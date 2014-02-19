@@ -1,0 +1,73 @@
+************************************************
+****        PyViennaCL Readme    (git)      ****
+************************************************
+
+Table of Contents
+------------------
+1. Requirements
+2. Installation
+3. Authors and Contact
+A. Licence
+
+
+
+1. Requirements
+---------------
+
+PyViennaCL requires the following build dependencies (given as Debian packages):
+ * cmake
+ * build-essential -- make, g++, etc..
+ * python-dev / python3-dev
+ * python-numpy / python3-numpy
+ * python-sphinx
+ * libboost-python-dev (corresponding to the Python version installed)
+ * ocl-icd-opencl-dev (or some other OpenCL SDK)
+
+PyViennaCL supports both Python 2 and Python 3, defaulting to your system's
+default Python interpreter version.
+
+
+2. Installation
+---------------
+
+Clone the PyViennaCL git repository and change to that directory:
+
+$> git clone https://github.com/viennacl-dev/pyviennacl.git
+$> cd pyviennacl
+
+Then, get the external submodules with
+
+$> git submodule update --init
+
+Next, change to the build directory, configure, make and install:
+
+$> cd build
+$> cmake ..
+    [ use `cmake -DPYTHON_EXECUTABLE=path-to-interpreter ..` if needed ]
+$> make
+$> make install
+
+HTML documentation will be in build/pyviennacl/build/doc, or you can access it
+from within the Python interpreter:
+
+>>> import pyviennacl
+>>> help(pyviennacl)
+
+
+3. Authors and Contact
+----------------------
+
+PyViennaCL was developed during the 2013 'Google Summer of Code' by 
+Toby St Clere Smithe <pyviennacl@tsmithe.net>.
+
+ViennaCL was developed under the aegis of the 'Institute for Microelectronics'
+at the 'Vienna University of Technology'.
+
+For any technical questions related to ViennaCL, please use our
+mailing list: <viennacl-support@lists.sourceforge.net>
+
+
+A. Licence
+----------
+
+(Py)ViennaCL is distributed under the MIT (X11) License. See file LICENSE.

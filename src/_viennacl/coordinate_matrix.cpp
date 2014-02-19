@@ -1,0 +1,12 @@
+#include "coordinate_matrix.hpp"
+
+PYVCL_SUBMODULE(coordinate_matrix)
+{
+  EXPORT_COORDINATE_MATRIX(float);
+  EXPORT_COORDINATE_MATRIX(double);
+  //EXPORT_COORDINATE_MATRIX(int);
+  //EXPORT_COORDINATE_MATRIX(long);
+  //EXPORT_COORDINATE_MATRIX(uint);
+  //EXPORT_COORDINATE_MATRIX(long);
+}
+

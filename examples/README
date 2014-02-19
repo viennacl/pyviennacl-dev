@@ -1,0 +1,21 @@
+This directory contains examples for how to use PyViennaCL.
+
+Read them! The comments are very explanatory :-)
+
+If you need more example code, the tests (under ../tests) cover the
+full PyViennaCL API, and so provide examples of that usage, even if
+the tests are somewhat contrived.
+
+Otherwise, the next best thing is the in-built documentation
+
+>>> import pyviennacl
+>>> help(pyviennacl)
+
+which is also built into HTML documentation using the Sphinx system,
+and should be located in build/doc (if you built the sources 
+yourself); otherwise, if you are on a Debian or Ubuntu system, look
+in /usr/share/doc/pyviennacl-doc.
+
+Finally, if you are still struggling, then play around or read the
+source!
+

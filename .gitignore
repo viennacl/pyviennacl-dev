@@ -1,0 +1,12 @@
+.#*
+\#*#
+*~
+.emacs.desktop*
+.*.swp
+build
+!build/README
+GSoC/*tex
+pyviennacl-puzzle.pdf
+__pycache__
+*.pyc
+doc/viennacl.pdf

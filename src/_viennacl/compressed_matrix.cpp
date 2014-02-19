@@ -1,0 +1,12 @@
+#include "compressed_matrix.hpp"
+
+PYVCL_SUBMODULE(compressed_matrix)
+{
+  EXPORT_COMPRESSED_MATRIX(float);
+  EXPORT_COMPRESSED_MATRIX(double);
+  //EXPORT_COMPRESSED_MATRIX(int);
+  //EXPORT_COMPRESSED_MATRIX(long);
+  //EXPORT_COMPRESSED_MATRIX(uint);
+  //EXPORT_COMPRESSED_MATRIX(long);
+}
+
