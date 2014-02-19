@@ -182,8 +182,8 @@ add_custom_target(dist
      "${DIST_SOURCES_DIR}/external/boost_numpy"
 
   COMMAND "${CMAKE_COMMAND}" -E copy_directory
-     "${PROJECT_SOURCE_DIR}/external/viennacl-dev/viennacl"
-     "${DIST_SOURCES_DIR}/external/viennacl-dev/viennacl"
+     "${PROJECT_SOURCE_DIR}/external/viennacl-dev"
+     "${DIST_SOURCES_DIR}/external/viennacl-dev"
   
   COMMAND "${CMAKE_COMMAND}" -E copy_directory
      "${PROJECT_SOURCE_DIR}/src" "${DIST_SOURCES_DIR}/src"
