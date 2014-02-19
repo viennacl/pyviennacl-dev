@@ -1,7 +1,6 @@
 .#*
 \#*#
 *~
-.emacs.desktop*
 .*.swp
 build
 !build/README
