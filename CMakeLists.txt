@@ -35,6 +35,8 @@ add_subdirectory(tests)
 # Common options
 ################
 
+option(USE_SYSTEM_VIENNACL "Use system-provided ViennaCL" FALSE)
+
 set(VIENNACL_SRC_DIST TRUE)
 include(ViennaCLCommon)
 
@@ -88,13 +90,22 @@ endif ()
 
 #include_directories(BEFORE ${PROJECT_SOURCE_DIR})
 
-include_directories(
-  ${PYTHON_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-  ${PROJECT_SOURCE_DIR}/external/boost_numpy
-  ${PROJECT_SOURCE_DIR}/external/viennacl-dev
-  ${NUMPY_INCLUDE_DIRS}
-)
+if (USE_SYSTEM_VIENNACL)
+  include_directories(
+    ${PYTHON_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/external/boost_numpy
+    ${NUMPY_INCLUDE_DIRS}
+    )
+else ()
+  include_directories(
+    ${PYTHON_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/external/boost_numpy
+    ${PROJECT_SOURCE_DIR}/external/viennacl-dev
+    ${NUMPY_INCLUDE_DIRS}
+    )
+endif ()
 
 get_property(INCLUDE_DIRS DIRECTORY
   ${CMAKE_CURRENT_SOURCE_DIR}
