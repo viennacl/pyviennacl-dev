@@ -155,7 +155,6 @@ set(DIST_SOURCES_DIR "${PROJECT_BINARY_DIR}/dist/pyviennacl-${VERSION}")
 
 foreach(f LICENSE
     pyversions.py
-    README
     README.dist
     setup.py.in
     CMakeLists.txt
