@@ -15,8 +15,6 @@ set(VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 SET(CMAKE_VERBOSE_MAKEFILE ON)   #uncomment this line to increase CMake verbosity
 
-#SET(BOOSTPATH "C:/Program\ Files\ (x86)/boost/boost_1_42")    #Boost path for other systems - customize as needed
-
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # Add visibility of headers
@@ -26,16 +24,12 @@ file( GLOB_RECURSE MAKE_HEADERS_VISIBLE_SRC
     *.hpp *.h)
 add_custom_target( MAKE_HEADERS_VISIBLE SOURCES ${MAKE_HEADERS_VISIBLE_SRC} )
 
-# Subdirectories
-################
-
-add_subdirectory(external/boost_numpy)
-add_subdirectory(tests)
-
 # Common options
 ################
 
 option(USE_SYSTEM_VIENNACL "Use system-provided ViennaCL" FALSE)
+
+#set(BOOST_ROOT "WINDOWS USERS SHOULD UNCOMMENT AND SET THIS")
 
 set(VIENNACL_SRC_DIST TRUE)
 include(ViennaCLCommon)
@@ -50,40 +44,47 @@ ENDIF()
 # Find prerequisites
 ####################
 
-if(NOT DEFINED PYTHON_EXECUTABLE)
-  set(
-    PYTHON_EXECUTABLE "python"
-    CACHE STRING
-    "Change this to the path for your interpreter; for instance 'python3'")
-endif()
-execute_process(
-  COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py python
-  OUTPUT_VARIABLE PYVERSION
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-execute_process(
-  COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py boost
-  OUTPUT_VARIABLE BOOST_COMPONENTS
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-#set(Python_ADDITIONAL_VERSIONS ${PYVERSION})
-find_package(PythonInterp ${PYVERSION} EXACT)
-message(${PYTHON_VERSION_STRING})
-if(DEFINED PYTHON_INCLUDE_DIR AND NOT DEFINED PYTHON_INCLUDE_DIR2)
-  message("${PYTHON_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS}")
-  set(PYTHON_INCLUDE_DIR2 ${PYTHON_INCLUDE_DIR})
-endif()
-find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
-find_package(Numpy REQUIRED)
-
-#SET(BOOST_INCLUDEDIR ${PROJECT_SOURCE_DIR}/external/boost_numpy)
-#SET(BOOST_LIBRARYDIR ${PROJECT_BINARY_DIR}/lib)
-SET(Boost_USE_STATIC_LIBS OFF)
-if (BOOST_COMPONENTS)
-  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows") 
+  find_package(PythonInterp REQUIRED)
+  find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
+  set(Boost_USE_STATIC_LIBS ON)
+  set(BOOST_COMPONENTS "python")
+  message("BOOST_ROOT: ${BOOST_ROOT}")
 else ()
-  find_package(Boost REQUIRED COMPONENTS python)
+  SET(Boost_USE_STATIC_LIBS OFF)
+  if(NOT DEFINED PYTHON_EXECUTABLE)
+    set(
+      PYTHON_EXECUTABLE "python"
+      CACHE STRING
+      "Change this to the path for your interpreter; for instance 'python3'")
+  endif()
+  execute_process(
+    COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py python
+    OUTPUT_VARIABLE PYVERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  execute_process(
+    COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py boost
+    OUTPUT_VARIABLE BOOST_COMPONENTS
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  #set(Python_ADDITIONAL_VERSIONS ${PYVERSION})
+  find_package(PythonInterp ${PYVERSION} EXACT)
+  message(${PYTHON_VERSION_STRING})
+  if(DEFINED PYTHON_INCLUDE_DIR AND NOT DEFINED PYTHON_INCLUDE_DIR2)
+    message("${PYTHON_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS}")
+    set(PYTHON_INCLUDE_DIR2 ${PYTHON_INCLUDE_DIR})
+  endif()
+  find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
+  find_package(Numpy REQUIRED) 
+  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 endif ()
+
+# Subdirectories
+################
+
+add_subdirectory(external/boost_numpy)
+add_subdirectory(tests)
 
 # Compile options
 #################
