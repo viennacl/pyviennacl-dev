@@ -4,3 +4,6 @@
 [submodule "external/viennacl-dev"]
 	path = external/viennacl-dev
 	url = https://github.com/viennacl/viennacl-dev.git
+[submodule "external/bpl-subset"]
+	path = external/bpl-subset
+	url = https://github.com/inducer/bpl-subset

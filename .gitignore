@@ -9,3 +9,5 @@ pyviennacl-puzzle.pdf
 __pycache__
 *.pyc
 doc/viennacl.pdf
+*.egg-info
+dist
