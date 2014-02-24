@@ -42,9 +42,9 @@ Requirements
 
 PyViennaCL requires the following build dependencies:
 
- * *Python* (2.7+);
- * *NumPy* (1.7+);
- * *Sphinx* (1.0+) [if you want to build HTML documentation].
+* *Python* (2.7+);
+* *NumPy* (1.7+);
+* *Sphinx* (1.0+) [if you want to build HTML documentation].
 
 It is also highly recommended to have an available OpenCL
 implementation, since PyViennaCL was designed for this case. If you do
