@@ -65,7 +65,9 @@ def main():
             warn_about_no_config=False)
 
     EXTRA_OBJECTS, EXTRA_DEFINES = \
-            set_up_shipped_boost_if_requested("pyopencl", conf)
+            set_up_shipped_boost_if_requested(
+                    "pyviennacl", conf,
+                    source_path="external/boost-python-ublas-subset/boost_subset")
 
     INCLUDE_DIRS = conf["BOOST_INC_DIR"] + [
             "external/boost_numpy/",
