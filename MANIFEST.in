@@ -1,0 +1,22 @@
+include src/wrapper/*.hpp
+include src/wrapper/*.cpp
+include test/*.py
+include test/*.h
+include examples/*.py
+
+# include doc/source/*.rst
+# include doc/Makefile
+# include doc/*.py
+# include doc/source/conf.py
+# include doc/source/_static/*.css
+# include doc/source/_templates/*.html
+
+include configure.py
+include Makefile.in
+include aksetup_helper.py
+include README
+
+recursive-include external/boost-python-ublas-subset/boost *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
+recursive-include external/boost-python-ublas-subset/boost *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
+
+recursive-include contrib *.vim *.py README

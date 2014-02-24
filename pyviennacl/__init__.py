@@ -40,7 +40,7 @@ or::
    >>> help(p.linalg)                                    # doctest: +SKIP
 """
 
-__version__ = "1.0.0"
+from .version import VERSION_TEXT as __version__
 from ._viennacl import __version__ as __viennacl_version__
 
 from .pycore import *
@@ -50,4 +50,4 @@ from .vclmath import *
 
 from . import vclmath as math
 
-# TODO: __all__, __version__
+# TODO: __all__
