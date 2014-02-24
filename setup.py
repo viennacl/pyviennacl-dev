@@ -115,6 +115,35 @@ def main():
     setup(
             name="pyviennacl",
             version=ver_dic["VERSION_TEXT"],
+            description="Sparse/dense linear algebra on GPUs and CPUs using OpenCL",
+            long_description=open("README.rst", "rt").read(),
+
+            url="http://viennacl.sourceforge.net/pyviennacl.html",
+            classifiers=[
+                'Environment :: Console',
+                'Development Status :: 5 - Production/Stable',
+                'Intended Audience :: Developers',
+                'Intended Audience :: Other Audience',
+                'Intended Audience :: Science/Research',
+                'License :: OSI Approved :: MIT License',
+                'Natural Language :: English',
+                'Programming Language :: C++',
+                'Programming Language :: Python',
+                'Programming Language :: Python :: 2',
+                # TBD: Which 2.x versions do you support?
+                # 'Programming Language :: Python :: 2.4',
+                # 'Programming Language :: Python :: 2.5',
+                'Programming Language :: Python :: 2.6',
+                'Programming Language :: Python :: 2.7',
+                # TBD: Python 3 support?
+                # 'Programming Language :: Python :: 3',
+                # 'Programming Language :: Python :: 3.2',
+                # 'Programming Language :: Python :: 3.3',
+                'Topic :: Scientific/Engineering',
+                'Topic :: Scientific/Engineering :: Mathematics',
+                'Topic :: Scientific/Engineering :: Physics',
+                ],
+
             packages=["pyviennacl"],
             ext_package="pyviennacl",
             ext_modules=[NumpyExtension(

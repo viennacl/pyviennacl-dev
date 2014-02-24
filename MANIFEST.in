@@ -16,7 +16,5 @@ include Makefile.in
 include aksetup_helper.py
 include README
 
-recursive-include external/boost-python-ublas-subset/boost *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
-recursive-include external/boost-python-ublas-subset/boost *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
-
-recursive-include contrib *.vim *.py README
+recursive-include external/boost-python-ublas-subset/boost_subset/boost *.h *.hpp *.inl *.ipp *.pl *.txt
+recursive-include external/boost-python-ublas-subset/boost_subset/lib *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
