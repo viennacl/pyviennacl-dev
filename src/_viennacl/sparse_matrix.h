@@ -183,7 +183,7 @@ public:
   void resize(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2)
   {
 
-    if ((_size1 == size1()) and (_size2 == size2()))
+    if ((_size1 == size1()) && (_size2 == size2()))
       return;
 
     // TODO NB: ublas compressed matrix does not support preserve on resize
@@ -205,7 +205,7 @@ public:
     for (it1 i = temp.begin1(); i != temp.end1(); ++i) {
       for (it2 j = i.begin(); j != i.end(); ++j) {
 	if ((temp(j.index1(), j.index2()) != 0)
-            and (j.index1() < _size1) and (j.index2() < _size2)) {
+            && (j.index1() < _size1) && (j.index2() < _size2)) {
           cpu_compressed_matrix(j.index1(), j.index2()) = temp(j.index1(), j.index2());
           //_places->append(bp::make_tuple(j.index1(), j.index2()));
         }

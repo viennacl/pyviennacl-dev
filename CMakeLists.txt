@@ -29,8 +29,6 @@ add_custom_target( MAKE_HEADERS_VISIBLE SOURCES ${MAKE_HEADERS_VISIBLE_SRC} )
 
 option(USE_SYSTEM_VIENNACL "Use system-provided ViennaCL" FALSE)
 
-#set(BOOST_ROOT "WINDOWS USERS SHOULD UNCOMMENT AND SET THIS")
-
 set(VIENNACL_SRC_DIST TRUE)
 include(ViennaCLCommon)
 
@@ -46,39 +44,41 @@ ENDIF()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows") 
   find_package(PythonInterp REQUIRED)
-  find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
   set(Boost_USE_STATIC_LIBS ON)
-  set(BOOST_COMPONENTS "python")
   message("BOOST_ROOT: ${BOOST_ROOT}")
+  message("BOOST_LIBRARYDIR: ${BOOST_LIBRARYDIR}")
+  message("Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
+  message("BOOST_INCLUDE_DIRS: ${BOOST_INCLUDE_DIRS}")
 else ()
   SET(Boost_USE_STATIC_LIBS OFF)
-  if(NOT DEFINED PYTHON_EXECUTABLE)
-    set(
-      PYTHON_EXECUTABLE "python"
-      CACHE STRING
-      "Change this to the path for your interpreter; for instance 'python3'")
-  endif()
-  execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py python
-    OUTPUT_VARIABLE PYVERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-  execute_process(
-    COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py boost
-    OUTPUT_VARIABLE BOOST_COMPONENTS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-  #set(Python_ADDITIONAL_VERSIONS ${PYVERSION})
-  find_package(PythonInterp ${PYVERSION} EXACT)
-  message(${PYTHON_VERSION_STRING})
-  if(DEFINED PYTHON_INCLUDE_DIR AND NOT DEFINED PYTHON_INCLUDE_DIR2)
-    message("${PYTHON_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS}")
-    set(PYTHON_INCLUDE_DIR2 ${PYTHON_INCLUDE_DIR})
-  endif()
-  find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
-  find_package(Numpy REQUIRED) 
-  find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-endif ()
+endif()
+
+if(NOT DEFINED PYTHON_EXECUTABLE)
+  set(
+    PYTHON_EXECUTABLE "python"
+    CACHE STRING
+    "Change this to the path for your interpreter; for instance 'python3'")
+endif()
+execute_process(
+  COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py python
+  OUTPUT_VARIABLE PYVERSION
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+execute_process(
+  COMMAND "${PYTHON_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/pyversions.py boost
+  OUTPUT_VARIABLE BOOST_COMPONENTS
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+#set(Python_ADDITIONAL_VERSIONS ${PYVERSION})
+find_package(PythonInterp ${PYVERSION} EXACT)
+message(${PYTHON_VERSION_STRING})
+if(DEFINED PYTHON_INCLUDE_DIR AND NOT DEFINED PYTHON_INCLUDE_DIR2)
+  message("${PYTHON_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS}")
+  set(PYTHON_INCLUDE_DIR2 ${PYTHON_INCLUDE_DIR})
+endif()
+find_package(PythonLibs ${PYTHON_VERSION_STRING} REQUIRED)
+find_package(Numpy REQUIRED) 
+find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 
 # Subdirectories
 ################

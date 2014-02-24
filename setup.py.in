@@ -5,6 +5,7 @@ source_dir = os.path.abspath("${CMAKE_CURRENT_SOURCE_DIR}")
 binary_dir = os.path.abspath("${PROJECT_BINARY_DIR}")
 
 include_dirs = '${INCLUDE_DIRS}'.split(";")
+print("include_dirs %s" % include_dirs)
 libraries = [ 'OpenCL' ]
 library_dirs = [os.path.join(binary_dir, 'lib')]
 extra_library_dirs = "$ENV{LD_LIBRARY_PATH}".split(":")

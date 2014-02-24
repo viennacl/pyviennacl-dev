@@ -17,17 +17,21 @@ def main(argv):
                             sys.version_info.minor,
                             sys.version_info.micro))
     elif argv[1] == "boost":
-        if platform.system() == 'Linux':
+        if 'linux' in platform.system().lower():
             if platform.linux_distribution()[0] == 'Ubuntu':
                 print("python-py%d%d" %
                       (sys.version_info.major,
                        sys.version_info.minor))
                 return os.EX_OK
-
-        if sys.version_info == 3:
-            print("python3")
-        else:
+            if sys.version_info == 3:
+                print("python3")
+            else:
+                print("python")
+        elif 'windows' in platform.system().lower():
             print("python")
+        elif 'darwin' in platform.system().lower():
+            print("python")
+
     else:
         do_help()
         return os.EX_CONFIG
