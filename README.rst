@@ -37,8 +37,8 @@ PyViennaCL exposes the following functionality:
 * iterative algorithms for eigenvalue estimation problems.
 
 
-1. Requirements
-===============
+Requirements
+============
 
 PyViennaCL requires the following build dependencies:
 
@@ -56,8 +56,8 @@ also optionally use that, rather than the Boost subset shipped with
 the PyViennaCL sources.
 
 
-2. Installation
-===============
+Installation
+============
 
 Installation using pip
 ----------------------
@@ -107,8 +107,8 @@ installation::
   >>> help(pyviennacl)
 
 
-3. Authors and Contact
-======================
+Authors and Contact
+===================
 
 PyViennaCL was developed during the 2013 *Google Summer of Code* by 
 `Toby St Clere Smithe <pyviennacl@tsmithe.net>`_.
@@ -119,8 +119,8 @@ at the *Vienna University of Technology*.
 For any technical questions related to ViennaCL, please use `our
 mailing list <viennacl-support@lists.sourceforge.net>`_.
 
-5. Licence
-==========
+Licence
+=======
 
 (Py)ViennaCL is distributed under the MIT (X11) License. See the file
 LICENSE in the source root directory.
