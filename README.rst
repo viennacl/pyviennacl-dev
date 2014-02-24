@@ -2,16 +2,12 @@
 PyViennaCL Readme
 *****************
 
-Table of Contents
-=================
+PyViennaCL around the web
+=========================
 
-0. About PyViennaCL
-1. Requirements
-2. Installation
-3. Documentation
-4. Authors and Contact
-5. Licence
-
+* `Home page <http://viennacl.sourceforge.net/pyviennacl.html>`_
+* `Documentation <http://viennacl.sourceforge.net/pyviennacl/doc/index.html>`_
+* `Github <https://github.com/viennacl/pyviennacl-dev>`_ (`Issue tracker <https://github.com/viennacl/pyviennacl-dev/issues>`_)
 
 0. About PyViennaCL
 ===================
@@ -20,12 +16,12 @@ Table of Contents
 scientific computing really transparently easy, especially for users
 already using NumPy for representing matrices.
 
-PyViennaCL does this by harnessing the *ViennaCL* linear algebra and
-numerical computation library for GPGPU and heterogeneous systems,
-thereby making available to Python programmers ViennaCL’s fast
-*OpenCL* and *CUDA* algorithms. PyViennaCL does this in a way that is
-idiomatic and compatible with the Python community’s most popular
-scientific packages, *NumPy* and *SciPy*.
+PyViennaCL does this by harnessing the `ViennaCL
+<http://viennacl.sourceforge.net/>`_ linear algebra and numerical computation
+library for GPGPU and heterogeneous systems, thereby making available to Python
+programmers ViennaCL’s fast *OpenCL* and *CUDA* algorithms. PyViennaCL does
+this in a way that is idiomatic and compatible with the Python community’s most
+popular scientific packages, *NumPy* and *SciPy*.
 
 PyViennaCL exposes the following functionality:
 
@@ -60,8 +56,20 @@ also optionally use that, rather than the Boost subset shipped with
 the PyViennaCL sources.
 
 
-2. Installation from source
-===========================
+2. Installation
+===============
+
+Installation using pip
+----------------------
+
+The following command should usually be enough to install PyViennaCL::
+
+  $> pip install pyviennacl
+
+TODO: See `issue <https://github.com/viennacl/pyviennacl-dev/issues/2>`_.
+
+Installation from source
+------------------------
 
 These instructions assume a UNIX-like platform (such as a Linux
 distribution or Mac OS X), but will work on a well-configured Windows
@@ -110,7 +118,6 @@ at the *Vienna University of Technology*.
 
 For any technical questions related to ViennaCL, please use `our
 mailing list <viennacl-support@lists.sourceforge.net>`_.
-
 
 5. Licence
 ==========
