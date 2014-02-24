@@ -109,11 +109,11 @@ ViennaCL was developed under the aegis of the *Institute for Microelectronics*
 at the *Vienna University of Technology*.
 
 For any technical questions related to ViennaCL, please use `our
-mailing list <viennacl-support@lists.sourceforge.net>`_
+mailing list <viennacl-support@lists.sourceforge.net>`_.
 
 
 5. Licence
-----------
+==========
 
 (Py)ViennaCL is distributed under the MIT (X11) License. See the file
 LICENSE in the source root directory.
