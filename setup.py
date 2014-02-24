@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
+
 def get_config_schema():
-    from aksetup_helper import ConfigSchema, Option, \
+    from aksetup_helper import ConfigSchema, \
             IncludeDir, LibraryDir, Libraries, BoostLibraries, \
             Switch, StringListOption, make_boost_base_options
 
@@ -38,7 +39,6 @@ def get_config_schema():
 
         Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
 
-        Switch("USE_BOOST_UBLAS", True, "Use Boost.UBlas"),
         Switch("USE_OPENCL", False, "Use OpenCL"),
 
         IncludeDir("CL", []),
@@ -91,8 +91,7 @@ def main():
 
     if conf["USE_OPENCL"]:
         EXTRA_DEFINES["VIENNACL_WITH_OPENCL"] = None
-    if conf["USE_BOOST_UBLAS"]:
-        EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
+    EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
 
     source_files = [
             "core",
