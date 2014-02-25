@@ -45,12 +45,15 @@ def get_config_schema():
             BoostLibraries("python"),
 
             Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
+            Switch("USE_SHIPPED_VIENNACL", True, "Use included ViennaCL library"),
 
-            Switch("USE_OPENCL", False, "Use OpenCL"),
+            Switch("USE_OPENCL", True, "Use OpenCL"),
 
             IncludeDir("CL", []),
             LibraryDir("CL", []),
             Libraries("CL", default_libs),
+
+            IncludeDir("VIENNACL", []),
 
             StringListOption("CXXFLAGS", default_cxxflags,
                              help="Any extra C++ compiler options to include"),
@@ -82,9 +85,11 @@ def main():
     conf["CXXFLAGS"] += ["-Wno-unused-function"]
 
     INCLUDE_DIRS = conf["BOOST_INC_DIR"] + [
-            "external/boost_numpy/",
-            "external/viennacl-dev/",
+            "external/boost_numpy/"
             ]
+    if conf["USE_SHIPPED_VIENNACL"]:
+        INCLUDE_DIRS += ["external/viennacl-dev/"]
+
     LIBRARY_DIRS = conf["BOOST_LIB_DIR"]
     LIBRARIES = conf["BOOST_PYTHON_LIBNAME"]
 

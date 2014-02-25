@@ -59,6 +59,20 @@ the PyViennaCL sources.
 Installation
 ============
 
+OpenCL
+------
+
+By default, you will need an OpenCL implementation. PyViennaCL will
+still build and function without one, but will not perform to full
+effect.
+
+For information on how to get an OpenCL implementation, see this
+`howto <http://wiki.tiker.net/OpenCLHowTo>`_.
+
+If you do not wish to use OpenCL, then follow the *Installation from
+source* instructions below, and use the '--no-use-opencl' configure
+option.
+
 Installation using pip
 ----------------------
 
