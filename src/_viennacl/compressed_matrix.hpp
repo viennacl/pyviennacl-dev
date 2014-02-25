@@ -7,8 +7,8 @@
   bp::class_<cpu_compressed_matrix_wrapper<TYPE> >                      \
   ("cpu_compressed_matrix_" #TYPE)                                      \
   .def(bp::init<>())                                                    \
-  .def(bp::init<uint32_t, uint32_t>())                                  \
-  .def(bp::init<uint32_t, uint32_t, uint32_t>())                        \
+  .def(bp::init<vcl::vcl_size_t, vcl::vcl_size_t>())                                  \
+  .def(bp::init<vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_size_t>())                        \
   .def(bp::init<cpu_compressed_matrix_wrapper<TYPE> >())                \
   .def(bp::init<vcl::compressed_matrix<TYPE> >())                       \
   /*.def(bp::init<vcl::coordinate_matrix<TYPE> >())                    */ \

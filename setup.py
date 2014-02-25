@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-
+import sys
 
 def get_config_schema():
     from aksetup_helper import ConfigSchema, \
             IncludeDir, LibraryDir, Libraries, BoostLibraries, \
             Switch, StringListOption, make_boost_base_options
 
-    import sys
     if 'darwin' in sys.platform:
         import platform
         osx_ver, _, _ = platform.mac_ver()
@@ -80,9 +79,12 @@ def main():
                     "pyviennacl", conf,
                     source_path="external/boost-python-ublas-subset/boost_subset")
 
-    if EXTRA_OBJECTS:
-        conf["CXXFLAGS"] += ["-Wno-unused-local-typedefs"]
-    conf["CXXFLAGS"] += ["-Wno-unused-function"]
+    if 'win' in sys.platform:
+        conf["CXXFLAGS"] += ["/EHsc"]
+    else:
+        if EXTRA_OBJECTS:
+            conf["CXXFLAGS"] += ["-Wno-unused-local-typedefs"]
+        conf["CXXFLAGS"] += ["-Wno-unused-function"]
 
     INCLUDE_DIRS = conf["BOOST_INC_DIR"] + [
             "external/boost_numpy/"

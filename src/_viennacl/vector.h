@@ -38,11 +38,11 @@ std_vector_init_ndarray(const np::ndarray& array)
     bp::throw_error_already_set();
   }
   
-  uint32_t s = (uint32_t) array.shape(0);
+  vcl::vcl_size_t s = (vcl::vcl_size_t) array.shape(0);
   
   std::vector<SCALARTYPE> *v = new std::vector<SCALARTYPE>(s);
   
-  for (uint32_t i=0; i < s; ++i)
+  for (vcl::vcl_size_t i=0; i < s; ++i)
     (*v)[i] = bp::extract<SCALARTYPE>(array[i]);
   
   return vcl::tools::shared_ptr<std::vector<SCALARTYPE> >(v);
@@ -58,9 +58,9 @@ std_vector_init_list(const bp::list& l)
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<std::vector<SCALARTYPE> >
-std_vector_init_scalar(uint32_t length, SCALARTYPE value) {
+std_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value) {
   std::vector<SCALARTYPE> *v = new std::vector<SCALARTYPE>(length);
-  for (uint32_t i=0; i < length; ++i)
+  for (vcl::vcl_size_t i=0; i < length; ++i)
     (*v)[i] = value;
   return vcl::tools::shared_ptr<std::vector<SCALARTYPE> >(v);
 }
@@ -93,12 +93,12 @@ vcl_vector_init_ndarray(const np::ndarray& array)
     bp::throw_error_already_set();
   }
   
-  uint32_t s = (uint32_t) array.shape(0);
+  vcl::vcl_size_t s = (vcl::vcl_size_t) array.shape(0);
   
   vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s);
   std::vector<SCALARTYPE> cpu_vector(s);
   
-  for (uint32_t i=0; i < s; ++i)
+  for (vcl::vcl_size_t i=0; i < s; ++i)
     cpu_vector[i] = bp::extract<SCALARTYPE>(array[i]);
   
   vcl::fast_copy(cpu_vector.begin(), cpu_vector.end(), v->begin());
@@ -116,7 +116,7 @@ vcl_vector_init_list(const bp::list& l)
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_scalar(uint32_t length, SCALARTYPE value)
+vcl_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value)
 {
   ublas::scalar_vector<SCALARTYPE> s_v(length, value);
   vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(length);
