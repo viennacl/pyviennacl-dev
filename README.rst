@@ -7,10 +7,10 @@ PyViennaCL around the web
 
 * `Home page <http://viennacl.sourceforge.net/pyviennacl.html>`_
 * `Documentation <http://viennacl.sourceforge.net/pyviennacl/doc/index.html>`_
-* `Github <https://github.com/viennacl/pyviennacl-dev>`_ (`Issue tracker <https://github.com/viennacl/pyviennacl-dev/issues>`_)
+* `GitHub <https://github.com/viennacl/pyviennacl-dev>`_ (`Issue tracker <https://github.com/viennacl/pyviennacl-dev/issues>`_)
 
-0. About PyViennaCL
-===================
+About PyViennaCL
+================
 
 *PyViennaCL* aims to make fast, powerful GPGPU and hetereogeneous
 scientific computing really transparently easy, especially for users

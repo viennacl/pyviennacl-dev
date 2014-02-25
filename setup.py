@@ -34,22 +34,30 @@ def get_config_schema():
         default_cxxflags = []
         default_ldflags = []
 
-    return ConfigSchema(make_boost_base_options() + [
-        BoostLibraries("python"),
+    try:
+        import os
+        conf_file = os.environ["SITECONF"]
+    except:
+        conf_file = "siteconf.py"
 
-        Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
+    return ConfigSchema(
+        make_boost_base_options() + [
+            BoostLibraries("python"),
+            
+            Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
 
-        Switch("USE_OPENCL", False, "Use OpenCL"),
+            Switch("USE_OPENCL", False, "Use OpenCL"),
 
-        IncludeDir("CL", []),
-        LibraryDir("CL", []),
-        Libraries("CL", default_libs),
-
-        StringListOption("CXXFLAGS", default_cxxflags,
-            help="Any extra C++ compiler options to include"),
-        StringListOption("LDFLAGS", default_ldflags,
-            help="Any extra linker options to include"),
-        ])
+            IncludeDir("CL", []),
+            LibraryDir("CL", []),
+            Libraries("CL", default_libs),
+            
+            StringListOption("CXXFLAGS", default_cxxflags,
+                             help="Any extra C++ compiler options to include"),
+            StringListOption("LDFLAGS", default_ldflags,
+                             help="Any extra linker options to include"),
+        ],
+        conf_file = conf_file)
 
 
 def main():
@@ -71,6 +79,7 @@ def main():
 
     if EXTRA_OBJECTS:
         conf["CXXFLAGS"] += ["-Wno-unused-local-typedefs"]
+    conf["CXXFLAGS"] += ["-Wno-unused-function"]
 
     INCLUDE_DIRS = conf["BOOST_INC_DIR"] + [
             "external/boost_numpy/",
