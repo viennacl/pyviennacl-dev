@@ -43,7 +43,7 @@ def get_config_schema():
     return ConfigSchema(
         make_boost_base_options() + [
             BoostLibraries("python"),
-            
+
             Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
 
             Switch("USE_OPENCL", False, "Use OpenCL"),
@@ -51,7 +51,7 @@ def get_config_schema():
             IncludeDir("CL", []),
             LibraryDir("CL", []),
             Libraries("CL", default_libs),
-            
+
             StringListOption("CXXFLAGS", default_cxxflags,
                              help="Any extra C++ compiler options to include"),
             StringListOption("LDFLAGS", default_ldflags,
