@@ -1,4 +1,4 @@
-.PHONY	: all install clean tags
+.PHONY	: all install clean dist-clean tags
 
 all: tags
 	${PYTHON_EXE} setup.py build
@@ -7,8 +7,14 @@ install: all tags
 	${PYTHON_EXE} setup.py install
 
 clean:
+	${PYTHON_EXE} setup.py clean
 	rm -Rf build
 	rm -f tags
+
+dist-clean: clean
+	rm siteconf.py Makefile
+	rm *pyc
+	rm -R __pycache__
 
 tags:
 	ctags -R src || true
