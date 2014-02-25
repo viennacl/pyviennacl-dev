@@ -6,7 +6,7 @@ def get_config_schema():
             IncludeDir, LibraryDir, Libraries, BoostLibraries, \
             Switch, StringListOption, make_boost_base_options
 
-    if 'darwin' in sys.platform:
+    if sys.platform.startswith('darwin'):
         import platform
         osx_ver, _, _ = platform.mac_ver()
         osx_ver = '.'.join(osx_ver.split('.')[:2])
@@ -79,7 +79,7 @@ def main():
                     "pyviennacl", conf,
                     source_path="external/boost-python-ublas-subset/boost_subset")
 
-    if 'win' in sys.platform:
+    if sys.platform.startswith('win'):
         conf["CXXFLAGS"] += ["/EHsc"]
     else:
         if EXTRA_OBJECTS:

@@ -40,23 +40,11 @@ PYVCL_SUBMODULE(eig)
                              const vcl::linalg::power_iter_tag&))
   bp::def("eig", eig_power_iter_double_row);
 
-  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
-                            vcl::linalg::eig, eig_lanczos_vector_double_row,
-                            (const vcl::matrix<double, vcl::row_major>&, 
-                             const vcl::linalg::lanczos_tag&))
-  bp::def("eig", eig_lanczos_vector_double_row);
-
   DISAMBIGUATE_FUNCTION_PTR(float, 
                             vcl::linalg::eig,eig_power_iter_float_row,
                             (const vcl::matrix<float, vcl::row_major>&, 
                              const vcl::linalg::power_iter_tag&))
   bp::def("eig", eig_power_iter_float_row);
-
-  DISAMBIGUATE_FUNCTION_PTR(std::vector<float>,
-                            vcl::linalg::eig, eig_lanczos_vector_float_row,
-                            (const vcl::matrix<float, vcl::row_major>&, 
-                             const vcl::linalg::lanczos_tag&))
-  bp::def("eig", eig_lanczos_vector_float_row);
 
   DISAMBIGUATE_FUNCTION_PTR(double, 
                             vcl::linalg::eig,eig_power_iter_double_col,
@@ -64,22 +52,36 @@ PYVCL_SUBMODULE(eig)
                              const vcl::linalg::power_iter_tag&))
   bp::def("eig", eig_power_iter_double_col);
 
-  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
-                            vcl::linalg::eig, eig_lanczos_vector_double_col,
-                            (const vcl::matrix<double, vcl::column_major>&, 
-                             const vcl::linalg::lanczos_tag&))
-  bp::def("eig", eig_lanczos_vector_double_col);
-
   DISAMBIGUATE_FUNCTION_PTR(float, 
                             vcl::linalg::eig,eig_power_iter_float_col,
                             (const vcl::matrix<float, vcl::column_major>&, 
                              const vcl::linalg::power_iter_tag&))
   bp::def("eig", eig_power_iter_float_col);
 
+  /*
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
+                            vcl::linalg::eig, eig_lanczos_vector_double_row,
+                            (const vcl::matrix<double, vcl::row_major>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_double_row);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<float>,
+                            vcl::linalg::eig, eig_lanczos_vector_float_row,
+                            (const vcl::matrix<float, vcl::row_major>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_float_row);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
+                            vcl::linalg::eig, eig_lanczos_vector_double_col,
+                            (const vcl::matrix<double, vcl::column_major>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_double_col);
+
   DISAMBIGUATE_FUNCTION_PTR(std::vector<float>,
                             vcl::linalg::eig, eig_lanczos_vector_float_col,
                             (const vcl::matrix<float, vcl::column_major>&, 
                              const vcl::linalg::lanczos_tag&))
   bp::def("eig", eig_lanczos_vector_float_col);
+  */
 
 }
