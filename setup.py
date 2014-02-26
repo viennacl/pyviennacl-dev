@@ -12,10 +12,10 @@ class build_ext_subclass(build_ext):
     """
     def build_extensions(self):
         c = self.compiler.compiler_type
-        if platform_cflags.has_key(c):
+        if c in platform_cflags.keys():
             for e in self.extensions:
                 e.extra_compile_args = platform_cflags[c]
-        if platform_ldflags.has_key(c):
+        if c in platform_ldflags.keys():
             for e in self.extensions:
                 e.extra_link_args = platform_ldflags[c]
         build_ext.build_extensions(self)

@@ -68,8 +68,8 @@ Windows SDK v7.0 for Windows 7 and .NET Framework 3.5 SP1
 <http://www.microsoft.com/en-us/download/details.aspx?id=18950>`_.
 
 If you are building for a standard distribution of Python 3.3 (32- or
-64-bit), you will need `Microsoft Windows SDK v7.1 for Windows 7 and
-.NET Framework 4
+64-bit), you will need the `Microsoft Windows SDK v7.1 for Windows 7
+and .NET Framework 4
 <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_.
 
 Having installed the correct SDK version, you will need to open an SDK
