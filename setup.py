@@ -1,5 +1,25 @@
 #!/usr/bin/env python
 import sys
+from distutils.core import setup, Extension
+from distutils.command.build_ext import build_ext
+
+platform_cflags = {}
+platform_ldflags = {}
+
+class build_ext_subclass(build_ext):
+    """Shamelessly stolen from
+    https://stackoverflow.com/questions/724664
+    """
+    def build_extensions(self):
+        c = self.compiler.compiler_type
+        if platform_cflags.has_key(c):
+            for e in self.extensions:
+                e.extra_compile_args = platform_cflags[c]
+        if platform_ldflags.has_key(c):
+            for e in self.extensions:
+                e.extra_link_args = platform_ldflags[c]
+        build_ext.build_extensions(self)
+
 
 def get_config_schema():
     from aksetup_helper import ConfigSchema, \
@@ -79,13 +99,6 @@ def main():
                     "pyviennacl", conf,
                     source_path="external/boost-python-ublas-subset/boost_subset")
 
-    if sys.platform.startswith('win'):
-        conf["CXXFLAGS"] += ["/EHsc"]
-    else:
-        if EXTRA_OBJECTS:
-            conf["CXXFLAGS"] += ["-Wno-unused-local-typedefs"]
-        conf["CXXFLAGS"] += ["-Wno-unused-function"]
-
     INCLUDE_DIRS = conf["BOOST_INC_DIR"] + [
             "external/boost_numpy/"
             ]
@@ -112,6 +125,15 @@ def main():
         EXTRA_DEFINES["VIENNACL_WITH_OPENCL"] = None
     EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
 
+    platform_cflags["msvc"] = ["/EHsc"]
+    platform_cflags["mingw32"] = ["-Wno-unused-function"]
+    platform_cflags["unix"] = ["-Wno-unused-function"]
+
+    if EXTRA_OBJECTS:
+        platform_cflags['mingw32'] += ["-Wno-unused-local-typedefs"]
+        if not sys.platform.startswith("darwin"):
+            platform_cflags['unix'] += ["-Wno-unused-local-typedefs"]
+
     source_files = [
             "core",
             "vector_float", "vector_double", "vector_int", "vector_long",
@@ -129,58 +151,59 @@ def main():
     from glob import glob
 
     setup(
-            name="pyviennacl",
-            version=ver_dic["VERSION_TEXT"],
-            description="Sparse/dense linear algebra on GPUs and CPUs using OpenCL",
-            long_description=open("README.rst", "rt").read(),
+        name="pyviennacl",
+        version=ver_dic["VERSION_TEXT"],
+        description="Sparse/dense linear algebra on GPUs and CPUs using OpenCL",
+        long_description=open("README.rst", "rt").read(),
 
-            url="http://viennacl.sourceforge.net/pyviennacl.html",
-            classifiers=[
-                'Environment :: Console',
-                'Development Status :: 5 - Production/Stable',
-                'Intended Audience :: Developers',
-                'Intended Audience :: Other Audience',
-                'Intended Audience :: Science/Research',
-                'License :: OSI Approved :: MIT License',
-                'Natural Language :: English',
-                'Programming Language :: C++',
-                'Programming Language :: Python',
-                'Programming Language :: Python :: 2',
-                # TBD: Which 2.x versions do you support?
-                # 'Programming Language :: Python :: 2.4',
-                # 'Programming Language :: Python :: 2.5',
-                'Programming Language :: Python :: 2.6',
-                'Programming Language :: Python :: 2.7',
-                # TBD: Python 3 support?
-                # 'Programming Language :: Python :: 3',
-                # 'Programming Language :: Python :: 3.2',
-                # 'Programming Language :: Python :: 3.3',
-                'Topic :: Scientific/Engineering',
-                'Topic :: Scientific/Engineering :: Mathematics',
-                'Topic :: Scientific/Engineering :: Physics',
-                ],
+        url="http://viennacl.sourceforge.net/pyviennacl.html",
+        classifiers=[
+            'Environment :: Console',
+            'Development Status :: 5 - Production/Stable',
+            'Intended Audience :: Developers',
+            'Intended Audience :: Other Audience',
+            'Intended Audience :: Science/Research',
+            'License :: OSI Approved :: MIT License',
+            'Natural Language :: English',
+            'Programming Language :: C++',
+            'Programming Language :: Python',
+            'Programming Language :: Python :: 2',
+            # TBD: Which 2.x versions do you support?
+            # 'Programming Language :: Python :: 2.4',
+            # 'Programming Language :: Python :: 2.5',
+            'Programming Language :: Python :: 2.6',
+            'Programming Language :: Python :: 2.7',
+            # TBD: Python 3 support?
+            # 'Programming Language :: Python :: 3',
+            # 'Programming Language :: Python :: 3.2',
+            # 'Programming Language :: Python :: 3.3',
+            'Topic :: Scientific/Engineering',
+            'Topic :: Scientific/Engineering :: Mathematics',
+            'Topic :: Scientific/Engineering :: Physics',
+        ],
 
-            packages=["pyviennacl"],
-            ext_package="pyviennacl",
-            ext_modules=[NumpyExtension(
-                "_viennacl",
+        packages=["pyviennacl"],
+        ext_package="pyviennacl",
+        ext_modules=[NumpyExtension(
+            "_viennacl",
 
-                [os.path.join("src", "_viennacl", sf + ".cpp")
-                    for sf in source_files]
-                + glob("external/boost_numpy/libs/numpy/src/*.cpp")
-                + EXTRA_OBJECTS,
-                depends=[os.path.join("src", "_viennacl", "viennacl.h")],
+            [os.path.join("src", "_viennacl", sf + ".cpp")
+             for sf in source_files]
+            + glob("external/boost_numpy/libs/numpy/src/*.cpp")
+            + EXTRA_OBJECTS,
+            depends=[os.path.join("src", "_viennacl", "viennacl.h")],
 
-                extra_compile_args=conf["CXXFLAGS"],
-                extra_link_args=conf["LDFLAGS"],
+            extra_compile_args=conf["CXXFLAGS"],
+            extra_link_args=conf["LDFLAGS"],
 
-                define_macros=list(EXTRA_DEFINES.items()),
+            define_macros=list(EXTRA_DEFINES.items()),
 
-                include_dirs=INCLUDE_DIRS,
-                library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"],
-                libraries=LIBRARIES + conf["CL_LIBNAME"],
-                )]
-            )
+            include_dirs=INCLUDE_DIRS,
+            library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"],
+            libraries=LIBRARIES + conf["CL_LIBNAME"],
+        )],
+        cmdclass = {'build_ext': build_ext_subclass}
+    )
 
 
 if __name__ == "__main__":

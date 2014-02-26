@@ -1,20 +1,27 @@
-include src/wrapper/*.hpp
-include src/wrapper/*.cpp
-include test/*.py
-include test/*.h
-include examples/*.py
-
-# include doc/source/*.rst
-# include doc/Makefile
-# include doc/*.py
-# include doc/source/conf.py
-# include doc/source/_static/*.css
-# include doc/source/_templates/*.html
-
 include configure.py
 include Makefile.in
 include aksetup_helper.py
-include README
+include README.rest
+
+recursive-include doc *
+
+include examples/*.py
+include examples/README
 
 recursive-include external/boost-python-ublas-subset/boost_subset/boost *.h *.hpp *.inl *.ipp *.pl *.txt
 recursive-include external/boost-python-ublas-subset/boost_subset/lib *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
+
+recursive-include external/boost_numpy/boost *.h *.hpp *.inl *.ipp *.pl *.txt
+recursive-include external/boost_numpy/lib *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
+
+recursive-include external/viennacl-dev/viennacl *.h *.hpp
+
+include pyviennacl/*.py
+
+include src/_viennacl/*.h
+include src/_viennacl/*.hpp
+include src/_viennacl/*.cpp
+include tests/*.py
+
+
+
