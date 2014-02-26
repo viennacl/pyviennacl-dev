@@ -64,6 +64,10 @@ Python installation. Please see `this documentation
 <https://github.com/cython/cython/wiki/64BitCythonExtensionsOnWindows>`_
 for more information and advice.
 
+You might also be interested in the `Python Tools for Visual Studio
+<https://pytools.codeplex.com/>`_, though these are not required
+either for building or using PyViennaCL.
+
 
 Installation
 ============
