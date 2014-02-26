@@ -579,6 +579,7 @@ def set_up_shipped_boost_if_requested(project_name, conf, source_path=None):
 
                     "BOOST_MULTI_INDEX_DISABLE_SERIALIZATION": 1,
                     "BOOST_THREAD_DONT_USE_CHRONO": 1,
+                    "BOOST_CHRONO_HEADER_ONLY": 1,
                     "BOOST_PYTHON_SOURCE": 1,
                     "boost": '%sboost' % project_name
                     }
