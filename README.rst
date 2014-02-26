@@ -60,9 +60,32 @@ Extra requirements for Windows systems
 
 In addition to the components required above, Windows builds require
 the use of the Windows SDK version specific to the version of your
-Python installation. Please see `this documentation
-<https://github.com/cython/cython/wiki/64BitCythonExtensionsOnWindows>`_
-for more information and advice.
+Python installation.
+
+If you are building for a standard distribution of Python 2.6, 2.7,
+3.0, 3.1 or 3.2 (either 32- or 64-bit), you will need the `Microsoft
+Windows SDK v7.0 for Windows 7 and .NET Framework 3.5 SP1
+<http://www.microsoft.com/en-us/download/details.aspx?id=18950>`_.
+
+If you are building for a standard distribution of Python 3.3 (32- or
+64-bit), you will need `Microsoft Windows SDK v7.1 for Windows 7 and
+.NET Framework 4
+<https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_.
+
+Having installed the correct SDK version, you will need to open an SDK
+command prompt and issue the following commands, according to your
+system's architecture. If you are building for a 32-bit system:
+
+  $> set DISTUTILS_USE_SDK=1
+  $> setenv /x86 /release
+
+If you are building for a 64-bit architecture:
+
+  $> set DISTUTILS_USE_SDK=1
+  $> setenv /x64 /release
+
+At this point, you will be able to follow the instructions detailed
+below under *Installation*.
 
 You might also be interested in the `Python Tools for Visual Studio
 <https://pytools.codeplex.com/>`_, though these are not required

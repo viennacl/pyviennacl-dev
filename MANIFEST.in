@@ -14,6 +14,7 @@ recursive-include external/boost-python-ublas-subset/boost_subset/libs *.h *.hpp
 recursive-include external/boost_numpy/boost *.h *.hpp *.inl *.ipp *.pl *.txt
 recursive-include external/boost_numpy/libs *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
 
+recursive-include external/viennacl-dev/CL *.h *.hpp
 recursive-include external/viennacl-dev/viennacl *.h *.hpp
 
 include pyviennacl/*.py
@@ -22,6 +23,3 @@ include src/_viennacl/*.h
 include src/_viennacl/*.hpp
 include src/_viennacl/*.cpp
 include tests/*.py
-
-
-
