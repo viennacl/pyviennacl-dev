@@ -9,10 +9,10 @@ include examples/*.py
 include examples/README
 
 recursive-include external/boost-python-ublas-subset/boost_subset/boost *.h *.hpp *.inl *.ipp *.pl *.txt
-recursive-include external/boost-python-ublas-subset/boost_subset/lib *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
+recursive-include external/boost-python-ublas-subset/boost_subset/libs *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
 
 recursive-include external/boost_numpy/boost *.h *.hpp *.inl *.ipp *.pl *.txt
-recursive-include external/boost_numpy/lib *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
+recursive-include external/boost_numpy/libs *.h *.hpp *.cpp *.html *.inl *.ipp *.pl *.txt
 
 recursive-include external/viennacl-dev/viennacl *.h *.hpp
 
