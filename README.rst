@@ -55,6 +55,15 @@ If you have a Boost installation on your system, then PyViennaCL can
 also optionally use that, rather than the Boost subset shipped with
 the PyViennaCL sources.
 
+Extra requirements for Windows systems
+--------------------------------------
+
+In addition to the components required above, Windows builds require
+the use of the Windows SDK version specific to the version of your
+Python installation. Please see `this documentation
+<https://github.com/cython/cython/wiki/64BitCythonExtensionsOnWindows>`_
+for more information and advice.
+
 
 Installation
 ============
@@ -68,6 +77,10 @@ effect.
 
 For information on how to get an OpenCL implementation, see this
 `howto <http://wiki.tiker.net/OpenCLHowTo>`_.
+
+If you have an OpenCL installation that you installed and is not
+managed by your system's package manager, then it is likely you will
+need to use the '--cl-lib-dir' configure option.
 
 If you do not wish to use OpenCL, then follow the *Installation from
 source* instructions below, and use the '--no-use-opencl' configure
@@ -99,13 +112,13 @@ If you are in a hurry, then the following should just work::
   $> python setup.py build
   $> sudo python setup.py install
 
-Otherwise, read the configuration options, configure, make and
+Otherwise, read the configuration options, configure, build and
 install::
 
   $> ./configure.py --help
   $> ./configure.py --some-options
-  $> make
-  $> sudo make install
+  $> python setup.py build
+  $> sudo python setup.py install
 
 To build the HTML documentation using Sphinx, first install PyViennaCL
 as above, and then run::
