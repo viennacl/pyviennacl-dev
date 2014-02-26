@@ -37,14 +37,14 @@
 
 PYVCL_SUBMODULE(extra_functions)
 {
-  // vector: outer, element_pow, plane_rotation
-  // matrix: element_pow
-
-  // TODO missing: char, short, uchar, ushort
+  /* TODO missing: char, short, uchar, ushort
+     Some of these only make compile on Windows for float types -- eg norm_2, which
+       tries to do a sqrt on a long without converting it to some float type.
   EXPORT_FUNCTIONS(int);
   EXPORT_FUNCTIONS(long);
   EXPORT_FUNCTIONS(uint);
   EXPORT_FUNCTIONS(ulong);
+  */
   EXPORT_FUNCTIONS(double);
   EXPORT_FUNCTIONS(float);
 
