@@ -74,12 +74,12 @@ If you are building for a standard distribution of Python 3.3 (32- or
 
 Having installed the correct SDK version, you will need to open an SDK
 command prompt and issue the following commands, according to your
-system's architecture. If you are building for a 32-bit system:
+system's architecture. If you are building for a 32-bit system::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x86 /release
 
-If you are building for a 64-bit architecture:
+If you are building for a 64-bit architecture::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x64 /release
