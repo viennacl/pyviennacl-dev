@@ -155,7 +155,8 @@ def main():
         version=ver_dic["VERSION_TEXT"],
         description="Sparse/dense linear algebra on GPUs and CPUs using OpenCL",
         long_description=open("README.rst", "rt").read(),
-
+        author='Toby St Clere Smithe',
+        author_email='pyviennacl@tsmithe.net'
         url="http://viennacl.sourceforge.net/pyviennacl.html",
         classifiers=[
             'Environment :: Console',
