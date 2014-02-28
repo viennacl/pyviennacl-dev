@@ -45,7 +45,7 @@ Requirements
 PyViennaCL requires the following build dependencies:
 
 * a C++ compiler;
-* *Python* (2.7+) with setuptools (see below);
+* *Python* (2.7+) with *setuptools* [see below];
 * *NumPy* (1.7+);
 * *Sphinx* (1.0+) [if you want to build HTML documentation].
 
@@ -132,11 +132,10 @@ can skip to the next steps.
 Installation using pip
 ----------------------
 
-The following command should usually be enough to install PyViennaCL::
+The following command should usually be enough to install PyViennaCL,
+as long as you have setuptools and pip installed (see above)::
 
   $> pip install pyviennacl
-
-If you do not have pip available, follow
 
 TODO: See `issue <https://github.com/viennacl/pyviennacl-dev/issues/2>`_.
 
