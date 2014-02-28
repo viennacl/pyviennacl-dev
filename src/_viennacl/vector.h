@@ -11,6 +11,20 @@
 
 namespace ublas = boost::numeric::ublas;
 
+template <class T>
+struct vector_to_list_converter
+{
+  static PyObject* convert(std::vector<T> const& v)
+  {
+    bp::list l;
+    for (std::size_t i = 0; i < v.size(); ++i)
+      l.append((T)v[i]);
+    
+    return bp::incref(l.ptr());
+  }
+};
+
+// TODO: Obliterate below with the above converter
 template <class SCALARTYPE>
 bp::list std_vector_to_list(const std::vector<SCALARTYPE>& v)
 {

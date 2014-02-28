@@ -19,6 +19,10 @@ void translate_string_exception(const char* e)
 
 BOOST_PYTHON_MODULE(_viennacl)
 {
+  // specify that this module is actually a package
+  bp::object package = bp::scope();
+  package.attr("__path__") = "_viennacl";
+
   bp::register_exception_translator<const char*>            
     (&translate_string_exception);                            
 
@@ -119,6 +123,9 @@ export_iterative_solvers();
 export_eig();
 export_extra_functions();
 export_scheduler();
+
+export_opencl_support();
+
   
 }
 

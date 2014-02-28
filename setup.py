@@ -146,7 +146,7 @@ def main():
             "compressed_matrix", "coordinate_matrix", "ell_matrix", "hyb_matrix",
             "direct_solvers", "iterative_solvers", "eig",
             "extra_functions",
-            "scheduler"]
+            "scheduler", "opencl_support"]
 
     from glob import glob
 
