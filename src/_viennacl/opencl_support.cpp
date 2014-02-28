@@ -60,27 +60,47 @@
 
   */
 
+std::vector<vcl::ocl::device>
+get_platform_devices(vcl::ocl::platform& p) {
+  return p.devices();
+}
+
+std::string get_device_info(vcl::ocl::device& d) {
+  return d.info();
+}
+
+std::string get_device_full_info(vcl::ocl::device& d) {
+  return d.full_info();
+}
 
 PYVCL_SUBMODULE(opencl_support)
 {
 
-  bp::scope opencl_support_scope = bp::class_<bp::object>("opencl_support", bp::no_init);
+  bp::object opencl_support_submodule(bp::handle<>(bp::borrowed(PyImport_AddModule("_viennacl.opencl_support"))));
+  bp::scope().attr("opencl_support") = opencl_support_submodule;
+  bp::scope opencl_support_scope = opencl_support_submodule;
 
   bp::class_<vcl::ocl::platform>("platform", bp::no_init)
-    .def("info", &vcl::ocl::platform::info)
-    .def("devices", &vcl::ocl::platform::devices)
+    .add_property("info", &vcl::ocl::platform::info)
+    .add_property("devices", get_platform_devices)
   ;
+  bp::to_python_converter<std::vector<vcl::ocl::platform>,
+                          vector_to_list_converter<vcl::ocl::platform> >();
+
+  bp::def("get_platforms", vcl::ocl::get_platforms);
 
   bp::class_<vcl::ocl::device>("device")
-    .def("name", &vcl::ocl::device::name)
-    .def("vendor", &vcl::ocl::device::vendor)
-    .def("version", &vcl::ocl::device::version)
-    .def("driver_version", &vcl::ocl::device::driver_version)
-    .def("info", &vcl::ocl::device::info)
-    .def("full_info", &vcl::ocl::device::full_info)
-    .def("extensions", &vcl::ocl::device::extensions)
-    .def("double_support", &vcl::ocl::device::double_support)
+    .add_property("name", &vcl::ocl::device::name)
+    .add_property("vendor", &vcl::ocl::device::vendor)
+    .add_property("version", &vcl::ocl::device::version)
+    .add_property("driver_version", &vcl::ocl::device::driver_version)
+    .add_property("info", get_device_info)
+    .add_property("full_info", get_device_full_info)
+    .add_property("extensions", &vcl::ocl::device::extensions)
+    .add_property("double_support", &vcl::ocl::device::double_support)
   ;
+  bp::to_python_converter<std::vector<vcl::ocl::device>,
+                          vector_to_list_converter<vcl::ocl::device> >();
   
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::ocl::context, void,
                                   init, init_new_context,
@@ -98,20 +118,19 @@ PYVCL_SUBMODULE(opencl_support)
                                   platform_index, context_get_platform_index,
                                   () const);
   bp::class_<vcl::ocl::context>("context")
-  .def("init", init_new_context)
+  .def("init_new_context", init_new_context)
   .def("current_device", &vcl::ocl::context::current_device, 
        bp::return_value_policy<bp::copy_const_reference>())
   .def("devices", &vcl::ocl::context::devices,
        bp::return_value_policy<bp::copy_const_reference>())
   .def("add_device", context_add_device)
-  .def("switch_device", context_switch_device)
-  .def("get_platform_index", context_get_platform_index)
-  .def("set_platform_index", context_set_platform_index)
+  .def("switch_active_device", context_switch_device)
+  .add_property("platform_index", context_get_platform_index, context_set_platform_index)
   ;
     
-  bp::def("current_context", vcl::ocl::current_context,
+  bp::def("get_current_context", vcl::ocl::current_context,
           bp::return_value_policy<bp::copy_non_const_reference>());
-  bp::def("current_device", vcl::ocl::current_device,
+  bp::def("get_current_device", vcl::ocl::current_device,
           bp::return_value_policy<bp::copy_const_reference>());
     
   DISAMBIGUATE_FUNCTION_PTR(void,
