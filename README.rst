@@ -2,12 +2,14 @@
 PyViennaCL Readme
 *****************
 
+
 PyViennaCL around the web
 =========================
 
 * `Home page <http://viennacl.sourceforge.net/pyviennacl.html>`_
 * `Documentation <http://viennacl.sourceforge.net/pyviennacl/doc/index.html>`_
 * `GitHub <https://github.com/viennacl/pyviennacl-dev>`_ (`Issue tracker <https://github.com/viennacl/pyviennacl-dev/issues>`_)
+
 
 About PyViennaCL
 ================
@@ -42,7 +44,8 @@ Requirements
 
 PyViennaCL requires the following build dependencies:
 
-* *Python* (2.7+);
+* a C++ compiler;
+* *Python* (2.7+) with setuptools (see below);
 * *NumPy* (1.7+);
 * *Sphinx* (1.0+) [if you want to build HTML documentation].
 
@@ -113,12 +116,27 @@ If you do not wish to use OpenCL, then follow the *Installation from
 source* instructions below, and use the '--no-use-opencl' configure
 option.
 
+setuptools
+----------
+
+PyViennaCL uses the Python package `setuptools
+<https://bitbucket.org/pypa/setuptools>`_ for installation. The **best
+way to install this**, which will also ensure you have *pip*
+installed, is to follow `the instructions here
+<http://www.pip-installer.org/en/latest/installing.html>`_.
+
+If you are using a **modern Linux distribution**, then it is highly
+likely that you already have pip and setuptools installed, and so you
+can skip to the next steps.
+
 Installation using pip
 ----------------------
 
 The following command should usually be enough to install PyViennaCL::
 
   $> pip install pyviennacl
+
+If you do not have pip available, follow
 
 TODO: See `issue <https://github.com/viennacl/pyviennacl-dev/issues/2>`_.
 
