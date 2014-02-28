@@ -119,6 +119,9 @@ export_iterative_solvers();
 export_eig();
 export_extra_functions();
 export_scheduler();
+
+export_opencl_support();
+
   
 }
 

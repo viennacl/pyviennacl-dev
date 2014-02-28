@@ -382,5 +382,7 @@ PYVCL_SUBMODULE(eig);
 PYVCL_SUBMODULE(extra_functions);
 PYVCL_SUBMODULE(scheduler);
 
+PYVCL_SUBMODULE(opencl_support);
+
 
 #endif
