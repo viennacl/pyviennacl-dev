@@ -1,7 +1,7 @@
 include configure.py
 include Makefile.in
 include aksetup_helper.py
-include README.rest
+include README.rst
 
 recursive-include doc *
 

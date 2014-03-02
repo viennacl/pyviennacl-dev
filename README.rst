@@ -62,18 +62,17 @@ setuptools
 ----------
 
 PyViennaCL uses the Python package `setuptools
-<https://bitbucket.org/pypa/setuptools>`_ for installation.
-
-Unless you are using **Python 3.4**, which comes with the required
-pieces, you may need to install these packages.The **best way to do
-so**, which will also ensure you have *pip* installed, is to follow
-`the instructions here
+<https://bitbucket.org/pypa/setuptools>`_ for installation. Unless you
+are using **Python 3.4**, which comes with the required pieces, you
+may need to install setuptools. The **best way to do so**, which will
+also ensure you have the Python package manager *pip* installed, is to
+follow `the instructions here
 <http://www.pip-installer.org/en/latest/installing.html>`_.
 
 OpenCL
 ------
 
-By default, you will need an OpenCL implementation. PyViennaCL will
+By default, you will need an OpenCL implementation. PyViennaCL can
 still build and function without one, but will not perform to full
 effect.
 
