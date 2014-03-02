@@ -495,11 +495,15 @@ class BoostLibraries(Libraries):
                     % humanize(lib_base_name))
 
 
-def set_up_shipped_boost_if_requested(project_name, conf, source_path=None):
+def set_up_shipped_boost_if_requested(project_name, conf, source_path=None,
+        boost_chrono=False):
     """Set up the package to use a shipped version of Boost.
 
     Return a tuple of a list of extra C files to build and extra
     defines to be used.
+
+    :arg boost_chrono: one of *False* and ``"header_only"``
+        (only relevant in shipped mode)
     """
     from os.path import exists
     import sys
@@ -571,18 +575,24 @@ def set_up_shipped_boost_if_requested(project_name, conf, source_path=None):
                 print("Copying files, hang on... (do not interrupt)")
                 copytree(main_boost_inc, bpl_project_boost_inc)
 
-        return (source_files,
-                {
-                    # do not pick up libboost link dependency on windows
-                    "BOOST_ALL_NO_LIB": 1,
-                    "BOOST_THREAD_BUILD_DLL": 1,
+        defines = {
+                # do not pick up libboost link dependency on windows
+                "BOOST_ALL_NO_LIB": 1,
+                "BOOST_THREAD_BUILD_DLL": 1,
 
-                    "BOOST_MULTI_INDEX_DISABLE_SERIALIZATION": 1,
-                    "BOOST_CHRONO_HEADER_ONLY": 1,
-                    "BOOST_PYTHON_SOURCE": 1,
-                    "boost": '%sboost' % project_name
-                    }
-                )
+                "BOOST_MULTI_INDEX_DISABLE_SERIALIZATION": 1,
+                "BOOST_PYTHON_SOURCE": 1,
+                "boost": '%sboost' % project_name,
+                }
+
+        if boost_chrono is False:
+            defines["BOOST_THREAD_DONT_USE_CHRONO"] = 1
+        elif boost_chrono == "header_only":
+            defines["BOOST_CHRONO_HEADER_ONLY"] = 1
+        else:
+            raise ValueError("invalid value of 'boost_chrono'")
+
+        return (source_files, defines)
     else:
         return [], {}
 

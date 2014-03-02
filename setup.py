@@ -97,7 +97,8 @@ def main():
     EXTRA_OBJECTS, EXTRA_DEFINES = \
             set_up_shipped_boost_if_requested(
                     "pyviennacl", conf,
-                    source_path="external/boost-python-ublas-subset/boost_subset")
+                    source_path="external/boost-python-ublas-subset/boost_subset",
+                    boost_chrono="header_only")
 
     INCLUDE_DIRS = conf["BOOST_INC_DIR"] + [
             "external/boost_numpy/"
