@@ -5,61 +5,6 @@
 #include <viennacl/ocl/device.hpp>
 #include <viennacl/ocl/platform.hpp>
 
-/*
-  
-  Notes on platform support; esp. OpenCL
-  ======================================
-  
-  PyOpenCL Integration
-  --------------------
-  
-  * Want to take advantage of PyOpenCL's int_ptr to access ViennaCL
-    objects in other (Py)OpenCL code and vice versa.
-
-  * need to get the underlying OpenCL pointers out of ViennaCL --
-    and be able to pass them back in
-
-
-  Multi-platform support
-  ----------------------
-
-  * useful to specify the backend details on creation of a ViennaCL
-    object (eg matrix)
-    + what about copying between back-ends?
-
-  * how to define 'back-end'? := context?
-
-  * throw an exception if attempting to do an operation across
-    back-ends
-
-
-  Scheduler integration and linking
-  ---------------------------------
-
-  * users able to define a custom Node class
-    + useful for prototyping algorithm implementations!
-    + so: useful to expose an API similar to the underlying
-          ViennaCL structure
-
-  * class info determines dtypes, arguments and return type
-    
-  * class provides kernel (source, binary, whatever supported by
-    back-end)
-    + device-specific kernel support?
-
-  * PyViennaCL registers custom Node with ViennaCL scheduler,
-    assigning the Node an ID
-
-  * ViennaCL then has a mapping of (ID, custom operation) pairs
-
-  * when the scheduler is called with the relevant ID, argument types
-    are checked and operation is scheduled for dispatch
-    + how is the return type created?
-
-  * posible to harness the generator usefully?
-
-  */
-
 std::vector<vcl::ocl::device>
 get_platform_devices(vcl::ocl::platform& p) {
   return p.devices();
