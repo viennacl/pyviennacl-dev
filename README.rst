@@ -58,6 +58,36 @@ If you have a Boost installation on your system, then PyViennaCL can
 also optionally use that, rather than the Boost subset shipped with
 the PyViennaCL sources.
 
+setuptools
+----------
+
+PyViennaCL uses the Python package `setuptools
+<https://bitbucket.org/pypa/setuptools>`_ for installation.
+
+Unless you are using **Python 3.4**, which comes with the required
+pieces, you may need to install these packages.The **best way to do
+so**, which will also ensure you have *pip* installed, is to follow
+`the instructions here
+<http://www.pip-installer.org/en/latest/installing.html>`_.
+
+OpenCL
+------
+
+By default, you will need an OpenCL implementation. PyViennaCL will
+still build and function without one, but will not perform to full
+effect.
+
+For information on how to get an OpenCL implementation, see this
+`howto <http://wiki.tiker.net/OpenCLHowTo>`_.
+
+If you have an OpenCL installation that you installed and is not
+managed by your system's package manager, then it is likely you will
+need to use the '--cl-lib-dir' configure option.
+
+If you do not wish to use OpenCL, then follow the *Installation from
+source* instructions below, and use the '--no-use-opencl' configure
+option.
+
 Extra requirements for Windows systems
 --------------------------------------
 
@@ -97,37 +127,6 @@ either for building or using PyViennaCL.
 
 Installation
 ============
-
-OpenCL
-------
-
-By default, you will need an OpenCL implementation. PyViennaCL will
-still build and function without one, but will not perform to full
-effect.
-
-For information on how to get an OpenCL implementation, see this
-`howto <http://wiki.tiker.net/OpenCLHowTo>`_.
-
-If you have an OpenCL installation that you installed and is not
-managed by your system's package manager, then it is likely you will
-need to use the '--cl-lib-dir' configure option.
-
-If you do not wish to use OpenCL, then follow the *Installation from
-source* instructions below, and use the '--no-use-opencl' configure
-option.
-
-setuptools
-----------
-
-PyViennaCL uses the Python package `setuptools
-<https://bitbucket.org/pypa/setuptools>`_ for installation. The **best
-way to install this**, which will also ensure you have *pip*
-installed, is to follow `the instructions here
-<http://www.pip-installer.org/en/latest/installing.html>`_.
-
-If you are using a **modern Linux distribution**, then it is highly
-likely that you already have pip and setuptools installed, and so you
-can skip to the next steps.
 
 Installation using pip
 ----------------------
@@ -189,6 +188,7 @@ at the *Vienna University of Technology*.
 
 For any technical questions related to ViennaCL, please use `our
 mailing list <viennacl-support@lists.sourceforge.net>`_.
+
 
 Licence
 =======
