@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import sys
-from distutils.core import setup, Extension
 from distutils.command.build_ext import build_ext
 
 platform_cflags = {}
 platform_ldflags = {}
+
 
 class build_ext_subclass(build_ext):
     """Shamelessly stolen from
@@ -79,7 +79,7 @@ def get_config_schema():
             StringListOption("LDFLAGS", default_ldflags,
                              help="Any extra linker options to include"),
         ],
-        conf_file = conf_file)
+        conf_file=conf_file)
 
 
 def main():
@@ -200,7 +200,7 @@ def main():
             library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"],
             libraries=LIBRARIES + conf["CL_LIBNAME"],
         )],
-        cmdclass = {'build_ext': build_ext_subclass}
+        cmdclass={'build_ext': build_ext_subclass}
     )
 
 
