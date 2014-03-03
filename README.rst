@@ -127,6 +127,21 @@ either for building or using PyViennaCL.
 Installation
 ============
 
+Please note that the commands below assume that the various programs
+invoked are available in your system PATH; if they are not, please
+provide the full path to the executable on invocation.
+
+This is especially relevant on Windows systems, where Python is not by
+default installed into the path. So, in this case, you might have to
+run something like::
+
+  $> C:\Python2.7\python setup.py build
+
+instead of just::
+
+  $> python setup.py build
+
+
 Installation using pip
 ----------------------
 
