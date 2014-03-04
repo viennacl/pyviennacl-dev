@@ -106,13 +106,22 @@ and .NET Framework 4
 
 Having installed the correct SDK version, you will need to open an SDK
 command prompt and issue the following commands, according the
-architecture of your Python installation. If you are building for a
-32-bit Python installation, use::
+architecture of your Python installation. For instance, if when you
+run Python you see the following::
+
+  Python 2.7.6 (default, Nov 10 2013, 19:24:18) [MSC v.1500 32 bit (Intel)] on win32
+
+then you should be using the SDK v7.0, and you are building for a
+32-bit installation.
+
+Bearing that in mind, if you are building for a 32-bit Python
+installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x86 /release
 
-If you are building for a 64-bit Python installation, use::
+On the other hand, if you are building for a 64-bit Python
+installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x64 /release
