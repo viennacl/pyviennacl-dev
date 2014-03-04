@@ -105,17 +105,14 @@ and .NET Framework 4
 <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_.
 
 Having installed the correct SDK version, you will need to open an SDK
-command prompt and issue the following commands, according to your
-system's architecture. Note that **the architecture of your Python
-installation must match the architecture you select here**! If you are
-building for a 32-bit system, or a 64-bit system with a 32-bit Python
-installation, use::
+command prompt and issue the following commands, according the
+architecture of your Python installation. If you are building for a
+32-bit Python installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x86 /release
 
-If you are building for a 64-bit architecture with a 64-bit Python
-installation, use::
+If you are building for a 64-bit Python installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x64 /release
