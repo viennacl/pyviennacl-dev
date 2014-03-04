@@ -83,9 +83,9 @@ If you have an OpenCL installation that you installed and is not
 managed by your system's package manager, then it is likely you will
 need to use the '--cl-lib-dir' configure option.
 
-If you do not wish to use OpenCL, then follow the *Installation from
-source* instructions below, and use the '--no-use-opencl' configure
-option.
+If you do not wish to use OpenCL, then follow the *Custom
+installation* instructions below, and use the '--no-use-opencl'
+configure option.
 
 Extra requirements for Windows systems
 --------------------------------------
@@ -106,12 +106,16 @@ and .NET Framework 4
 
 Having installed the correct SDK version, you will need to open an SDK
 command prompt and issue the following commands, according to your
-system's architecture. If you are building for a 32-bit system::
+system's architecture. Note that **the architecture of your Python
+installation must match the architecture you select here**! If you are
+building for a 32-bit system, or a 64-bit system with a 32-bit Python
+installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x86 /release
 
-If you are building for a 64-bit architecture::
+If you are building for a 64-bit architecture with a 64-bit Python
+installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x64 /release
@@ -152,8 +156,8 @@ as long as you have setuptools and pip installed (see above)::
 
 TODO: See `issue <https://github.com/viennacl/pyviennacl-dev/issues/2>`_.
 
-Installation from source
-------------------------
+Custom installation
+-------------------
 
 These instructions assume a UNIX-like platform (such as a Linux
 distribution or Mac OS X), but will work on a well-configured Windows
