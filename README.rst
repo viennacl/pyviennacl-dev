@@ -92,11 +92,19 @@ Extra requirements for Windows systems
 
 In addition to the components required above, Windows builds require
 the use of the Windows SDK version specific to the version of your
-Python installation.
+Python installation. For instance, if when you run Python you see the
+following::
 
-If you are building for a standard distribution of Python 2.6, 2.7,
-3.0, 3.1 or 3.2 (either 32- or 64-bit), you will need the `Microsoft
-Windows SDK v7.0 for Windows 7 and .NET Framework 3.5 SP1
+  Python 2.7.6 (default, Nov 10 2013, 19:24:18) [MSC v.1500 32 bit (Intel)] on win32
+
+then you are using a release of Python 2.7 and you are building for a
+32-bit installation of that version. You must therefore choose the SDK
+version and set the build environment accordingly.
+
+If you are building for a standard distribution (such as described in
+the example above) of Python 2.6, 2.7, 3.0, 3.1 or 3.2 (either 32- or
+64-bit), you will need the `Microsoft Windows SDK v7.0 for Windows 7
+and .NET Framework 3.5 SP1
 <http://www.microsoft.com/en-us/download/details.aspx?id=18950>`_.
 
 If you are building for a standard distribution of Python 3.3 (32- or
@@ -106,22 +114,14 @@ and .NET Framework 4
 
 Having installed the correct SDK version, you will need to open an SDK
 command prompt and issue the following commands, according the
-architecture of your Python installation. For instance, if when you
-run Python you see the following::
+architecture of your Python installation.
 
-  Python 2.7.6 (default, Nov 10 2013, 19:24:18) [MSC v.1500 32 bit (Intel)] on win32
-
-then you should be using the SDK v7.0, and you are building for a
-32-bit installation.
-
-Bearing that in mind, if you are building for a 32-bit Python
-installation, use::
+If you are building for a 32-bit Python installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x86 /release
 
-On the other hand, if you are building for a 64-bit Python
-installation, use::
+If you are building for a 64-bit Python installation, use::
 
   $> set DISTUTILS_USE_SDK=1
   $> setenv /x64 /release
