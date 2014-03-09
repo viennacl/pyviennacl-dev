@@ -76,8 +76,11 @@ By default, you will need an OpenCL implementation. PyViennaCL can
 still build and function without one, but will not perform to full
 effect.
 
-For information on how to get an OpenCL implementation, see this
+For information on how to get an OpenCL implementation on Linux, see this
 `howto <http://wiki.tiker.net/OpenCLHowTo>`_.
+See also the installation section in the
+`ViennaCL Manual <http://viennacl.sourceforge.net/viennacl-manual-current.pdf>`_
+on installation hints for Windows.
 
 If you have an OpenCL installation that you installed and is not
 managed by your system's package manager, then it is likely you will
@@ -92,7 +95,7 @@ Extra requirements for Windows systems
 
 In addition to the components required above, Windows builds require
 the use of the Windows SDK version specific to the version of your
-Python installation. For instance, if when you run Python you see the
+Python installation. For instance, if you run Python you see the
 following::
 
   Python 2.7.6 (default, Nov 10 2013, 19:24:18) [MSC v.1500 32 bit (Intel)] on win32
@@ -127,7 +130,8 @@ If you are building for a 64-bit Python installation, use::
   $> setenv /x64 /release
 
 At this point, you will be able to follow the instructions detailed
-below under *Installation*.
+below under *Installation*. Issue all commands from within the SDK
+command window.
 
 You might also be interested in the `Python Tools for Visual Studio
 <https://pytools.codeplex.com/>`_, though these are not required
@@ -169,10 +173,13 @@ These instructions assume a UNIX-like platform (such as a Linux
 distribution or Mac OS X), but will work on a well-configured Windows
 system with little modification.
 
-If you are building from git, then before doing anything else, you
-should get the external submodules with::
+If you are building from the release package, move on to the next paragraph.
+If you are building from git, then before doing anything else,
+navigate to your PyViennaCL folder and get the external submodules with::
 
   $> git submodule update --init
+
+(On Windows you usually want to use the git bash for this)
 
 If you are in a hurry, then the following should just work::
 
