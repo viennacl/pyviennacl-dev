@@ -95,7 +95,7 @@ Extra requirements for Windows systems
 
 In addition to the components required above, Windows builds require
 the use of the Windows SDK version specific to the version of your
-Python installation. For instance, if you run Python you see the
+Python installation. For instance, when you run Python, if you see the
 following::
 
   Python 2.7.6 (default, Nov 10 2013, 19:24:18) [MSC v.1500 32 bit (Intel)] on win32
