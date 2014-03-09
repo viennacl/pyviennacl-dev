@@ -143,14 +143,16 @@ def test_kernel(*args, **kwargs):
         raise RuntimeError("Failed solving A^T \ B^T for unit lower triangular A: %s" % act_diff)
     print("Test passed: solving A^T \ B^T for unit lower triangular A: %s" % act_diff)
 
+    # !!! NB: ITERATIVE SOLVERS NOT DEFINED FOR DENSE MATRICES CURRENTLY
+    #
     # GMRES
-    vcl_X = p.solve(vcl_A_upper, vcl_Bvec, p.gmres_tag(tolerance=(epsilon/10)))
-    X, info = spsp.gmres(A_upper, Bvec, tol=(epsilon/10))
-    act_diff = math.fabs(diff(X, vcl_X))
-    if act_diff > epsilon:
-        raise RuntimeError("Failed solving A \ b using GMRES: %s" % act_diff)
-    print("Test passed: solving A \ b using GMRES: %s" % act_diff)
-
+    #vcl_X = p.solve(vcl_A_upper, vcl_Bvec, p.gmres_tag(tolerance=(epsilon/10)))
+    #X, info = spsp.gmres(A_upper, Bvec, tol=(epsilon/10))
+    #act_diff = math.fabs(diff(X, vcl_X))
+    #if act_diff > epsilon:
+    #    raise RuntimeError("Failed solving A \ b using GMRES: %s" % act_diff)
+    #print("Test passed: solving A \ b using GMRES: %s" % act_diff)
+    #
     # CG -- TODO: need a symmetric positive definite matrix for test
     #vcl_X = p.solve(vcl_A_upper, vcl_Bvec, p.cg_tag())
     #X, info = spsp.cg(A_upper, Bvec)
@@ -158,7 +160,7 @@ def test_kernel(*args, **kwargs):
     #if act_diff > epsilon:
     #    raise RuntimeError("Failed solving A \ b using CG: %s" % act_diff)
     #print("Test passed: solving A \ b using CG: %s" % act_diff)
-
+    #
     # BiCGStab -- TODO: need a non-symmetric matrix for test
     #vcl_X = p.solve(vcl_A_upper, vcl_Bvec, p.cg_tag())
     #X, info = spsp.cg(A_upper, Bvec)
@@ -168,6 +170,7 @@ def test_kernel(*args, **kwargs):
     #print("Test passed: solving A \ b using CG: %s" % act_diff)
 
     # TODO: in-place solvers
+    # TODO: iterative solvers on sparse matrices
 
     return os.EX_OK
 
