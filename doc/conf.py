@@ -12,6 +12,10 @@
 # serve to show the default.
 
 import sys, os
+
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
 import distutils.command.build
 from distutils.dist import Distribution
 
@@ -19,14 +23,21 @@ b = distutils.command.build.build(Distribution())
 b.initialize_options()
 b.finalize_options()
 
-pyvcl_path = os.path.abspath(os.path.join("..", b.build_platlib))
+# TODO: Python 3 support (for Debian's pybuild)
+try: 
+    pyvcl_path = os.path.abspath(os.path.join("..", b.build_platlib))
+    sys.path.insert(0, pyvcl_path)
+    import pyviennacl
+except:
+    sys.path.pop(0)
 
-print(pyvcl_path)
+try:
+    pyvcl_path = os.path.abspath("..")
+    sys.path.insert(0, pyvcl_path)
+    import pyviennacl
+except:
+    sys.path.pop(0)
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, pyvcl_path)
 
 # -- General configuration -----------------------------------------------------
 
