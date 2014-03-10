@@ -155,7 +155,6 @@ instead of just::
 
   $> python setup.py build
 
-
 Installation using pip
 ----------------------
 
@@ -163,8 +162,6 @@ The following command should usually be enough to install PyViennaCL,
 as long as you have setuptools and pip installed (see above)::
 
   $> pip install pyviennacl
-
-TODO: See `issue <https://github.com/viennacl/pyviennacl-dev/issues/2>`_.
 
 Custom installation
 -------------------
