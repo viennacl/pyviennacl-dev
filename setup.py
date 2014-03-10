@@ -151,11 +151,16 @@ def main():
 
     from glob import glob
 
+    try:
+        long_description = open("README.rst", "rt", encoding='utf8').read()
+    except:
+        long_description = open("README.rst", "rt").read()
+
     setup(
         name="pyviennacl",
         version=ver_dic["VERSION_TEXT"],
         description="Sparse/dense linear algebra on GPUs and CPUs using OpenCL",
-        long_description=open("README.rst", "rt").read(),
+        long_description=long_description,
         author='Toby St Clere Smithe',
         author_email='pyviennacl@tsmithe.net',
         url="http://viennacl.sourceforge.net/pyviennacl.html",
