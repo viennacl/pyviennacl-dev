@@ -49,7 +49,7 @@ PyViennaCL requires the following build dependencies:
 * *NumPy* (1.7+);
 * *Sphinx* (1.0+) [if you want to build HTML documentation].
 
-It is also highly recommended to have an available OpenCL
+It is also highly recommended to have an available *OpenCL*
 implementation, since PyViennaCL was designed for this case. If you do
 not have OpenCL available, then PyViennaCL will still build and
 function, but will not perform to full effect.
@@ -90,8 +90,8 @@ If you do not wish to use OpenCL, then follow the *Custom
 installation* instructions below, and use the '--no-use-opencl'
 configure option.
 
-Extra requirements for Windows systems
---------------------------------------
+Extra requirements for building from source on Windows systems
+--------------------------------------------------------------
 
 In addition to the components required above, Windows builds require
 the use of the Windows SDK version specific to the version of your
@@ -149,19 +149,27 @@ This is especially relevant on Windows systems, where Python is not by
 default installed into the path. So, in this case, you might have to
 run something like::
 
-  $> C:\Python2.7\python setup.py build
+  $> C:\Python2.7\python -m pip install pyviennacl
 
 instead of just::
 
-  $> python setup.py build
+  $> pip install pyviennacl
 
-Installation using pip
-----------------------
+Quick installation using pip
+----------------------------
 
 The following command should usually be enough to install PyViennaCL,
 as long as you have setuptools and pip installed (see above)::
 
   $> pip install pyviennacl
+
+If you have a recent installation of Python (2.7 or 3.3+), and a
+recent installation of pip (1.4+), then this should be painless.
+
+Note that this command assumes you have OpenCL available, and if you
+are on Linux, an OpenCL SDK.
+
+If this does not succeed, follow the instructions below.
 
 Custom installation
 -------------------
