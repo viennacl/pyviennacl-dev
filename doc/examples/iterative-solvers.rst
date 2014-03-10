@@ -1,5 +1,5 @@
 Iterative solvers
 =================
 
-.. literalinclude:: /../../examples/iterative-solvers.py
+.. literalinclude:: /../examples/iterative-solvers.py
    :language: python

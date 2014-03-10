@@ -1,5 +1,5 @@
 PyViennaCL Basics
 =================
 
-.. literalinclude:: /../../examples/basics.py
+.. literalinclude:: /../examples/basics.py
    :language: python

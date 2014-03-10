@@ -1,5 +1,5 @@
 Computing products
 ==================
 
-.. literalinclude:: /../../examples/products.py
+.. literalinclude:: /../examples/products.py
    :language: python
