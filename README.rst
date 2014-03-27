@@ -14,7 +14,7 @@ PyViennaCL around the web
 About PyViennaCL
 ================
 
-*PyViennaCL* aims to make fast, powerful GPGPU and hetereogeneous
+*PyViennaCL* aims to make fast, powerful GPGPU and heterogeneous
 scientific computing really transparently easy, especially for users
 already using NumPy for representing matrices.
 
