@@ -58,7 +58,6 @@ PYVCL_SUBMODULE(eig)
                              const vcl::linalg::power_iter_tag&))
   bp::def("eig", eig_power_iter_float_col);
 
-  /*
   DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
                             vcl::linalg::eig, eig_lanczos_vector_double_row,
                             (const vcl::matrix<double, vcl::row_major>&, 
@@ -82,6 +81,5 @@ PYVCL_SUBMODULE(eig)
                             (const vcl::matrix<float, vcl::column_major>&, 
                              const vcl::linalg::lanczos_tag&))
   bp::def("eig", eig_lanczos_vector_float_col);
-  */
 
 }
