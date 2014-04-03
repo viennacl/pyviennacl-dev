@@ -1,10 +1,14 @@
 #include "viennacl.h"
+#include "sparse_matrix.h"
 
 #include <viennacl/linalg/power_iter.hpp>
 #include <viennacl/linalg/lanczos.hpp>
 
 PYVCL_SUBMODULE(eig)
 {
+
+  // Tag class definitions
+
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::power_iter_tag, double,
                                   factor, get_power_iter_factor, () const)
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::power_iter_tag, std::size_t,
@@ -33,6 +37,9 @@ PYVCL_SUBMODULE(eig)
     .add_property("krylov_size", get_lanczos_krylov_size)
     .add_property("method", get_lanczos_method)
     ;
+
+
+  // Dense matrices
 
   DISAMBIGUATE_FUNCTION_PTR(double, 
                             vcl::linalg::eig,eig_power_iter_double_row,
@@ -81,5 +88,110 @@ PYVCL_SUBMODULE(eig)
                             (const vcl::matrix<float, vcl::column_major>&, 
                              const vcl::linalg::lanczos_tag&))
   bp::def("eig", eig_lanczos_vector_float_col);
+
+
+  // Sparse matrices -- Lanczos
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
+                            vcl::linalg::eig, eig_lanczos_vector_double_compressed,
+                            (const vcl::compressed_matrix<double>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_double_compressed);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<float>,
+                            vcl::linalg::eig, eig_lanczos_vector_float_compressed,
+                            (const vcl::compressed_matrix<float>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_float_compressed);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
+                            vcl::linalg::eig, eig_lanczos_vector_double_coordinate,
+                            (const vcl::coordinate_matrix<double>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_double_coordinate);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<float>,
+                            vcl::linalg::eig, eig_lanczos_vector_float_coordinate,
+                            (const vcl::coordinate_matrix<float>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_float_coordinate);
+
+  /*
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
+                            vcl::linalg::eig, eig_lanczos_vector_double_ell,
+                            (const vcl::ell_matrix<double>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_double_ell);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<float>,
+                            vcl::linalg::eig, eig_lanczos_vector_float_ell,
+                            (const vcl::ell_matrix<float>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_float_ell);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<double>,
+                            vcl::linalg::eig, eig_lanczos_vector_double_hyb,
+                            (const vcl::hyb_matrix<double>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_double_hyb);
+
+  DISAMBIGUATE_FUNCTION_PTR(std::vector<float>,
+                            vcl::linalg::eig, eig_lanczos_vector_float_hyb,
+                            (const vcl::hyb_matrix<float>&, 
+                             const vcl::linalg::lanczos_tag&))
+  bp::def("eig", eig_lanczos_vector_float_hyb);
+  */
+
+  // Sparse matrices -- power_iter
+
+  DISAMBIGUATE_FUNCTION_PTR(double,
+                            vcl::linalg::eig, eig_power_iter_double_compressed,
+                            (const vcl::compressed_matrix<double>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_double_compressed);
+
+  DISAMBIGUATE_FUNCTION_PTR(float,
+                            vcl::linalg::eig, eig_power_iter_float_compressed,
+                            (const vcl::compressed_matrix<float>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_float_compressed);
+
+  DISAMBIGUATE_FUNCTION_PTR(double,
+                            vcl::linalg::eig, eig_power_iter_double_coordinate,
+                            (const vcl::coordinate_matrix<double>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_double_coordinate);
+
+  DISAMBIGUATE_FUNCTION_PTR(float,
+                            vcl::linalg::eig, eig_power_iter_float_coordinate,
+                            (const vcl::coordinate_matrix<float>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_float_coordinate);
+
+  /*
+  DISAMBIGUATE_FUNCTION_PTR(double,
+                            vcl::linalg::eig, eig_power_iter_double_ell,
+                            (const vcl::ell_matrix<double>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_double_ell);
+
+  DISAMBIGUATE_FUNCTION_PTR(float,
+                            vcl::linalg::eig, eig_power_iter_float_ell,
+                            (const vcl::ell_matrix<float>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_float_ell);
+
+  DISAMBIGUATE_FUNCTION_PTR(double,
+                            vcl::linalg::eig, eig_power_iter_double_hyb,
+                            (const vcl::hyb_matrix<double>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_double_hyb);
+
+  DISAMBIGUATE_FUNCTION_PTR(float,
+                            vcl::linalg::eig, eig_power_iter_float_hyb,
+                            (const vcl::hyb_matrix<float>&, 
+                             const vcl::linalg::power_iter_tag&))
+  bp::def("eig", eig_power_iter_float_hyb);
+  */
 
 }

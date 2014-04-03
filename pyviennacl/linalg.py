@@ -506,8 +506,8 @@ def eig(A, tag):
     TypeError
         If ``A`` is not a ``Matrix`` instance, or if ``tag`` is not understood
     """
-    if not isinstance(A, Matrix):
-        raise TypeError("A must be a Matrix type")
+    #if not isinstance(A, Matrix):
+    #    raise TypeError("A must be a Matrix type")
 
     if isinstance(tag, power_iter_tag):
         return _v.eig(A.vcl_leaf, tag.vcl_tag)
@@ -516,6 +516,7 @@ def eig(A, tag):
     else:
         raise TypeError("tag must be a supported eigenvalue tag!")
 Matrix.eig = eig
+SparseMatrixBase.eig = eig
 
 def ilu(A, config):
     return NotImplemented
