@@ -4,6 +4,7 @@ from distutils.command.build_ext import build_ext
 
 platform_cflags = {}
 platform_ldflags = {}
+platform_libs = {}
 
 
 class build_ext_subclass(build_ext):
@@ -18,6 +19,12 @@ class build_ext_subclass(build_ext):
         if c in platform_ldflags.keys():
             for e in self.extensions:
                 e.extra_link_args = platform_ldflags[c]
+        if c in platform_libs.keys():
+            for e in self.extensions:
+                try:
+                    e.libraries += platform_libs[c]
+                except:
+                    e.libraries = platform_libs[c]
         build_ext.build_extensions(self)
 
 
@@ -129,6 +136,9 @@ def main():
     platform_cflags["msvc"] = ["/EHsc"]
     platform_cflags["mingw32"] = ["-Wno-unused-function"]
     platform_cflags["unix"] = ["-Wno-unused-function"]
+
+    if not sys.platform.startswith("darwin"):
+        platform_libs['unix'] = ['rt']
 
     if EXTRA_OBJECTS:
         platform_cflags['mingw32'] += ["-Wno-unused-local-typedefs"]
