@@ -2643,8 +2643,11 @@ class Mul(Node):
                 self.shape = (self.operands[0].shape[0],
                                      self.operands[1].shape[1])
             elif self.operands[1].result_container_type == Vector:
+                # Need to make sure that matrix and vector shapes are aligned
+                if self.operands[0].shape[1] != self.operands[1].shape[0]:
+                    raise ValueError("Operand shapes not correctly aligned")
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MAT_VEC_PROD_TYPE
-                self.shape = self.operands[1].shape
+                self.shape = (self.operands[0].shape[0],)
             elif self.operands[1].result_container_type == Scalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
                 self.shape = self.operands[0].shape
