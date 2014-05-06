@@ -5,7 +5,7 @@
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           op_outer_prod, 0>);                                           \
   bp::def("element_pow", pyvcl_do_2ary_op<vcl::matrix<TYPE, F>,         \
-          vcl::matrix_base<TYPE, F>&, vcl::matrix_base<TYPE, F>&,       \
+          vcl::matrix_base<TYPE>&, vcl::matrix_base<TYPE>&,       \
           op_element_pow, 0>);                                          \
   bp::def("norm_frobenius", pyvcl_do_1ary_op<vcl::scalar<TYPE>,         \
           vcl::matrix<TYPE, F>&,                                        \

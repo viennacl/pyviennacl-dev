@@ -196,8 +196,7 @@ vcl_statement_node_subtype_strings = {
     _v.statement_node_subtype.DEVICE_SCALAR_TYPE: 'scalar',
     _v.statement_node_subtype.DENSE_VECTOR_TYPE: 'vector',
     _v.statement_node_subtype.IMPLICIT_VECTOR_TYPE: 'implicit_vector',
-    _v.statement_node_subtype.DENSE_ROW_MATRIX_TYPE: 'matrix_row',
-    _v.statement_node_subtype.DENSE_COL_MATRIX_TYPE: 'matrix_col',
+    _v.statement_node_subtype.DENSE_MATRIX_TYPE: 'matrix',
     _v.statement_node_subtype.IMPLICIT_MATRIX_TYPE: 'implicit_matrix',
     _v.statement_node_subtype.COMPRESSED_MATRIX_TYPE: 'compressed_matrix',
     _v.statement_node_subtype.COORDINATE_MATRIX_TYPE: 'coordinate_matrix',
@@ -1674,13 +1673,11 @@ class Matrix(Leaf):
         if 'layout' in kwargs.keys():
             if kwargs['layout'] == COL_MAJOR:
                 self.layout = COL_MAJOR
-                self.statement_node_subtype = _v.statement_node_subtype.DENSE_COL_MATRIX_TYPE
             else:
                 self.layout = ROW_MAJOR
-                self.statement_node_subtype = _v.statement_node_subtype.DENSE_ROW_MATRIX_TYPE
         else:
             self.layout = ROW_MAJOR
-            self.statement_node_subtype = _v.statement_node_subtype.DENSE_ROW_MATRIX_TYPE
+        self.statement_node_subtype = _v.statement_node_subtype.DENSE_MATRIX_TYPE
 
         if len(args) == 0:
             def get_leaf(vcl_t):
