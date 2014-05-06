@@ -8,6 +8,7 @@ doc/_build
 GSoC/*tex
 pyviennacl-puzzle.pdf
 __pycache__
+pyviennacl.egg-info
 *.pyc
 doc/viennacl.pdf
 *.egg-info
