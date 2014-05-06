@@ -1,0 +1,16 @@
+2014-05-06  Toby St Clere Smithe  <pyviennacl@tsmithe.net>
+
+	* Release 1.0.2.
+
+	* Re-enable Lanczos algorithm for eigenvalues (issue #11).
+	[cbfb41fca3fb1f3db42fd7b3ccb8332b701d1e20]
+
+	* Enable eigenvalue computations for compressed and coordinate
+  	matrices.
+	[8ecee3b200a92ae99b72653a823c1f60e62f75dd]
+
+	* Fix matrix-vector product for non-square matrices (issue #13).
+	[bf3aa2bf91339df72b6f7561afaf8b12aad57cda]
+
+	* Link against rt on Linux (issue #12).
+	[d5784b62b353ebbfd78fe1335fd96971b5089f53]
