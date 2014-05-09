@@ -1813,7 +1813,7 @@ class Matrix(Leaf):
                     raise TypeError("Did not understand key[0]")
         elif isinstance(key, slice):
             view1 = View(key, self.size1)
-            view2 = View(slice(0, 1, self.size2), self.size2)
+            view2 = View(slice(0, self.size2, 1), self.size2)
             return Matrix(project(self.vcl_leaf,
                                   view1.vcl_view,
                                   view2.vcl_view),
