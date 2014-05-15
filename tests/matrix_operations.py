@@ -337,13 +337,13 @@ def run_test(*args, **kwargs):
         raise RuntimeError("Failed: elementwise tanh")
     print("Test: elementwise tanh passed")
 
-    # - trans TODO ?!!!
-    #X = vcl_A.value.T
-    #Y = vcl_A.T.result #p.Trans(vcl_A).result
-    #act_diff = math.fabs(diff(X, Y))
-    #if act_diff > epsilon:
-    #    raise RuntimeError("Failed: elementwise trans")
-    #print("Test: elementwise trans passed")
+    # - trans
+    X = vcl_A.value.T
+    Y = vcl_A.T.result #p.Trans(vcl_A).result
+    act_diff = math.fabs(diff(X, Y))
+    if act_diff > epsilon:
+        raise RuntimeError("Failed: trans")
+    print("Test: trans passed")
 
     # - norm1 -- TODO ONLY FOR VECTORS
     # - norm2 -- TODO ONLY FOR VECTORS
