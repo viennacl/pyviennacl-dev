@@ -1,3 +1,32 @@
+2014-05-15  Toby St Clere Smithe  <pyviennacl@tsmithe.net>
+
+	* Release 1.0.3.
+
+	* Update external/viennacl-dev to version 1.5.2.
+	  [91b7589a8fccc92927306e0ae3e061d85ac1ae93]
+
+	  This contains two important fixes: one for a build failure on
+	  Windows (PyViennaCL issue #17) relating to the re-enabling of the
+	  Lanczos algorithm in 1.0.2, and one for an issue relating to
+	  missing support for matrix transposition in the ViennaCL scheduler
+	  (PyViennaCL issue #19, ViennaCL issue #73).
+
+	  This release is also benefitial for performance on nVidia Kepler
+	  GPUs, increasing the performance of matrix-matrix multiplications
+	  to 600 GFLOPs in single precision on a GeForce GTX 680.
+
+	* Fix bug when using integers in matrix and vector index key
+	  [dbb1911fd788e66475f5717c1692be49d083a506]
+
+	* Fix slicing of dense matrices (issue #18).
+	  [9c745710ebc2a1066c7074b6c5de61b227017cc6]
+
+	* Enable test for matrix transposition
+	  [9e951103b883a3848aa2115df3edce73d347c09b]
+
+	* Add non-square matrix-vector product test
+	  [21dd29cd10ebe02a96ee23c20ee55401bc6c874f]
+
 2014-05-06  Toby St Clere Smithe  <pyviennacl@tsmithe.net>
 
 	* Release 1.0.2.

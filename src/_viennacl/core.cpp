@@ -29,7 +29,7 @@ BOOST_PYTHON_MODULE(_viennacl)
   np::initialize();
 
   // TODO: integrate version into build process
-  bp::scope().attr("__version__") = bp::object("1.5.1");
+  bp::scope().attr("__version__") = bp::object("1.5.2");
 
   bp::def("backend_finish", vcl::backend::finish);
 
