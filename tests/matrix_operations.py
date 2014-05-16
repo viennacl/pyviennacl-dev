@@ -170,6 +170,16 @@ def run_test(*args, **kwargs):
         raise RuntimeError("Failed: matrix-vector multiplication")
     print("Test: matrix-vector multiplication passed")
 
+    # Non-square matrix-vector multiplication
+    vec = p.Vector(vcl_A[:,:-1].shape[1], 3.1415, dtype = dtype)
+    X = vcl_A[:,:-1] * vec
+    Y = vcl_A[:,:-1].value.dot(vec.value)
+    act_diff = math.fabs(diff(X, Y))
+    if act_diff > epsilon:
+        raise RuntimeError("Failed: non-square matrix-vector multiplication")
+    print("Test: non-square matrix-vector multiplication passed (%d, %d)" % 
+          (vcl_A[:,:-1].shape[0], vcl_A[:,:-1].shape[1]))
+
     # Matrix divided by scalar
     X = vcl_A.value / alpha.value
     Y = vcl_A / alpha
