@@ -1193,6 +1193,8 @@ class Vector(Leaf):
                 raise IndexError("Too many indices")
         elif isinstance(key, int) or isinstance(key, long):
             # TODO: key is probably an int -- be sure?
+            # TODO DUBIOUS USE INDEXERROR MAYBE?
+            key = key % self.shape[0]
             return HostScalar(self.vcl_leaf.get_entry(key),
                               dtype=self.dtype)
         else:
@@ -1758,21 +1760,27 @@ class Matrix(Leaf):
         project = getattr(_v,
                           "project_matrix_" + vcl_statement_node_numeric_type_strings[
                               self.statement_node_numeric_type])
-        if isinstance(key, tuple) or isinstance(key, list):
+        if isinstance(key, tuple):
+            key = list(key)
+        if isinstance(key, list):
             if len(key) == 0:
                 return self
             elif len(key) == 1: 
                 return self[key[0]]
             elif len(key) == 2:
                 if isinstance(key[0], int):
+                    # TODO DUBIOUS USE INDEXERROR MAYBE?
+                    key[0] = key[0] % self.shape[0]
                     # Choose from row
                     if isinstance(key[1], int):
+                        # TODO DUBIOUS USE INDEXERROR MAYBE?
+                        key[1] = key[1] % self.shape[1]
                         #  (int, int) -> scalar
                         return HostScalar(self.vcl_leaf.get_entry(key[0], key[1]),
                                           dtype=self.dtype)
                     elif isinstance(key[1], slice):
                         #  (int, slice) - range/slice from row -> row vector
-                        view1 = View(slice(0, key[0]+1), self.size1)
+                        view1 = View(slice(key[0], key[0]+1), self.size1)
                         view2 = View(key[1], self.size2)
                         return Matrix(project(self.vcl_leaf,
                                               view1.vcl_view,
@@ -1786,9 +1794,11 @@ class Matrix(Leaf):
                 elif isinstance(key[0], slice):
                     # slice of rows
                     if isinstance(key[1], int):
+                        # TODO DUBIOUS USE INDEXERROR MAYBE?
+                        key[1] = key[1] % self.shape[1]
                         #  (slice, int) - range/slice from col -> col vector
                         view1 = View(key[0], self.size1)
-                        view2 = View(slice(0, key[1]+1), self.size2)
+                        view2 = View(slice(key[1], key[1]+1), self.size2)
                         return Matrix(project(self.vcl_leaf,
                                               view1.vcl_view,
                                               view2.vcl_view),
