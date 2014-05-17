@@ -1,13 +1,14 @@
-"""
-PyViennaCL
+"""PyViennaCL
 ==========
 
-This extension provides the Python bindings for the ViennaCL linear
-algebra and numerical computation library for GPGPU and heterogeneous
-systems. ViennaCL itself is a header-only C++ library, so these bindings
-make available to Python programmers ViennaCL's fast OpenCL and CUDA 
-algorithms, in a way that is idiomatic and compatible with the Python
-community's most popular scientific packages, NumPy and SciPy.
+This extension provides the Python bindings for the `ViennaCL
+<http://viennacl.sourceforge.net/>`_ linear algebra and numerical
+computation library for GPGPU and heterogeneous systems. `ViennaCL
+<http://viennacl.sourceforge.net/>`_ itself is a header-only C++
+library, so these bindings make available to Python programmers
+ViennaCL's fast OpenCL and CUDA algorithms, in a way that is idiomatic
+and compatible with the Python community's most popular scientific
+packages, NumPy and SciPy.
 
 PyViennaCL is divided into five submodules, of which four are designed
 for direct use by users:
@@ -38,6 +39,7 @@ PyViennaCL's high-level linear algebra functions, run::
 or::
 
    >>> help(p.linalg)                                    # doctest: +SKIP
+
 """
 
 from .version import VERSION_TEXT as __version__
