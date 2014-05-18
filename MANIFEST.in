@@ -1,3 +1,4 @@
+include requirements.txt
 include ChangeLog
 include configure.py
 include Makefile.in

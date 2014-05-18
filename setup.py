@@ -195,6 +195,8 @@ def main():
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Physics',
         ],
+        setup_requires=['numpy>=1.7'],
+        install_requires=['numpy>=1.7'],
 
         packages=["pyviennacl"],
         ext_package="pyviennacl",
