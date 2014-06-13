@@ -155,7 +155,7 @@ def main():
             "dense_matrix_uint", "dense_matrix_ulong",
 
             "compressed_matrix", "coordinate_matrix", "ell_matrix", "hyb_matrix",
-            "direct_solvers", "iterative_solvers", "eig",
+            "preconditioners", "direct_solvers", "iterative_solvers", "eig",
             "extra_functions",
             "scheduler", "opencl_support"]
 

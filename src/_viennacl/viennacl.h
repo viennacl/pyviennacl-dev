@@ -376,6 +376,7 @@ PYVCL_SUBMODULE(coordinate_matrix);
 PYVCL_SUBMODULE(ell_matrix);
 PYVCL_SUBMODULE(hyb_matrix);
 
+PYVCL_SUBMODULE(preconditioners);
 PYVCL_SUBMODULE(direct_solvers);
 PYVCL_SUBMODULE(iterative_solvers);
 PYVCL_SUBMODULE(eig);
