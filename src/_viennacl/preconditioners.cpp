@@ -6,18 +6,22 @@ PYVCL_SUBMODULE(preconditioners)
   /*
   
     TODO:
-    + preconditioners themselves
-      - do this in .hpp and export for the various sparse types
-      - ilut_precond
-      - ilu0_precond
-      - block_ilu_precond (check docs for args; ilu0/ilut)
-      - jacobi_precond
-      - row_scaling_precond
-      - amg_precond
-      - (f)spai_precond
     + add preconditioner support to solver calls
+      - ichol
+      - ilu0, ilut, block-ilu0, block-ilut
+      - jacobi
+      - row_scaling
+      - f/spai
+    + implement python layer
 
    */
+
+  // ICHOL0
+
+  bp::class_<vcl::linalg::ichol0_tag>("ichol0_tag");
+
+  EXPORT_ICHOL0_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_ICHOL0_PRECOND(vcl::compressed_matrix<double>);
 
   // [BLOCK-]ILU(T/0)
 
@@ -40,6 +44,9 @@ PYVCL_SUBMODULE(preconditioners)
                   ilut_set_level_scheduling)
     ;
 
+  EXPORT_ILUT_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_ILUT_PRECOND(vcl::compressed_matrix<double>);
+
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::ilu0_tag, bool,
                                   use_level_scheduling,
                                   ilu0_get_level_scheduling, () const);
@@ -52,10 +59,24 @@ PYVCL_SUBMODULE(preconditioners)
                   ilu0_get_level_scheduling,
                   ilu0_set_level_scheduling)
     ;
+
+
+  EXPORT_ILU0_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_ILU0_PRECOND(vcl::compressed_matrix<double>);
+
+  EXPORT_BLOCK_ILUT_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_BLOCK_ILUT_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_BLOCK_ILU0_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_BLOCK_ILU0_PRECOND(vcl::compressed_matrix<double>);
   
   // JACOBI
 
   bp::class_<vcl::linalg::jacobi_tag>("jacobi_tag");
+
+  EXPORT_JACOBI_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_JACOBI_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_JACOBI_PRECOND(vcl::coordinate_matrix<float>);
+  EXPORT_JACOBI_PRECOND(vcl::coordinate_matrix<double>);
 
   // ROW SCALING
 
@@ -63,6 +84,11 @@ PYVCL_SUBMODULE(preconditioners)
     .def(bp::init<unsigned int>())
     .add_property("norm", &vcl::linalg::row_scaling_tag::norm)
     ;
+
+  EXPORT_ROW_SCALING_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_ROW_SCALING_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_ROW_SCALING_PRECOND(vcl::coordinate_matrix<float>);
+  EXPORT_ROW_SCALING_PRECOND(vcl::coordinate_matrix<double>);
 
   // AMG
 
@@ -107,6 +133,9 @@ PYVCL_SUBMODULE(preconditioners)
                   &vcl::linalg::amg_tag::set_coarselevels)
     ;
 
+  EXPORT_AMG_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_AMG_PRECOND(vcl::compressed_matrix<double>);
+
   // (F)SPAI
 
   bp::class_<vcl::linalg::spai_tag>("spai_tag")
@@ -128,6 +157,9 @@ PYVCL_SUBMODULE(preconditioners)
                   &vcl::linalg::spai_tag::setIsRight)
     ;
 
+  EXPORT_SPAI_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_SPAI_PRECOND(vcl::compressed_matrix<double>);
+
   bp::class_<vcl::linalg::fspai_tag>("fspai_tag")
     .def(bp::init<double, unsigned int, bool, bool>())
     .add_property("residual_norm_threshold",
@@ -143,4 +175,8 @@ PYVCL_SUBMODULE(preconditioners)
                   &vcl::linalg::fspai_tag::getIsRight,
                   &vcl::linalg::fspai_tag::setIsRight)
     ;
+
+  EXPORT_FSPAI_PRECOND(vcl::compressed_matrix<float>);
+  EXPORT_FSPAI_PRECOND(vcl::compressed_matrix<double>);
+
 }
