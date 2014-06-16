@@ -216,8 +216,8 @@ installation::
 Authors and Contact
 ===================
 
-PyViennaCL was developed during the 2013 *Google Summer of Code* by 
-`Toby St Clere Smithe <pyviennacl@tsmithe.net>`_.
+PyViennaCL was developed during the 2013 and 2014 *Google Summers of
+Code* by `Toby St Clere Smithe <pyviennacl@tsmithe.net>`_.
 
 ViennaCL was developed under the aegis of the *Institute for Microelectronics*
 at the *Vienna University of Technology*.
