@@ -6,15 +6,12 @@ PYVCL_SUBMODULE(preconditioners)
   /*
   
     TODO:
-    + add preconditioner support to solver calls
-      - ichol
-      - ilu0, ilut, block-ilu0, block-ilut
-      - jacobi
-      - row_scaling
-      - f/spai
     + implement python layer
 
    */
+
+
+  bp::class_<vcl::linalg::no_precond>("no_precond");
 
   // ICHOL0
 

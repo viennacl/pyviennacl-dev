@@ -1,4 +1,5 @@
 #include "iterative_solvers.hpp"
+#include "preconditioners.hpp"
 
 PYVCL_SUBMODULE(iterative_solvers)
 {
@@ -14,5 +15,6 @@ PYVCL_SUBMODULE(iterative_solvers)
 
   EXPORT_SPARSE_ITERATIVE_SOLVERS(float);
   EXPORT_SPARSE_ITERATIVE_SOLVERS(double);
+
 }
 
