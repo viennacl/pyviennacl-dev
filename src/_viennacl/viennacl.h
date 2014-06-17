@@ -6,11 +6,6 @@
 
 #include <viennacl/tools/shared_ptr.hpp>
 #include <viennacl/matrix.hpp>
-#include <viennacl/linalg/inner_prod.hpp>
-#include <viennacl/linalg/norm_1.hpp>
-#include <viennacl/linalg/norm_2.hpp>
-#include <viennacl/linalg/norm_inf.hpp>
-#include <viennacl/linalg/norm_frobenius.hpp>
 #include <viennacl/linalg/prod.hpp>
 
 #define CONCAT(...) __VA_ARGS__
@@ -44,30 +39,23 @@ namespace boost {
 
 // TODO: Use ViennaCL operation tags?
 enum op_t {
-  op_add,
-  op_sub,
-  op_mul,
-  op_div,
-  op_iadd,
-  op_isub,
-  op_imul,
-  op_idiv,
-  op_inner_prod,
-  op_outer_prod,
-  op_element_prod,
-  op_element_pow,
-  op_element_div,
-  op_norm_1,
-  op_norm_2,
-  op_norm_inf,
-  op_norm_frobenius,
-  op_index_norm_inf,
-  op_plane_rotation,
-  op_trans,
-  op_prod,
-  op_solve,
-  op_solve_precond,
-  op_inplace_solve
+  op_inner_prod=0,   //  0
+  op_outer_prod,     //  1
+  op_element_pow,    //  2
+  op_norm_1,         //  3
+  op_norm_2,         //  4
+  op_norm_inf,       //  5
+  op_norm_frobenius, //  6
+  op_index_norm_inf, //  7
+  op_plane_rotation, //  8
+  op_prod,           //  9
+  op_solve,          // 10
+  op_solve_precond,  // 11
+  op_inplace_solve,  // 12
+  op_fft,            // 13
+  op_ifft,           // 14
+  op_inplace_fft,    // 15
+  op_inplace_ifft    // 16
 };
 
 // Generic operation dispatch class -- see specialisations below
@@ -215,11 +203,6 @@ ReturnT pyvcl_do_4ary_op(Operand1T a, Operand2T b,
   return o.do_op();
 }
 
-
-/*****************************
-  Operation wrapper functions
- *****************************/
-
 // These macros define specialisations of the pyvcl_worker class
 // which is used to dispatch viennacl operations.
 
@@ -237,99 +220,6 @@ ReturnT pyvcl_do_4ary_op(Operand1T a, Operand2T b,
                        Operand1T, Operand2T,                         \
                        Operand3T, Operand4T,                         \
                        OP, PyObjs>& o)
-
-// And the actual operations follow below.
-
-DO_OP_FUNC(op_add) { return o.operand1 + o.operand2; } };
-DO_OP_FUNC(op_sub) { return o.operand1 - o.operand2; } };
-DO_OP_FUNC(op_mul) { return o.operand1 * o.operand2; } };
-DO_OP_FUNC(op_div) { return o.operand1 / o.operand2; } };
-
-DO_OP_FUNC(op_inner_prod)
-{
-  return vcl::linalg::inner_prod(o.operand1, o.operand2);
-} };
-
-DO_OP_FUNC(op_outer_prod)
-{
-  return vcl::linalg::outer_prod(o.operand1, o.operand2);
-} };
-
-DO_OP_FUNC(op_element_prod)
-{
-  return vcl::linalg::element_prod(o.operand1, o.operand2);
-} };
-
-DO_OP_FUNC(op_element_pow)
-{
-  return vcl::linalg::element_pow(o.operand1, o.operand2);
-} };
-
-DO_OP_FUNC(op_element_div)
-{
-  return vcl::linalg::element_div(o.operand1, o.operand2);
-} };
-
-DO_OP_FUNC(op_iadd)
-{
-  o.operand1 += o.operand2;
-  return o.operand1;
-} };
-
-DO_OP_FUNC(op_isub)
-{
-  o.operand1 -= o.operand2;
-  return o.operand1;
-} };
-
-DO_OP_FUNC(op_imul)
-{
-  o.operand1 *= o.operand2;
-  return o.operand1;
-} };
-
-DO_OP_FUNC(op_idiv)
-{
-  o.operand1 /= o.operand2;
-  return o.operand1;
-} };
-
-DO_OP_FUNC(op_norm_1)
-{
-  return vcl::linalg::norm_1(o.operand1);
-} };
-
-DO_OP_FUNC(op_norm_2)
-{
-  return vcl::linalg::norm_2(o.operand1);
-} };
-
-DO_OP_FUNC(op_norm_inf)
-{
-  return vcl::linalg::norm_inf(o.operand1);
-} };
-
-DO_OP_FUNC(op_norm_frobenius)
-{
-  return vcl::linalg::norm_frobenius(o.operand1);
-} };
-
-DO_OP_FUNC(op_index_norm_inf)
-{
-  return vcl::linalg::index_norm_inf(o.operand1);
-} };
-
-DO_OP_FUNC(op_plane_rotation)
-{
-  vcl::linalg::plane_rotation(o.operand1, o.operand2,
-			      o.operand3, o.operand4);
-  return bp::object();
-} };
-
-DO_OP_FUNC(op_trans)
-{
-  return vcl::trans(o.operand1);
-} };
 
 DO_OP_FUNC(op_prod)
 {

@@ -176,6 +176,11 @@ bp::list list_from_vector(std::vector<T> v) {
   return l;
 }
 
+DO_OP_FUNC(op_index_norm_inf)
+{
+  return vcl::linalg::index_norm_inf(o.operand1);
+} };
+
 #define EXPORT_VECTOR_CLASS(TYPE)					\
   bp::class_<vcl::vector_base<TYPE>,                                    \
 	     vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >               \

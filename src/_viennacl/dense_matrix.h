@@ -127,9 +127,6 @@ np::ndarray vcl_matrix_to_ndarray(const vcl::matrix_base<SCALARTYPE, VCL_F>& m)
     .add_property("size2", &vcl::matrix_base<TYPE, F>::size2)           \
     .add_property("internal_size2",                                     \
                   &vcl::matrix_base<TYPE, F>::internal_size2)           \
-    .add_property("trans", pyvcl_do_1ary_op<vcl::matrix<TYPE, F>,       \
-                  vcl::matrix_base<TYPE, F>&,                           \
-                  op_trans, 0>)                                         \
     ;                                                                   \
   bp::class_<vcl::matrix_range<vcl::matrix_base<TYPE, F> >,             \
              vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix_base<TYPE, \

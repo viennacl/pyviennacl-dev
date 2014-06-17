@@ -1,5 +1,78 @@
 #include "viennacl.h"
 
+#include <viennacl/linalg/inner_prod.hpp>
+#include <viennacl/linalg/norm_1.hpp>
+#include <viennacl/linalg/norm_2.hpp>
+#include <viennacl/linalg/norm_inf.hpp>
+#include <viennacl/linalg/norm_frobenius.hpp>
+#include <viennacl/fft.hpp>
+
+DO_OP_FUNC(op_inner_prod)
+{
+  return vcl::linalg::inner_prod(o.operand1, o.operand2);
+} };
+
+DO_OP_FUNC(op_outer_prod)
+{
+  return vcl::linalg::outer_prod(o.operand1, o.operand2);
+} };
+
+DO_OP_FUNC(op_element_pow)
+{
+  return vcl::linalg::element_pow(o.operand1, o.operand2);
+} };
+
+DO_OP_FUNC(op_norm_1)
+{
+  return vcl::linalg::norm_1(o.operand1);
+} };
+
+DO_OP_FUNC(op_norm_2)
+{
+  return vcl::linalg::norm_2(o.operand1);
+} };
+
+DO_OP_FUNC(op_norm_inf)
+{
+  return vcl::linalg::norm_inf(o.operand1);
+} };
+
+DO_OP_FUNC(op_norm_frobenius)
+{
+  return vcl::linalg::norm_frobenius(o.operand1);
+} };
+
+DO_OP_FUNC(op_plane_rotation)
+{
+  vcl::linalg::plane_rotation(o.operand1, o.operand2,
+			      o.operand3, o.operand4);
+  return bp::object();
+} };
+
+DO_OP_FUNC(op_fft)
+{
+  vcl::fft(o.operand1, o.operand2);
+  return bp::object();
+} };
+
+DO_OP_FUNC(op_inplace_fft)
+{
+  vcl::inplace_fft(o.operand1);
+  return bp::object();
+} };
+
+DO_OP_FUNC(op_ifft)
+{
+  vcl::ifft(o.operand1, o.operand2);
+  return bp::object();
+} };
+
+DO_OP_FUNC(op_inplace_ifft)
+{
+  vcl::inplace_ifft(o.operand1);
+  return bp::object();
+} };
+
 #define EXPORT_FUNCTIONS_F(TYPE, F)                                     \
   bp::def("outer", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
@@ -32,7 +105,19 @@
           op_norm_2, 0>);                                               \
   bp::def("norm_inf", pyvcl_do_1ary_op<vcl::scalar<TYPE>,               \
           vcl::vector_base<TYPE>&,                                      \
-          op_norm_inf, 0>);
+          op_norm_inf, 0>);                                             \
+  bp::def("fft", pyvcl_do_2ary_op<bp::object,                           \
+          vcl::vector<TYPE>&, vcl::vector<TYPE>&,                       \
+          op_fft, 0>);                                                  \
+  bp::def("ifft", pyvcl_do_2ary_op<bp::object,                          \
+          vcl::vector<TYPE>&, vcl::vector<TYPE>&,                       \
+          op_ifft, 0>);                                                 \
+  bp::def("inplace_fft", pyvcl_do_1ary_op<bp::object,                   \
+          vcl::vector<TYPE>&,                                           \
+          op_inplace_fft, 0>);                                          \
+  bp::def("inplace_ifft", pyvcl_do_1ary_op<bp::object,                  \
+          vcl::vector<TYPE>&,                                           \
+          op_inplace_ifft, 0>);                                                 
 
 
 PYVCL_SUBMODULE(extra_functions)
