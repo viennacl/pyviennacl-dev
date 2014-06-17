@@ -21,9 +21,7 @@ std::string get_device_full_info(vcl::ocl::device& d) {
 PYVCL_SUBMODULE(opencl_support)
 {
 
-  bp::object opencl_support_submodule(bp::handle<>(bp::borrowed(PyImport_AddModule("_viennacl.opencl_support"))));
-  bp::scope().attr("opencl_support") = opencl_support_submodule;
-  bp::scope opencl_support_scope = opencl_support_submodule;
+  PYTHON_SCOPE_SUBMODULE(opencl_support);
 
   bp::class_<vcl::ocl::platform>("platform", bp::no_init)
     .add_property("info", &vcl::ocl::platform::info)

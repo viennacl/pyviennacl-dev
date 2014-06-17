@@ -1,10 +1,12 @@
 #include "viennacl.h"
 
 #include <viennacl/linalg/inner_prod.hpp>
+#include <viennacl/linalg/nmf.hpp>
 #include <viennacl/linalg/norm_1.hpp>
 #include <viennacl/linalg/norm_2.hpp>
 #include <viennacl/linalg/norm_inf.hpp>
 #include <viennacl/linalg/norm_frobenius.hpp>
+#include <viennacl/linalg/qr.hpp>
 #include <viennacl/fft.hpp>
 
 DO_OP_FUNC(op_inner_prod)
@@ -73,6 +75,25 @@ DO_OP_FUNC(op_inplace_ifft)
   return bp::object();
 } };
 
+DO_OP_FUNC(op_inplace_qr) {
+  return vcl::linalg::inplace_qr(o.operand1, o.operand2);
+} };
+
+DO_OP_FUNC(op_inplace_qr_apply_trans_q) {
+  vcl::linalg::inplace_qr_apply_trans_Q(o.operand1, o.operand2, o.operand3);
+  return bp::object();
+} };
+
+DO_OP_FUNC(op_recoverq) {
+  vcl::linalg::recoverQ(o.operand1, o.operand2, o.operand3, o.operand4);
+  return bp::object();
+} };
+
+DO_OP_FUNC(op_nmf) {
+  vcl::linalg::nmf(o.operand1, o.operand2, o.operand3, o.operand4);
+  return bp::object();
+} };
+
 #define EXPORT_FUNCTIONS_F(TYPE, F)                                     \
   bp::def("outer", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
@@ -82,11 +103,29 @@ DO_OP_FUNC(op_inplace_ifft)
           op_element_pow, 0>);                                          \
   bp::def("norm_frobenius", pyvcl_do_1ary_op<vcl::scalar<TYPE>,         \
           vcl::matrix<TYPE, F>&,                                        \
-          op_norm_frobenius, 0>);
+          op_norm_frobenius, 0>);                                       \
+  bp::def("inplace_qr", pyvcl_do_2ary_op<std::vector<TYPE>,             \
+          vcl::matrix<TYPE, F>&, vcl::vcl_size_t,                       \
+          op_inplace_qr, 0>);                                           \
+  bp::def("inplace_qr_apply_trans_Q", pyvcl_do_3ary_op<bp::object,      \
+          const vcl::matrix<TYPE, F>&, const std::vector<TYPE>&,        \
+          vcl::vector<TYPE>&,                                           \
+          op_inplace_qr_apply_trans_q, 0>);                             \
+  bp::def("recoverQ", pyvcl_do_4ary_op<bp::object,                      \
+          const vcl::matrix<TYPE, F>&, const std::vector<TYPE>&,        \
+          vcl::matrix<TYPE, F>&, vcl::matrix<TYPE, F>&,                 \
+          op_recoverq, 0>);
 
+// TODO: NMF only supports row_major right now
 #define EXPORT_FUNCTIONS(TYPE)                                          \
   EXPORT_FUNCTIONS_F(TYPE, vcl::row_major);                             \
   EXPORT_FUNCTIONS_F(TYPE, vcl::column_major);                          \
+  bp::def("nmf", pyvcl_do_4ary_op<bp::object,                           \
+          const vcl::matrix<TYPE, vcl::row_major>&,                     \
+          vcl::matrix<TYPE, vcl::row_major>&,                           \
+          vcl::matrix<TYPE, vcl::row_major>&,                           \
+          const vcl::linalg::nmf_config&,                               \
+          op_nmf, 0>);                                                  \
   bp::def("inner_prod", pyvcl_do_2ary_op<vcl::scalar<TYPE>,             \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           op_inner_prod, 0>);                                           \
@@ -117,11 +156,61 @@ DO_OP_FUNC(op_inplace_ifft)
           op_inplace_fft, 0>);                                          \
   bp::def("inplace_ifft", pyvcl_do_1ary_op<bp::object,                  \
           vcl::vector<TYPE>&,                                           \
-          op_inplace_ifft, 0>);                                                 
-
+          op_inplace_ifft, 0>);
 
 PYVCL_SUBMODULE(extra_functions)
 {
+
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, double,
+                                  tolerance, get_tolerance, () const);
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, void,
+                                  tolerance, set_tolerance, (double));
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, double,
+                                  stagnation_tolerance, 
+                                  get_stagnation_tolerance,
+                                  () const);
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, void,
+                                  stagnation_tolerance, 
+                                  set_stagnation_tolerance,
+                                  (double));
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, vcl::vcl_size_t,
+                                  max_iterations, 
+                                  get_max_iterations,
+                                  () const);
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, void,
+                                  max_iterations, 
+                                  set_max_iterations,
+                                  (vcl::vcl_size_t));
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, vcl::vcl_size_t,
+                                  check_after_steps, 
+                                  get_check_after_steps,
+                                  () const);
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, void,
+                                  check_after_steps, 
+                                  set_check_after_steps,
+                                  (vcl::vcl_size_t));
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, bool,
+                                  print_relative_error, 
+                                  get_print_relative_error,
+                                  () const);
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, void,
+                                  print_relative_error, 
+                                  set_print_relative_error,
+                                  (bool));
+  bp::class_<vcl::linalg::nmf_config>
+    ("nmf_config",
+     bp::init<double, double, vcl::vcl_size_t, vcl::vcl_size_t>())
+    .add_property("tolerance", get_tolerance, set_tolerance)
+    .add_property("stagnation_tolerance",
+                  get_stagnation_tolerance, set_stagnation_tolerance)
+    .add_property("max_iterations",
+                  get_max_iterations, set_max_iterations)
+    .add_property("check_after_steps",
+                  get_check_after_steps, set_check_after_steps)
+    .add_property("print_relative_error",
+                  get_print_relative_error, set_print_relative_error)
+    ;
+
   /* TODO missing: char, short, uchar, ushort
      Some of these only make compile on Windows for float types -- eg norm_2, which
        tries to do a sqrt on a long without converting it to some float type.

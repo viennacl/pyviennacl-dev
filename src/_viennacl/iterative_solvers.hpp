@@ -1,9 +1,10 @@
 #ifndef _PYVIENNACL_ITERATIVE_SOLVERS_H
 #define _PYVIENNACL_ITERATIVE_SOLVERS_H
 
-#include <viennacl/linalg/cg.hpp>
 #include <viennacl/linalg/bicgstab.hpp>
+#include <viennacl/linalg/cg.hpp>
 #include <viennacl/linalg/gmres.hpp>
+#include <viennacl/linalg/mixed_precision_cg.hpp>
 
 #include <viennacl/matrix.hpp>
 #include <viennacl/compressed_matrix.hpp>
@@ -13,19 +14,24 @@
 
 #include "viennacl.h"
 #include "solve_op_func.hpp"
+#include "preconditioners.hpp"
 
 #define EXPORT_DENSE_ITERATIVE_SOLVERS_F(TYPE, F, PRECOND)              \
   bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
           vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::cg_tag&, PRECOND&,                                \
+          vcl::linalg::cg_tag&, PRECOND&,                               \
           op_solve_precond, 0>);                                        \
   bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
           vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::bicgstab_tag&, PRECOND&,                          \
+          vcl::linalg::mixed_precision_cg_tag&, PRECOND&,               \
           op_solve_precond, 0>);                                        \
   bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
           vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::gmres_tag&, PRECOND&,                             \
+          vcl::linalg::bicgstab_tag&, PRECOND&,                         \
+          op_solve_precond, 0>);                                        \
+  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
+          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
+          vcl::linalg::gmres_tag&, PRECOND&,                            \
           op_solve_precond, 0>);
 
 #define EXPORT_DENSE_ITERATIVE_SOLVERS(TYPE, PRECOND)                   \

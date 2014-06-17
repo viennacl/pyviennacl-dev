@@ -55,7 +55,11 @@ enum op_t {
   op_fft,            // 13
   op_ifft,           // 14
   op_inplace_fft,    // 15
-  op_inplace_ifft    // 16
+  op_inplace_ifft,   // 16
+  op_inplace_qr,     // 17
+  op_inplace_qr_apply_trans_q, // 18
+  op_recoverq,       // 19
+  op_nmf             // 20
 };
 
 // Generic operation dispatch class -- see specialisations below
@@ -246,6 +250,11 @@ HostT vcl_scalar_to_host(const vcl::scalar<HostT>& vcl_s)
  **************/
 
 #define PYVCL_SUBMODULE(NAME) void export_ ## NAME ()
+#define PYTHON_SCOPE_SUBMODULE(NAME)                                    \
+  bp::object NAME##_submodule                                           \
+  (bp::handle<>(bp::borrowed(PyImport_AddModule("_viennacl." #NAME)))); \
+  bp::scope().attr(#NAME) = NAME##_submodule;                           \
+  bp::scope NAME##_scope = NAME##_submodule;
 
 PYVCL_SUBMODULE(vector_int);
 PYVCL_SUBMODULE(vector_long);
@@ -269,11 +278,12 @@ PYVCL_SUBMODULE(hyb_matrix);
 PYVCL_SUBMODULE(preconditioners);
 PYVCL_SUBMODULE(direct_solvers);
 PYVCL_SUBMODULE(iterative_solvers);
-PYVCL_SUBMODULE(eig);
+
 PYVCL_SUBMODULE(extra_functions);
+PYVCL_SUBMODULE(eig);
+PYVCL_SUBMODULE(bandwidth_reduction);
+
 PYVCL_SUBMODULE(scheduler);
-
 PYVCL_SUBMODULE(opencl_support);
-
 
 #endif

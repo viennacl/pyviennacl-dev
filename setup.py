@@ -146,18 +146,20 @@ def main():
             platform_cflags['unix'] += ["-Wno-unused-local-typedefs"]
 
     source_files = [
-            "core",
-            "vector_float", "vector_double", "vector_int", "vector_long",
-            "vector_uint", "vector_ulong",
+        "core",
+        "vector_float", "vector_double", "vector_int", "vector_long",
+        "vector_uint", "vector_ulong",
 
-            "dense_matrix_float", "dense_matrix_double",
-            "dense_matrix_int", "dense_matrix_long",
-            "dense_matrix_uint", "dense_matrix_ulong",
+        "dense_matrix_float", "dense_matrix_double",
+        "dense_matrix_int", "dense_matrix_long",
+        "dense_matrix_uint", "dense_matrix_ulong",
 
-            "compressed_matrix", "coordinate_matrix", "ell_matrix", "hyb_matrix",
-            "preconditioners", "direct_solvers", "iterative_solvers", "eig",
-            "extra_functions",
-            "scheduler", "opencl_support"]
+        "compressed_matrix", "coordinate_matrix", "ell_matrix", "hyb_matrix",
+        "preconditioners","direct_solvers", "iterative_solvers",
+
+        "extra_functions", "eig", #"bandwidth_reduction",
+
+        "scheduler", "opencl_support"]
 
     from glob import glob
 

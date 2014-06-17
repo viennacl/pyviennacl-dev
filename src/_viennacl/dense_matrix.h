@@ -113,10 +113,9 @@ np::ndarray vcl_matrix_to_ndarray(const vcl::matrix_base<SCALARTYPE, VCL_F>& m)
   return array;
 }
 
-
 #define EXPORT_DENSE_MATRIX_CLASS(TYPE, LAYOUT, F, CPU_F)               \
   bp::class_<vcl::matrix_base<TYPE, F>,                                 \
-	     vcl::tools::shared_ptr<vcl::matrix_base<TYPE, F> > >            \
+    vcl::tools::shared_ptr<vcl::matrix_base<TYPE, F> > >                \
     ("matrix_base", bp::no_init)                                        \
     .def("get_entry", &get_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE, F> >) \
     .def("set_entry", &set_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE, F> >) \
@@ -129,7 +128,7 @@ np::ndarray vcl_matrix_to_ndarray(const vcl::matrix_base<SCALARTYPE, VCL_F>& m)
                   &vcl::matrix_base<TYPE, F>::internal_size2)           \
     ;                                                                   \
   bp::class_<vcl::matrix_range<vcl::matrix_base<TYPE, F> >,             \
-             vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix_base<TYPE, \
+    vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix_base<TYPE,     \
                                                                   F> > >, \
              bp::bases<vcl::matrix_base<TYPE, F> > >                    \
     ("matrix_range", bp::no_init);                                      \
