@@ -76,6 +76,7 @@ BOOST_PYTHON_MODULE(_viennacl)
   //export_bandwidth_reduction();
 
   export_scheduler();
+  export_platform_support();
   export_opencl_support();
   
 }

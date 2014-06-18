@@ -286,6 +286,7 @@ PYVCL_SUBMODULE(eig);
 PYVCL_SUBMODULE(bandwidth_reduction);
 
 PYVCL_SUBMODULE(scheduler);
+PYVCL_SUBMODULE(platform_support);
 PYVCL_SUBMODULE(opencl_support);
 
 #endif
