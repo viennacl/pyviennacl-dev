@@ -1,5 +1,5 @@
-#ifndef _PYVIENNACL_ELL_MATRIX_H
-#define _PYVIENNACL_ELL_MATRIX_H
+#ifndef _PYVIENNACL_ELL_MATRIX_HPP
+#define _PYVIENNACL_ELL_MATRIX_HPP
 
 #include "sparse_matrix.h"
 

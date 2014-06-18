@@ -60,6 +60,8 @@ BOOST_PYTHON_MODULE(_viennacl)
   export_dense_matrix_float();
   export_dense_matrix_double();
 
+  export_structured_matrices();
+
   export_compressed_matrix();
   export_coordinate_matrix();
   export_ell_matrix();

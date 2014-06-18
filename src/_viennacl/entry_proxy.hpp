@@ -7,19 +7,19 @@
 // THIS IS NOT VERY C++ !!
 
 template <class SCALARTYPE, class VCLTYPE>
-SCALARTYPE get_vcl_vector_entry(VCLTYPE o, vcl::vcl_size_t x)
+SCALARTYPE get_vcl_vector_entry(VCLTYPE& o, vcl::vcl_size_t x)
 {
   return o(x);
 }
 
 template <class SCALARTYPE, class VCLTYPE>
-SCALARTYPE get_vcl_matrix_entry(VCLTYPE o, vcl::vcl_size_t x, vcl::vcl_size_t y)
+SCALARTYPE get_vcl_matrix_entry(VCLTYPE& o, vcl::vcl_size_t x, vcl::vcl_size_t y)
 {
   return o(x, y);
 }
 
 template <class SCALARTYPE, class VCLTYPE>
-bp::object set_vcl_vector_entry(VCLTYPE o, vcl::vcl_size_t x, SCALARTYPE v)
+bp::object set_vcl_vector_entry(VCLTYPE& o, vcl::vcl_size_t x, SCALARTYPE v)
 {
   o(x) = v;
 
@@ -27,7 +27,7 @@ bp::object set_vcl_vector_entry(VCLTYPE o, vcl::vcl_size_t x, SCALARTYPE v)
 }
 
 template <class SCALARTYPE, class VCLTYPE>
-bp::object set_vcl_matrix_entry(VCLTYPE o, vcl::vcl_size_t x, vcl::vcl_size_t y, SCALARTYPE v)
+bp::object set_vcl_matrix_entry(VCLTYPE& o, vcl::vcl_size_t x, vcl::vcl_size_t y, SCALARTYPE v)
 {
   o(x, y) = v;
 

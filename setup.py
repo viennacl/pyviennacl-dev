@@ -154,6 +154,8 @@ def main():
         "dense_matrix_int", "dense_matrix_long",
         "dense_matrix_uint", "dense_matrix_ulong",
 
+        "structured_matrices",
+
         "compressed_matrix", "coordinate_matrix", "ell_matrix", "hyb_matrix",
         "preconditioners","direct_solvers", "iterative_solvers",
 

@@ -85,8 +85,8 @@ std::size_t get_offset(const vcl::matrix_base<SCALARTYPE,
   return m.start1() + m.start2()*m.internal_size1();
 }
 
-template<class SCALARTYPE, class VCL_F>
-np::ndarray vcl_matrix_to_ndarray(const vcl::matrix_base<SCALARTYPE, VCL_F>& m)
+template<class MATRIXTYPE, class SCALARTYPE>
+np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
 {
 
   std::size_t size = m.internal_size1() * m.internal_size2() * sizeof(SCALARTYPE);
@@ -119,7 +119,8 @@ np::ndarray vcl_matrix_to_ndarray(const vcl::matrix_base<SCALARTYPE, VCL_F>& m)
     ("matrix_base", bp::no_init)                                        \
     .def("get_entry", &get_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE, F> >) \
     .def("set_entry", &set_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE, F> >) \
-    .def("as_ndarray", &vcl_matrix_to_ndarray<TYPE, F>)                 \
+    .def("as_ndarray",                                                  \
+         &vcl_matrix_to_ndarray<vcl::matrix_base<TYPE, F>, TYPE>)       \
     .add_property("size1", &vcl::matrix_base<TYPE, F>::size1)           \
     .add_property("internal_size1",                                     \
                   &vcl::matrix_base<TYPE, F>::internal_size1)           \

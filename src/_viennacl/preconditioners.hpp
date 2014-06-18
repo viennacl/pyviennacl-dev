@@ -1,5 +1,5 @@
-#ifndef _PYVIENNACL_PRECONDITIONERS_H
-#define _PYVIENNACL_PRECONDITIONERS_H
+#ifndef _PYVIENNACL_PRECONDITIONERS_HPP
+#define _PYVIENNACL_PRECONDITIONERS_HPP
 
 #include "viennacl.h"
 #include "sparse_matrix.h"

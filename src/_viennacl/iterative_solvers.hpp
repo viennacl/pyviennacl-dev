@@ -1,5 +1,5 @@
-#ifndef _PYVIENNACL_ITERATIVE_SOLVERS_H
-#define _PYVIENNACL_ITERATIVE_SOLVERS_H
+#ifndef _PYVIENNACL_ITERATIVE_SOLVERS_HPP
+#define _PYVIENNACL_ITERATIVE_SOLVERS_HPP
 
 #include <viennacl/linalg/bicgstab.hpp>
 #include <viennacl/linalg/cg.hpp>

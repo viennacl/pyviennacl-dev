@@ -1,5 +1,5 @@
-#ifndef _PYVIENNACL_SOLVE_OP_FUNC_H
-#define _PYVIENNACL_SOLVE_OP_FUNC_H
+#ifndef _PYVIENNACL_SOLVE_OP_FUNC_HPP
+#define _PYVIENNACL_SOLVE_OP_FUNC_HPP
 
 #include "viennacl.h"
 

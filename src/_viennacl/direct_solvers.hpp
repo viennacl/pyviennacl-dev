@@ -1,5 +1,5 @@
-#ifndef _PYVIENNACL_DIRECT_SOLVERS_H
-#define _PYVIENNACL_DIRECT_SOLVERS_H
+#ifndef _PYVIENNACL_DIRECT_SOLVERS_HPP
+#define _PYVIENNACL_DIRECT_SOLVERS_HPP
 
 #include <viennacl/linalg/direct_solve.hpp>
 #include <viennacl/matrix.hpp>

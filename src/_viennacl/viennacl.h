@@ -270,6 +270,8 @@ PYVCL_SUBMODULE(dense_matrix_ulong);
 PYVCL_SUBMODULE(dense_matrix_float);
 PYVCL_SUBMODULE(dense_matrix_double);
 
+PYVCL_SUBMODULE(structured_matrices);
+
 PYVCL_SUBMODULE(compressed_matrix);
 PYVCL_SUBMODULE(coordinate_matrix);
 PYVCL_SUBMODULE(ell_matrix);
