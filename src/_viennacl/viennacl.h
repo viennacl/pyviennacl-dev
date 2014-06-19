@@ -244,49 +244,12 @@ HostT vcl_scalar_to_host(const vcl::scalar<HostT>& vcl_s)
 #define DISAMBIGUATE_CLASS_FUNCTION_PTR(CLASS, RET, OLD_NAME, NEW_NAME, ARGS)\
   RET (CLASS::*NEW_NAME) ARGS = &CLASS::OLD_NAME;
 
+#define ENUM_VALUE(NS, V) .value( #V, NS :: V )
 
-/**************
-   Submodules
- **************/
-
-#define PYVCL_SUBMODULE(NAME) void export_ ## NAME ()
 #define PYTHON_SCOPE_SUBMODULE(NAME)                                    \
   bp::object NAME##_submodule                                           \
   (bp::handle<>(bp::borrowed(PyImport_AddModule("_viennacl." #NAME)))); \
   bp::scope().attr(#NAME) = NAME##_submodule;                           \
   bp::scope NAME##_scope = NAME##_submodule;
-
-PYVCL_SUBMODULE(vector_int);
-PYVCL_SUBMODULE(vector_long);
-PYVCL_SUBMODULE(vector_uint);
-PYVCL_SUBMODULE(vector_ulong);
-PYVCL_SUBMODULE(vector_float);
-PYVCL_SUBMODULE(vector_double);
-
-PYVCL_SUBMODULE(dense_matrix_int);
-PYVCL_SUBMODULE(dense_matrix_long);
-PYVCL_SUBMODULE(dense_matrix_uint);
-PYVCL_SUBMODULE(dense_matrix_ulong);
-PYVCL_SUBMODULE(dense_matrix_float);
-PYVCL_SUBMODULE(dense_matrix_double);
-
-PYVCL_SUBMODULE(structured_matrices);
-
-PYVCL_SUBMODULE(compressed_matrix);
-PYVCL_SUBMODULE(coordinate_matrix);
-PYVCL_SUBMODULE(ell_matrix);
-PYVCL_SUBMODULE(hyb_matrix);
-
-PYVCL_SUBMODULE(preconditioners);
-PYVCL_SUBMODULE(direct_solvers);
-PYVCL_SUBMODULE(iterative_solvers);
-
-PYVCL_SUBMODULE(extra_functions);
-PYVCL_SUBMODULE(eig);
-PYVCL_SUBMODULE(bandwidth_reduction);
-
-PYVCL_SUBMODULE(scheduler);
-PYVCL_SUBMODULE(platform_support);
-PYVCL_SUBMODULE(opencl_support);
 
 #endif
