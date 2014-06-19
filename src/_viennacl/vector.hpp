@@ -1,7 +1,7 @@
 #ifndef _PYVIENNACL_VECTOR_H
 #define _PYVIENNACL_VECTOR_H
 
-#include "viennacl.h"
+#include "pyviennacl.hpp"
 #include "entry_proxy.hpp"
 
 #include <boost/numeric/ublas/vector_sparse.hpp>
@@ -183,7 +183,7 @@ DO_OP_FUNC(op_index_norm_inf)
 
 #define EXPORT_VECTOR_CLASS(TYPE)					\
   bp::class_<vcl::vector_base<TYPE>,                                    \
-	     vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >               \
+             vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >          \
     ("vector_base", bp::no_init)                                        \
     .def("get_entry", &get_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("set_entry", &set_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
@@ -193,7 +193,7 @@ DO_OP_FUNC(op_index_norm_inf)
     .add_property("internal_size", &vcl::vector_base<TYPE>::internal_size) \
     .add_property("index_norm_inf", pyvcl_do_1ary_op<vcl::scalar<TYPE>,	\
 		  vcl::vector_base<TYPE>&,                              \
-		  op_index_norm_inf, 0>)				\
+		  op_index_norm_inf>)                                   \
     ;                                                                   \
   bp::class_<vcl::vector_range<vcl::vector_base<TYPE> >,                \
              vcl::tools::shared_ptr<vcl::vector_range<vcl::vector_base<TYPE> > >, \

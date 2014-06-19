@@ -1,5 +1,5 @@
-#include "viennacl.h"
-#include "vector.h"
+#include "pyviennacl.hpp"
+#include "vector.hpp"
 
 #include <viennacl/ocl/context.hpp>
 #include <viennacl/ocl/device.hpp>

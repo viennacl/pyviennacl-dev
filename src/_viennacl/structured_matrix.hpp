@@ -6,7 +6,7 @@
 #include <viennacl/toeplitz_matrix.hpp>
 #include <viennacl/vandermonde_matrix.hpp>
 
-#include "dense_matrix.h"
+#include "dense_matrix.hpp"
 
 template<class MATRIXTYPE, class SCALARTYPE>
 np::ndarray vcl_structured_matrix_to_ndarray(MATRIXTYPE& m)

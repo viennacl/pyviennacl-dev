@@ -1,7 +1,7 @@
 #ifndef _PYVIENNACL_HYB_MATRIX_HPP
 #define _PYVIENNACL_HYB_MATRIX_HPP
 
-#include "sparse_matrix.h"
+#include "sparse_matrix.hpp"
 
 #define EXPORT_HYB_MATRIX(TYPE)                                         \
   bp::class_<vcl::hyb_matrix<TYPE>,                                     \
@@ -16,7 +16,7 @@
 			      bp::return_value_policy<bp::return_by_value>())) \
   .def("prod", pyvcl_do_2ary_op<vcl::vector<TYPE>,                      \
        vcl::hyb_matrix<TYPE>&, vcl::vector<TYPE>&,                      \
-       op_prod, 0>)                                                     \
+       op_prod>)                                                        \
     ;
 
 #endif

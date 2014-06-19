@@ -146,7 +146,7 @@ def main():
             platform_cflags['unix'] += ["-Wno-unused-local-typedefs"]
 
     source_files = [
-        "core",
+        "core", "scalars",
         "vector_float", "vector_double", "vector_int", "vector_long",
         "vector_uint", "vector_ulong",
 

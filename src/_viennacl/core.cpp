@@ -1,7 +1,42 @@
 #include <iostream>
 #include <typeinfo>
 
-#include "viennacl.h"
+#include "pyviennacl.hpp"
+
+PYVCL_SUBMODULE(scalars);
+
+PYVCL_SUBMODULE(vector_int);
+PYVCL_SUBMODULE(vector_long);
+PYVCL_SUBMODULE(vector_uint);
+PYVCL_SUBMODULE(vector_ulong);
+PYVCL_SUBMODULE(vector_float);
+PYVCL_SUBMODULE(vector_double);
+
+PYVCL_SUBMODULE(dense_matrix_int);
+PYVCL_SUBMODULE(dense_matrix_long);
+PYVCL_SUBMODULE(dense_matrix_uint);
+PYVCL_SUBMODULE(dense_matrix_ulong);
+PYVCL_SUBMODULE(dense_matrix_float);
+PYVCL_SUBMODULE(dense_matrix_double);
+
+PYVCL_SUBMODULE(structured_matrices);
+
+PYVCL_SUBMODULE(compressed_matrix);
+PYVCL_SUBMODULE(coordinate_matrix);
+PYVCL_SUBMODULE(ell_matrix);
+PYVCL_SUBMODULE(hyb_matrix);
+
+PYVCL_SUBMODULE(preconditioners);
+PYVCL_SUBMODULE(direct_solvers);
+PYVCL_SUBMODULE(iterative_solvers);
+
+PYVCL_SUBMODULE(extra_functions);
+PYVCL_SUBMODULE(eig);
+PYVCL_SUBMODULE(bandwidth_reduction);
+
+PYVCL_SUBMODULE(scheduler);
+PYVCL_SUBMODULE(platform_support);
+PYVCL_SUBMODULE(opencl_support);
 
 /*******************************
   Python module initialisation
@@ -26,25 +61,7 @@ BOOST_PYTHON_MODULE(_viennacl)
   // TODO: integrate version into build process
   bp::scope().attr("__version__") = bp::object("1.5.2");
 
-  bp::def("backend_finish", vcl::backend::finish);
-
-#define EXPORT_SCALAR_CLASS(TYPE)                                       \
-  bp::class_<vcl::scalar<TYPE> >("scalar_" #TYPE)                       \
-    .def(bp::init<TYPE>())                                              \
-    .def(bp::init<vcl::scalar<TYPE> >())                                \
-    .def("to_host", &vcl_scalar_to_host<TYPE>)
-
-  EXPORT_SCALAR_CLASS(int);
-  EXPORT_SCALAR_CLASS(uint);
-  EXPORT_SCALAR_CLASS(long);
-  EXPORT_SCALAR_CLASS(ulong);
-  EXPORT_SCALAR_CLASS(float);
-  EXPORT_SCALAR_CLASS(double);
-
-  bp::class_<vcl::range>("range",
-                         bp::init<vcl::vcl_size_t, vcl::vcl_size_t>());
-  bp::class_<vcl::slice>("slice",
-                         bp::init<vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_size_t>());
+  export_scalars();
 
   export_vector_int();
   export_vector_long();

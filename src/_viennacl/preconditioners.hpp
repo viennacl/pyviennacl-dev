@@ -1,8 +1,8 @@
 #ifndef _PYVIENNACL_PRECONDITIONERS_HPP
 #define _PYVIENNACL_PRECONDITIONERS_HPP
 
-#include "viennacl.h"
-#include "sparse_matrix.h"
+#include "pyviennacl.hpp"
+#include "sparse_matrix.hpp"
 
 #include <viennacl/linalg/amg.hpp>
 #include <viennacl/linalg/ichol.hpp>
