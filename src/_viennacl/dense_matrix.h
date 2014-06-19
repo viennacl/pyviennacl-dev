@@ -116,7 +116,7 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   .def("set_entry", &set_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE> >) \
   .def("as_ndarray",                                                    \
        &vcl_matrix_to_ndarray<vcl::matrix_base<TYPE>, TYPE>)            \
-  .add_property("memory_domain", &vcl::matrix_base<TYPE, F>::memory_domain) \
+  .add_property("memory_domain", &vcl::matrix_base<TYPE>::memory_domain) \
   .add_property("handle", bp::make_function                             \
                 (get_matrix_##TYPE##_handle,                            \
                  bp::return_internal_reference<>()))                    \
