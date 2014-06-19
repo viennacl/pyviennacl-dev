@@ -246,6 +246,8 @@ HostT vcl_scalar_to_host(const vcl::scalar<HostT>& vcl_s)
 
 #define ENUM_VALUE(NS, V) .value( #V, NS :: V )
 
+#define PYVCL_SUBMODULE(NAME) void export_ ## NAME ()
+
 #define PYTHON_SCOPE_SUBMODULE(NAME)                                    \
   bp::object NAME##_submodule                                           \
   (bp::handle<>(bp::borrowed(PyImport_AddModule("_viennacl." #NAME)))); \

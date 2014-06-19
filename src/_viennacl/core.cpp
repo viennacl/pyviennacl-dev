@@ -3,7 +3,6 @@
 
 #include "viennacl.h"
 
-#define PYVCL_SUBMODULE(NAME) void export_ ## NAME ()
 PYVCL_SUBMODULE(vector_int);
 PYVCL_SUBMODULE(vector_long);
 PYVCL_SUBMODULE(vector_uint);
