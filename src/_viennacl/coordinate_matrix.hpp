@@ -1,7 +1,7 @@
 #ifndef _PYVIENNACL_COORDINATE_MATRIX_HPP
 #define _PYVIENNACL_COORDINATE_MATRIX_HPP
 
-#include "sparse_matrix.h"
+#include "sparse_matrix.hpp"
 
 #define EXPORT_COORDINATE_MATRIX(TYPE)                                  \
   bp::class_<vcl::coordinate_matrix<TYPE>,                              \
@@ -19,24 +19,24 @@
                               bp::return_value_policy<bp::return_by_value>())) \
   .def("prod", pyvcl_do_2ary_op<vcl::vector<TYPE>,                      \
        vcl::coordinate_matrix<TYPE>&, vcl::vector<TYPE>&,               \
-       op_prod, 0>)                                                     \
+       op_prod>)                                                        \
   ;
     /* 
     .def("inplace_solve", pyvcl_do_3ary_op<vcl::coordinate_matrix<TYPE>,
 	 vcl::coordinate_matrix<TYPE>&, vcl::vector<TYPE>&,
 	 vcl::linalg::lower_tag,
-	 op_inplace_solve, 0>)
+	 op_inplace_solve>)
     .def("inplace_solve", pyvcl_do_3ary_op<vcl::coordinate_matrix<TYPE>,
 	 vcl::coordinate_matrix<TYPE>&, vcl::vector<TYPE>&,
 	 vcl::linalg::unit_lower_tag,
-	 op_inplace_solve, 0>)
+	 op_inplace_solve>)
     .def("inplace_solve", pyvcl_do_3ary_op<vcl::coordinate_matrix<TYPE>,
 	 vcl::coordinate_matrix<TYPE>&, vcl::vector<TYPE>&,
 	 vcl::linalg::unit_upper_tag,
-	 op_inplace_solve, 0>)
+	 op_inplace_solve>)
     .def("inplace_solve", pyvcl_do_3ary_op<vcl::coordinate_matrix<TYPE>,
 	 vcl::coordinate_matrix<TYPE>&, vcl::vector<TYPE>&,
 	 vcl::linalg::upper_tag,
-	 op_inplace_solve, 0>)*/
+	 op_inplace_solve>)*/
 
 #endif

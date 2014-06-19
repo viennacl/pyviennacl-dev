@@ -1,5 +1,5 @@
-#include "viennacl.h"
-#include "sparse_matrix.h"
+#include "pyviennacl.hpp"
+#include "sparse_matrix.hpp"
 
 #include <viennacl/linalg/power_iter.hpp>
 #include <viennacl/linalg/lanczos.hpp>

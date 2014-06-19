@@ -1,7 +1,7 @@
 #ifndef _PYVIENNACL_SOLVE_OP_FUNC_HPP
 #define _PYVIENNACL_SOLVE_OP_FUNC_HPP
 
-#include "viennacl.h"
+#include "pyviennacl.hpp"
 
 DO_OP_FUNC(op_solve)
 {

@@ -1,4 +1,4 @@
-#include "dense_matrix.h"
+#include "dense_matrix.hpp"
 
 PYVCL_SUBMODULE(dense_matrix_int)
 {

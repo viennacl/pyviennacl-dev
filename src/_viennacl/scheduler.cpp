@@ -1,98 +1,96 @@
-#include "scheduler.h"
+#include "scheduler.hpp"
 
 PYVCL_SUBMODULE(scheduler)
 {
 
-#define VALUE(NS, V) .value( #V, NS :: V )
-
   bp::enum_<vcl::scheduler::operation_node_type_family>
     ("operation_node_type_family")
-    VALUE(vcl::scheduler, OPERATION_UNARY_TYPE_FAMILY)
-    VALUE(vcl::scheduler, OPERATION_BINARY_TYPE_FAMILY)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TYPE_FAMILY)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_TYPE_FAMILY)
     ;
 
   bp::enum_<vcl::scheduler::operation_node_type>("operation_node_type")
     // unary expression
-    VALUE(vcl::scheduler, OPERATION_UNARY_ABS_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_ACOS_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_ASIN_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_ATAN_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_CEIL_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_COS_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_COSH_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_EXP_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_FABS_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_FLOOR_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_LOG_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_LOG10_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_SIN_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_SINH_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_SQRT_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_TAN_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_TANH_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_TRANS_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_NORM_1_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_NORM_2_TYPE)
-    VALUE(vcl::scheduler, OPERATION_UNARY_NORM_INF_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_ABS_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_ACOS_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_ASIN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_ATAN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CEIL_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_COS_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_COSH_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_EXP_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_FABS_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_FLOOR_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_LOG_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_LOG10_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_SIN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_SINH_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_SQRT_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TAN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TANH_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TRANS_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_NORM_1_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_NORM_2_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_NORM_INF_TYPE)
     
     // binary expression
-    VALUE(vcl::scheduler, OPERATION_BINARY_ACCESS_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_ASSIGN_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_INPLACE_ADD_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_INPLACE_SUB_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_ADD_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_SUB_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_MULT_TYPE)// scalar * vector/matrix
-    VALUE(vcl::scheduler, OPERATION_BINARY_DIV_TYPE) // vector/matrix / scalar
-    VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_PROD_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_DIV_TYPE)
-    VALUE(vcl::scheduler, OPERATION_BINARY_INNER_PROD_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ACCESS_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ASSIGN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_INPLACE_ADD_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_INPLACE_SUB_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ADD_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_SUB_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MAT_MAT_PROD_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MULT_TYPE)// scalar * vector/matrix
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_DIV_TYPE) // vector/matrix / scalar
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_PROD_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_DIV_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_INNER_PROD_TYPE)
     ;
 
   bp::enum_<vcl::scheduler::statement_node_type_family>
     ("statement_node_type_family")
-    VALUE(vcl::scheduler, COMPOSITE_OPERATION_FAMILY)
-    VALUE(vcl::scheduler, SCALAR_TYPE_FAMILY)
-    VALUE(vcl::scheduler, VECTOR_TYPE_FAMILY)
-    VALUE(vcl::scheduler, MATRIX_TYPE_FAMILY)
+    ENUM_VALUE(vcl::scheduler, COMPOSITE_OPERATION_FAMILY)
+    ENUM_VALUE(vcl::scheduler, SCALAR_TYPE_FAMILY)
+    ENUM_VALUE(vcl::scheduler, VECTOR_TYPE_FAMILY)
+    ENUM_VALUE(vcl::scheduler, MATRIX_TYPE_FAMILY)
     ;
 
   bp::enum_<vcl::scheduler::statement_node_subtype>
     ("statement_node_subtype")
-    VALUE(vcl::scheduler, INVALID_SUBTYPE)
+    ENUM_VALUE(vcl::scheduler, INVALID_SUBTYPE)
 
-    VALUE(vcl::scheduler, HOST_SCALAR_TYPE)
-    VALUE(vcl::scheduler, DEVICE_SCALAR_TYPE)
+    ENUM_VALUE(vcl::scheduler, HOST_SCALAR_TYPE)
+    ENUM_VALUE(vcl::scheduler, DEVICE_SCALAR_TYPE)
 
-    VALUE(vcl::scheduler, DENSE_VECTOR_TYPE)
-    VALUE(vcl::scheduler, IMPLICIT_VECTOR_TYPE)
+    ENUM_VALUE(vcl::scheduler, DENSE_VECTOR_TYPE)
+    ENUM_VALUE(vcl::scheduler, IMPLICIT_VECTOR_TYPE)
 
-    VALUE(vcl::scheduler, DENSE_MATRIX_TYPE)
-    VALUE(vcl::scheduler, IMPLICIT_MATRIX_TYPE)
+    ENUM_VALUE(vcl::scheduler, DENSE_MATRIX_TYPE)
+    ENUM_VALUE(vcl::scheduler, IMPLICIT_MATRIX_TYPE)
 
-    VALUE(vcl::scheduler, COMPRESSED_MATRIX_TYPE)
-    VALUE(vcl::scheduler, COORDINATE_MATRIX_TYPE)
-    VALUE(vcl::scheduler, ELL_MATRIX_TYPE)
-    VALUE(vcl::scheduler, HYB_MATRIX_TYPE)
+    ENUM_VALUE(vcl::scheduler, COMPRESSED_MATRIX_TYPE)
+    ENUM_VALUE(vcl::scheduler, COORDINATE_MATRIX_TYPE)
+    ENUM_VALUE(vcl::scheduler, ELL_MATRIX_TYPE)
+    ENUM_VALUE(vcl::scheduler, HYB_MATRIX_TYPE)
     ;
 
   bp::enum_<vcl::scheduler::statement_node_numeric_type>
     ("statement_node_numeric_type")
-    VALUE(vcl::scheduler, INVALID_NUMERIC_TYPE)
+    ENUM_VALUE(vcl::scheduler, INVALID_NUMERIC_TYPE)
 
-    VALUE(vcl::scheduler, CHAR_TYPE)
-    VALUE(vcl::scheduler, UCHAR_TYPE)
-    VALUE(vcl::scheduler, SHORT_TYPE)
-    VALUE(vcl::scheduler, USHORT_TYPE)
-    VALUE(vcl::scheduler, INT_TYPE)
-    VALUE(vcl::scheduler, UINT_TYPE)
-    VALUE(vcl::scheduler, LONG_TYPE)
-    VALUE(vcl::scheduler, ULONG_TYPE)
-    VALUE(vcl::scheduler, HALF_TYPE)
-    VALUE(vcl::scheduler, FLOAT_TYPE)
-    VALUE(vcl::scheduler, DOUBLE_TYPE)
+    ENUM_VALUE(vcl::scheduler, CHAR_TYPE)
+    ENUM_VALUE(vcl::scheduler, UCHAR_TYPE)
+    ENUM_VALUE(vcl::scheduler, SHORT_TYPE)
+    ENUM_VALUE(vcl::scheduler, USHORT_TYPE)
+    ENUM_VALUE(vcl::scheduler, INT_TYPE)
+    ENUM_VALUE(vcl::scheduler, UINT_TYPE)
+    ENUM_VALUE(vcl::scheduler, LONG_TYPE)
+    ENUM_VALUE(vcl::scheduler, ULONG_TYPE)
+    ENUM_VALUE(vcl::scheduler, HALF_TYPE)
+    ENUM_VALUE(vcl::scheduler, FLOAT_TYPE)
+    ENUM_VALUE(vcl::scheduler, DOUBLE_TYPE)
     ;
 
   bp::class_<vcl::scheduler::lhs_rhs_element>("lhs_rhs_element")

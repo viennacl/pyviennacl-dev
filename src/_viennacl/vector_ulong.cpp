@@ -1,4 +1,4 @@
-#include "vector.h"
+#include "vector.hpp"
 
 PYVCL_SUBMODULE(vector_ulong)
 {

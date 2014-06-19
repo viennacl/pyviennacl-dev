@@ -1,4 +1,4 @@
-#include "viennacl.h"
+#include "pyviennacl.hpp"
 
 #include <viennacl/linalg/inner_prod.hpp>
 #include <viennacl/linalg/nmf.hpp>
@@ -97,24 +97,24 @@ DO_OP_FUNC(op_nmf) {
 #define EXPORT_FUNCTIONS_F(TYPE, F)                                     \
   bp::def("outer", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
-          op_outer_prod, 0>);                                           \
+          op_outer_prod>);                                              \
   bp::def("element_pow", pyvcl_do_2ary_op<vcl::matrix<TYPE, F>,         \
-          vcl::matrix_base<TYPE>&, vcl::matrix_base<TYPE>&,       \
-          op_element_pow, 0>);                                          \
+          vcl::matrix_base<TYPE>&, vcl::matrix_base<TYPE>&,             \
+          op_element_pow>);                                             \
   bp::def("norm_frobenius", pyvcl_do_1ary_op<vcl::scalar<TYPE>,         \
           vcl::matrix<TYPE, F>&,                                        \
-          op_norm_frobenius, 0>);                                       \
+          op_norm_frobenius>);                                          \
   bp::def("inplace_qr", pyvcl_do_2ary_op<std::vector<TYPE>,             \
           vcl::matrix<TYPE, F>&, vcl::vcl_size_t,                       \
-          op_inplace_qr, 0>);                                           \
+          op_inplace_qr>);                                              \
   bp::def("inplace_qr_apply_trans_Q", pyvcl_do_3ary_op<bp::object,      \
           const vcl::matrix<TYPE, F>&, const std::vector<TYPE>&,        \
           vcl::vector<TYPE>&,                                           \
-          op_inplace_qr_apply_trans_q, 0>);                             \
+          op_inplace_qr_apply_trans_q>);                                \
   bp::def("recoverQ", pyvcl_do_4ary_op<bp::object,                      \
           const vcl::matrix<TYPE, F>&, const std::vector<TYPE>&,        \
           vcl::matrix<TYPE, F>&, vcl::matrix<TYPE, F>&,                 \
-          op_recoverq, 0>);
+          op_recoverq>);
 
 // TODO: NMF only supports row_major right now
 #define EXPORT_FUNCTIONS(TYPE)                                          \
@@ -125,41 +125,48 @@ DO_OP_FUNC(op_nmf) {
           vcl::matrix<TYPE, vcl::row_major>&,                           \
           vcl::matrix<TYPE, vcl::row_major>&,                           \
           const vcl::linalg::nmf_config&,                               \
-          op_nmf, 0>);                                                  \
+          op_nmf>);                                                     \
   bp::def("inner_prod", pyvcl_do_2ary_op<vcl::scalar<TYPE>,             \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
-          op_inner_prod, 0>);                                           \
+          op_inner_prod>);                                              \
   bp::def("element_pow", pyvcl_do_2ary_op<vcl::vector<TYPE>,            \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
-          op_element_pow, 0>);                                          \
+          op_element_pow>);                                             \
   bp::def("plane_rotation", pyvcl_do_4ary_op<bp::object,                \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           TYPE, TYPE,                                                   \
-          op_plane_rotation, 0>);                                       \
+          op_plane_rotation>);                                          \
   bp::def("norm_1", pyvcl_do_1ary_op<vcl::scalar<TYPE>,                 \
           vcl::vector_base<TYPE>&,                                      \
-          op_norm_1, 0>);                                               \
+          op_norm_1>);                                                  \
   bp::def("norm_2", pyvcl_do_1ary_op<vcl::scalar<TYPE>,                 \
           vcl::vector_base<TYPE>&,                                      \
-          op_norm_2, 0>);                                               \
+          op_norm_2>);                                                  \
   bp::def("norm_inf", pyvcl_do_1ary_op<vcl::scalar<TYPE>,               \
           vcl::vector_base<TYPE>&,                                      \
-          op_norm_inf, 0>);                                             \
+          op_norm_inf>);                                                \
   bp::def("fft", pyvcl_do_2ary_op<bp::object,                           \
           vcl::vector<TYPE>&, vcl::vector<TYPE>&,                       \
-          op_fft, 0>);                                                  \
+          op_fft>);                                                     \
   bp::def("ifft", pyvcl_do_2ary_op<bp::object,                          \
           vcl::vector<TYPE>&, vcl::vector<TYPE>&,                       \
-          op_ifft, 0>);                                                 \
+          op_ifft>);                                                    \
   bp::def("inplace_fft", pyvcl_do_1ary_op<bp::object,                   \
           vcl::vector<TYPE>&,                                           \
-          op_inplace_fft, 0>);                                          \
+          op_inplace_fft>);                                             \
   bp::def("inplace_ifft", pyvcl_do_1ary_op<bp::object,                  \
           vcl::vector<TYPE>&,                                           \
-          op_inplace_ifft, 0>);
+          op_inplace_ifft>);
 
 PYVCL_SUBMODULE(extra_functions)
 {
+
+  bp::def("backend_finish", vcl::backend::finish);
+
+  bp::class_<vcl::range>("range",
+                         bp::init<vcl::vcl_size_t, vcl::vcl_size_t>());
+  bp::class_<vcl::slice>("slice",
+                         bp::init<vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_size_t>());
 
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, double,
                                   tolerance, get_tolerance, () const);
