@@ -172,7 +172,7 @@ def main():
 
         "extra_functions", "eig", #"bandwidth_reduction",
 
-        "scheduler", "opencl_support"]
+        "scheduler", "platform_support", "opencl_support"]
 
     from glob import glob
 

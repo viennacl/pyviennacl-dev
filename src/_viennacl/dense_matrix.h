@@ -113,7 +113,12 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   return array;
 }
 
+#define COMMA ,
 #define EXPORT_DENSE_MATRIX_CLASS(TYPE, LAYOUT, F, CPU_F)               \
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::matrix_base<TYPE COMMA F>,       \
+                                  vcl::matrix_base<TYPE COMMA F>::handle_type&, \
+                                  handle, get_matrix_##TYPE##_##LAYOUT##_handle, \
+                                  ());                                  \
   bp::class_<vcl::matrix_base<TYPE, F>,                                 \
     vcl::tools::shared_ptr<vcl::matrix_base<TYPE, F> > >                \
     ("matrix_base", bp::no_init)                                        \
@@ -121,6 +126,10 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
     .def("set_entry", &set_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE, F> >) \
     .def("as_ndarray",                                                  \
          &vcl_matrix_to_ndarray<vcl::matrix_base<TYPE, F>, TYPE>)       \
+    .add_property("memory_domain", &vcl::matrix_base<TYPE, F>::memory_domain) \
+    .add_property("handle", bp::make_function                           \
+                  (get_matrix_##TYPE##_##LAYOUT##_handle,               \
+                   bp::return_internal_reference<>()))                  \
     .add_property("size1", &vcl::matrix_base<TYPE, F>::size1)           \
     .add_property("internal_size1",                                     \
                   &vcl::matrix_base<TYPE, F>::internal_size1)           \

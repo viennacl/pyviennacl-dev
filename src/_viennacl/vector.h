@@ -182,13 +182,20 @@ DO_OP_FUNC(op_index_norm_inf)
 } };
 
 #define EXPORT_VECTOR_CLASS(TYPE)					\
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::vector_base<TYPE>,               \
+                                  vcl::vector_base<TYPE>::handle_type&, \
+                                  handle, get_vector_##TYPE##_handle, ()); \
   bp::class_<vcl::vector_base<TYPE>,                                    \
-	     vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >               \
+    vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >                   \
     ("vector_base", bp::no_init)                                        \
     .def("get_entry", &get_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("set_entry", &set_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("as_ndarray", &vcl_vector_to_ndarray<TYPE>)			\
     .def("as_list", &vcl_vector_to_list<TYPE>)                          \
+    .add_property("memory_domain", &vcl::vector_base<TYPE>::memory_domain) \
+    .add_property("handle", bp::make_function                           \
+                  (get_vector_##TYPE##_handle,                          \
+                   bp::return_internal_reference<>()))                  \
     .add_property("size", &vcl::vector_base<TYPE>::size)                \
     .add_property("internal_size", &vcl::vector_base<TYPE>::internal_size) \
     .add_property("index_norm_inf", pyvcl_do_1ary_op<vcl::scalar<TYPE>,	\
