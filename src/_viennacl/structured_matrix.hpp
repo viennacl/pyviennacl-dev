@@ -1,8 +1,7 @@
 #ifndef _PYVIENNACL_STRUCTURED_MATRIX_HPP
 #define _PYVIENNACL_STRUCTURED_MATRIX_HPP
 
-#include "viennacl.h"
-#include "dense_matrix.h"
+#include "dense_matrix.hpp"
 
 #include <viennacl/circulant_matrix.hpp>
 #include <viennacl/hankel_matrix.hpp>

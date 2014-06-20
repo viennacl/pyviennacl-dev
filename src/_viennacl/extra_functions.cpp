@@ -1,4 +1,4 @@
-#include "pyviennacl.hpp"
+#include "common.hpp"
 
 #include <viennacl/linalg/inner_prod.hpp>
 #include <viennacl/linalg/nmf.hpp>

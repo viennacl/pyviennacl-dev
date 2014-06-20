@@ -12,7 +12,6 @@
 #include <viennacl/ell_matrix.hpp>
 #include <viennacl/hyb_matrix.hpp>
 
-#include "pyviennacl.hpp"
 #include "solve_op_func.hpp"
 #include "preconditioners.hpp"
 

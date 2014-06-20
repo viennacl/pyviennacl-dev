@@ -1,7 +1,7 @@
 #include <iostream>
 #include <typeinfo>
 
-#include "pyviennacl.hpp"
+#include "common.hpp"
 
 PYVCL_SUBMODULE(scalars);
 

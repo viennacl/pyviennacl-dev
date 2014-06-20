@@ -1,4 +1,3 @@
-#include "pyviennacl.hpp"
 #include "sparse_matrix.hpp"
 
 #include <viennacl/linalg/power_iter.hpp>

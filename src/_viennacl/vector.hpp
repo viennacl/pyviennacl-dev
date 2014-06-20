@@ -1,7 +1,6 @@
 #ifndef _PYVIENNACL_VECTOR_H
 #define _PYVIENNACL_VECTOR_H
 
-#include "pyviennacl.hpp"
 #include "entry_proxy.hpp"
 
 #include <boost/numeric/ublas/vector_sparse.hpp>

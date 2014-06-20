@@ -1,4 +1,3 @@
-#include "pyviennacl.hpp"
 #include "vector.hpp"
 
 #include <viennacl/ocl/context.hpp>

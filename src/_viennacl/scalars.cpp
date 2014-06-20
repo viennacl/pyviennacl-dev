@@ -1,4 +1,4 @@
-#include "pyviennacl.hpp"
+#include "common.hpp"
 
 #define EXPORT_SCALAR_CLASS(TYPE)                                       \
   bp::class_<vcl::scalar<TYPE> >("scalar_" #TYPE)                       \

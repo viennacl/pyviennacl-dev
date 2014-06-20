@@ -4,7 +4,6 @@
 #include <viennacl/linalg/direct_solve.hpp>
 #include <viennacl/matrix.hpp>
 
-#include "pyviennacl.hpp"
 #include "solve_op_func.hpp"
 
 #define EXPORT_MATRIX_VECTOR_SOLVERS(TYPE)                              \

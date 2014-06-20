@@ -1,7 +1,7 @@
 #ifndef _PYVIENNACL_VECTOR_H
 #define _PYVIENNACL_VECTOR_H
 
-#include "pyviennacl.hpp"
+#include "common.hpp"
 
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/vector_of_vector.hpp>

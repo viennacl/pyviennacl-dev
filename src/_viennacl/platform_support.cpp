@@ -1,4 +1,4 @@
-#include "viennacl.h"
+#include "common.hpp"
 
 #include <viennacl/context.hpp>
 
