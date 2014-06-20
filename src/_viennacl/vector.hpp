@@ -98,7 +98,7 @@ np::ndarray vcl_vector_to_ndarray(const vcl::vector_base<SCALARTYPE>& v)
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_ndarray(const np::ndarray& array)
+vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
 {
   int d = array.get_nd();
   if (d != 1) {
@@ -108,7 +108,7 @@ vcl_vector_init_ndarray(const np::ndarray& array)
   
   vcl::vcl_size_t s = (vcl::vcl_size_t) array.shape(0);
   
-  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s);
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s, ctx);
   std::vector<SCALARTYPE> cpu_vector(s);
   
   for (vcl::vcl_size_t i=0; i < s; ++i)
@@ -121,20 +121,42 @@ vcl_vector_init_ndarray(const np::ndarray& array)
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_list(const bp::list& l)
+vcl_vector_init_list(const bp::list& l, const vcl::context& ctx)
 {
   return vcl_vector_init_ndarray<SCALARTYPE>
-    (np::from_object(l, np::dtype::get_builtin<SCALARTYPE>()));
+    (np::from_object(l, np::dtype::get_builtin<SCALARTYPE>()), ctx);
 }
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value)
+vcl_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value,
+                       const vcl::context &ctx)
 {
   ublas::scalar_vector<SCALARTYPE> s_v(length, value);
-  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(length);
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(length, ctx);
   vcl::copy(s_v.begin(), s_v.end(), v->begin());
   return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_ndarray_default_context(const np::ndarray& array)
+{
+  return vcl_vector_init_ndarray<SCALARTYPE>(array, vcl::context());
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_list_default_context(const bp::list& l)
+{
+  return vcl_vector_init_list<SCALARTYPE>(l, vcl::context());
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_scalar_default_context(vcl::vcl_size_t length, SCALARTYPE value)
+{
+  return vcl_vector_init_scalar<SCALARTYPE>(length, value, vcl::context());
 }
 
 template <class SCALARTYPE>
@@ -214,16 +236,20 @@ DO_OP_FUNC(op_index_norm_inf)
              bp::bases<vcl::vector_base<TYPE> > >                       \
     ( "vector_" #TYPE )                                                 \
     .def(bp::init<int>())						\
+    .def(bp::init<int, vcl::context>())                                 \
     .def(bp::init<vcl::vector_base<TYPE> >())				\
     .def("__init__", bp::make_constructor(vcl_vector_init_ndarray<TYPE>)) \
     .def("__init__", bp::make_constructor(vcl_vector_init_list<TYPE>))	\
     .def("__init__", bp::make_constructor(vcl_vector_init_scalar<TYPE>))\
+    .def("__init__", bp::make_constructor(vcl_vector_init_ndarray_default_context<TYPE>)) \
+    .def("__init__", bp::make_constructor(vcl_vector_init_list_default_context<TYPE>))	\
+    .def("__init__", bp::make_constructor(vcl_vector_init_scalar_default_context<TYPE>))\
     ;                                                                   \
   bp::class_<std::vector<TYPE>,						\
 	     vcl::tools::shared_ptr<std::vector<TYPE> > >			\
     ( "std_vector_" #TYPE )                                             \
     .def(bp::init<int>())						\
-    .def(bp::init<std::vector<TYPE> >())				\
+  .def(bp::init<std::vector<TYPE> >())                                  \
     .def("__init__", bp::make_constructor(std_vector_init_ndarray<TYPE>)) \
     .def("__init__", bp::make_constructor(std_vector_init_list<TYPE>))	\
     .def("__init__", bp::make_constructor(std_vector_init_scalar<TYPE>))\
