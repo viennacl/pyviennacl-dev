@@ -8,18 +8,19 @@
 
 #include "dense_matrix.hpp"
 
-template<class MATRIXTYPE, class SCALARTYPE>
+template<class MATRIXTYPE>
 np::ndarray vcl_structured_matrix_to_ndarray(MATRIXTYPE& m)
 {
 
   // TODO: THIS IS VERY CRUDE!
 
+  typedef typename MATRIXTYPE::value_type::value_type SCALARTYPE;
+
   ublas::matrix<SCALARTYPE> cpu_dense_m(m.size1(), m.size2());
   vcl::matrix<SCALARTYPE> vcl_dense_m(m.size1(), m.size2());
   vcl::copy(m, cpu_dense_m);
   vcl::copy(cpu_dense_m, vcl_dense_m);
-  return vcl_matrix_to_ndarray<vcl::matrix<SCALARTYPE>, SCALARTYPE>
-    (vcl_dense_m);
+  return vcl_matrix_to_ndarray<SCALARTYPE>(vcl_dense_m);
 }
 
 #define EXPORT_STRUCTURED_MATRIX(MAT, SCALAR)                           \
@@ -28,7 +29,7 @@ np::ndarray vcl_structured_matrix_to_ndarray(MATRIXTYPE& m)
   .def("get_entry", &get_vcl_matrix_entry<SCALAR, vcl::MAT<SCALAR, 4> >) \
   .def("set_entry", &set_vcl_matrix_entry<SCALAR, vcl::MAT<SCALAR, 4> >) \
   .def("as_ndarray",                                                    \
-         &vcl_structured_matrix_to_ndarray<vcl::MAT<SCALAR, 4>, SCALAR>) \
+       &vcl_structured_matrix_to_ndarray<vcl::MAT<SCALAR, 4> >)         \
   .add_property("size1", &vcl::MAT<SCALAR, 4>::size1)                   \
   .add_property("size2", &vcl::MAT<SCALAR, 4>::size2)                   \
   .add_property("internal_size",                                        \
