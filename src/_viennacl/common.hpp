@@ -180,12 +180,15 @@ ReturnT pyvcl_do_4ary_op(Operand1T a, Operand2T b,
   static ReturnT do_op(pyvcl_op<ReturnT,                             \
                        Operand1T, Operand2T,                         \
                        Operand3T, Operand4T,                         \
-                       OP>& o)
+                       OP>& o)                                       \
+
+#define CLOSE_OP_FUNC }
 
 DO_OP_FUNC(op_prod)
 {
   return vcl::linalg::prod(o.operand1, o.operand2);
-} };
+}
+CLOSE_OP_FUNC;
 
 /** @brief Returns a double describing the VCL_T */
 template <class HostT>
@@ -194,6 +197,8 @@ HostT vcl_scalar_to_host(const vcl::scalar<HostT>& vcl_s)
   HostT cpu_s = vcl_s;
   return cpu_s;
 }
+
+#define COMMA ,
 
 #define DISAMBIGUATE_FUNCTION_PTR(RET, OLD_NAME, NEW_NAME, ARGS) \
   RET (*NEW_NAME) ARGS = &OLD_NAME;

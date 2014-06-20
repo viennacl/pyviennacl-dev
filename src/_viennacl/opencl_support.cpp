@@ -75,12 +75,14 @@ PYVCL_SUBMODULE(opencl_support)
   bp::def("get_current_device", vcl::ocl::current_device,
           bp::return_value_policy<bp::copy_const_reference>());
     
+#ifdef VIENNACL_WITH_OPENCL    
   DISAMBIGUATE_FUNCTION_PTR(void,
                             vcl::ocl::setup_context,
                             setup_context_single,
                             (long, vcl::ocl::device const&));
   bp::def("setup_context", setup_context_single);
-    
+
   bp::def("switch_context", vcl::ocl::switch_context);
+#endif
 
 }

@@ -1,98 +1,135 @@
 #include "common.hpp"
 
 #include <viennacl/linalg/inner_prod.hpp>
-#include <viennacl/linalg/nmf.hpp>
 #include <viennacl/linalg/norm_1.hpp>
 #include <viennacl/linalg/norm_2.hpp>
 #include <viennacl/linalg/norm_inf.hpp>
 #include <viennacl/linalg/norm_frobenius.hpp>
 #include <viennacl/linalg/qr.hpp>
+
+#ifdef VIENNACL_WITH_OPENCL
+#include <viennacl/linalg/nmf.hpp>
 #include <viennacl/fft.hpp>
+#else
+// This is here to keep #ifdefs to a minimum
+namespace viennacl {
+  namespace linalg {
+    struct nmf_config{};
+  } 
+}
+#endif
 
 DO_OP_FUNC(op_inner_prod)
 {
   return vcl::linalg::inner_prod(o.operand1, o.operand2);
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_outer_prod)
 {
   return vcl::linalg::outer_prod(o.operand1, o.operand2);
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_element_pow)
 {
   return vcl::linalg::element_pow(o.operand1, o.operand2);
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_norm_1)
 {
   return vcl::linalg::norm_1(o.operand1);
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_norm_2)
 {
   return vcl::linalg::norm_2(o.operand1);
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_norm_inf)
 {
   return vcl::linalg::norm_inf(o.operand1);
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_norm_frobenius)
 {
   return vcl::linalg::norm_frobenius(o.operand1);
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_plane_rotation)
 {
   vcl::linalg::plane_rotation(o.operand1, o.operand2,
 			      o.operand3, o.operand4);
   return bp::object();
-} };
-
-DO_OP_FUNC(op_fft)
-{
-  vcl::fft(o.operand1, o.operand2);
-  return bp::object();
-} };
-
-DO_OP_FUNC(op_inplace_fft)
-{
-  vcl::inplace_fft(o.operand1);
-  return bp::object();
-} };
-
-DO_OP_FUNC(op_ifft)
-{
-  vcl::ifft(o.operand1, o.operand2);
-  return bp::object();
-} };
-
-DO_OP_FUNC(op_inplace_ifft)
-{
-  vcl::inplace_ifft(o.operand1);
-  return bp::object();
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_inplace_qr) {
   return vcl::linalg::inplace_qr(o.operand1, o.operand2);
-} };
+}
+CLOSE_OP_FUNC;
+
 
 DO_OP_FUNC(op_inplace_qr_apply_trans_q) {
   vcl::linalg::inplace_qr_apply_trans_Q(o.operand1, o.operand2, o.operand3);
   return bp::object();
-} };
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_recoverq) {
   vcl::linalg::recoverQ(o.operand1, o.operand2, o.operand3, o.operand4);
   return bp::object();
-} };
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_fft)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::fft(o.operand1, o.operand2);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_inplace_fft)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::inplace_fft(o.operand1);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_ifft)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::ifft(o.operand1, o.operand2);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_inplace_ifft)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::inplace_ifft(o.operand1);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
 
 DO_OP_FUNC(op_nmf) {
+#ifdef VIENNACL_WITH_OPENCL
   vcl::linalg::nmf(o.operand1, o.operand2, o.operand3, o.operand4);
+#endif
   return bp::object();
-} };
+}
+CLOSE_OP_FUNC;
 
 #define EXPORT_FUNCTIONS_F(TYPE, F)                                     \
   bp::def("outer", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
@@ -168,6 +205,7 @@ PYVCL_SUBMODULE(extra_functions)
   bp::class_<vcl::slice>("slice",
                          bp::init<vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_size_t>());
 
+#ifdef VIENNACL_WITH_OPENCL
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, double,
                                   tolerance, get_tolerance, () const);
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, void,
@@ -217,6 +255,9 @@ PYVCL_SUBMODULE(extra_functions)
     .add_property("print_relative_error",
                   get_print_relative_error, set_print_relative_error)
     ;
+#else
+  bp::class_<vcl::linalg::nmf_config>("nmf_config", bp::no_init);
+#endif
 
   /* TODO missing: char, short, uchar, ushort
      Some of these only make compile on Windows for float types -- eg norm_2, which

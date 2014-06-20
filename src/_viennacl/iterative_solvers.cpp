@@ -19,6 +19,7 @@ PYVCL_SUBMODULE(iterative_solvers)
     .add_property("error", get_cg_error, set_cg_error)
     ;
 
+#ifdef VIENNACL_WITH_OPENCL
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::mixed_precision_cg_tag,
                                   unsigned int,
                                   iters, get_mixed_precision_cg_iters,
@@ -49,6 +50,7 @@ PYVCL_SUBMODULE(iterative_solvers)
     .add_property("error",
                   get_mixed_precision_cg_error, set_mixed_precision_cg_error)
     ;
+#endif
 
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::bicgstab_tag, vcl::vcl_size_t,
                                   iters, get_bicgstab_iters, () const)

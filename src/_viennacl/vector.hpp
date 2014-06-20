@@ -211,7 +211,8 @@ bp::list list_from_vector(std::vector<T> v) {
 DO_OP_FUNC(op_index_norm_inf)
 {
   return vcl::linalg::index_norm_inf(o.operand1);
-} };
+}
+CLOSE_OP_FUNC;
 
 #define EXPORT_VECTOR_CLASS(TYPE)					\
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::vector_base<TYPE>,               \
