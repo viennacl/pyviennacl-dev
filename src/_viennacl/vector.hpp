@@ -98,6 +98,17 @@ np::ndarray vcl_vector_to_ndarray(const vcl::vector_base<SCALARTYPE>& v)
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_mem(SCALARTYPE* ptr, vcl::memory_types mem_type,
+                    vcl::vcl_size_t size, vcl::vcl_size_t start = 0,
+                    vcl::vcl_ptrdiff_t stride = 1)
+{
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>
+    (ptr, mem_type, size, start, stride);
+  return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
 vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
 {
   int d = array.get_nd();
@@ -208,7 +219,11 @@ DO_OP_FUNC(op_index_norm_inf)
                                   handle, get_vector_##TYPE##_handle, ()); \
   bp::class_<vcl::vector_base<TYPE>,                                    \
              vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >          \
-    ("vector_base", bp::no_init)                                        \
+  ("vector_base",                                                       \
+   bp::init<vcl::backend::mem_handle&,                                  \
+   vcl::vector_base<TYPE>::size_type,                                   \
+   vcl::vector_base<TYPE>::size_type,                                   \
+   vcl::vector_base<TYPE>::difference_type>())                          \
     .def("get_entry", &get_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("set_entry", &set_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("as_ndarray", &vcl_vector_to_ndarray<TYPE>)			\
@@ -238,6 +253,7 @@ DO_OP_FUNC(op_index_norm_inf)
     .def(bp::init<int>())						\
     .def(bp::init<int, vcl::context>())                                 \
     .def(bp::init<vcl::vector_base<TYPE> >())				\
+    .def("__init__", bp::make_constructor(vcl_vector_init_mem<TYPE>))   \
     .def("__init__", bp::make_constructor(vcl_vector_init_ndarray<TYPE>)) \
     .def("__init__", bp::make_constructor(vcl_vector_init_list<TYPE>))	\
     .def("__init__", bp::make_constructor(vcl_vector_init_scalar<TYPE>))\

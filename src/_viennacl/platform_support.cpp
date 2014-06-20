@@ -3,6 +3,20 @@
 #include <viennacl/context.hpp>
 #include <viennacl/backend/mem_handle.hpp>
 
+vcl::vcl_size_t get_ram_handle(vcl::backend::mem_handle& m) {
+  return (vcl::vcl_size_t) m.ram_handle().get();
+}
+#ifdef VIENNACL_WITH_OPENCL
+vcl::vcl_size_t get_opencl_handle(vcl::backend::mem_handle& m) {
+  return (vcl::vcl_size_t) m.opencl_handle().get();
+}
+#endif
+#ifdef VIENNACL_WITH_CUDA
+vcl::vcl_size_t get_cuda_handle(vcl::backend::mem_handle& m) {
+  return (vcl::vcl_size_t) m.cuda_handle().get();
+}
+#endif
+
 PYVCL_SUBMODULE(platform_support)
 {
 
@@ -16,25 +30,6 @@ PYVCL_SUBMODULE(platform_support)
   bp::scope().attr("default_memory_type") = vcl::backend::default_memory_type();
 
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::backend::mem_handle,
-                                  vcl::backend::mem_handle::ram_handle_type&,
-                                  ram_handle,
-                                  ram_handle,
-                                  ());
-#ifdef VIENNACL_WITH_OPENCL
-  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::backend::mem_handle,
-                                  vcl::ocl::handle<cl_mem>&,
-                                  opencl_handle,
-                                  opencl_handle,
-                                  ());
-#endif
-#ifdef VIENNACL_WITH_CUDA
-  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::backend::mem_handle,
-                                  vcl::backend::mem_handle::cuda_handle_type&,
-                                  cuda_handle,
-                                  cuda_handle,
-                                  ());
-#endif
-  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::backend::mem_handle,
                                   vcl::vcl_size_t,
                                   raw_size,
                                   mem_handle_get_raw_size,
@@ -45,15 +40,12 @@ PYVCL_SUBMODULE(platform_support)
                                   mem_handle_set_raw_size,
                                   (vcl::vcl_size_t));
   bp::class_<vcl::backend::mem_handle>("mem_handle")
-    .add_property("ram_handle", 
-                  bp::make_function(ram_handle, bp::return_internal_reference<>()))
+    .add_property("ram_handle", get_ram_handle)
 #ifdef VIENNACL_WITH_OPENCL
-    .add_property("opencl_handle", 
-                  bp::make_function(opencl_handle, bp::return_internal_reference<>()))
+    .add_property("opencl_handle", get_opencl_handle)
 #endif
 #ifdef VIENNACL_WITH_CUDA
-    .add_property("cuda_handle", 
-                  bp::make_function(cuda_handle, bp::return_internal_reference<>()))
+    .add_property("cuda_handle", get_cuda_handle)
 #endif
     .add_property("active_handle_id", &vcl::backend::mem_handle::get_active_handle_id,
                   &vcl::backend::mem_handle::switch_active_handle_id)
