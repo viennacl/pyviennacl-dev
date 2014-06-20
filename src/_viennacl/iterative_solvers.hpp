@@ -18,117 +18,33 @@
 #include "solve_op_func.hpp"
 #include "preconditioners.hpp"
 
+// TODO:: mixed_precision_cg supports only OpenCL, compressed_matrix, and no preconditioners
 #ifdef VIENNACL_WITH_OPENCL
 
-#define EXPORT_DENSE_ITERATIVE_SOLVERS_F(TYPE, F, PRECOND)              \
+#define EXPORT_OPENCL_PRECONDITIONED_SOLVERS(MAT, TYPE)                 \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::amg_precond<MAT>); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::spai_precond<MAT>); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::fspai_precond<MAT>);
+
+#define EXPORT_OPENCL_NON_PRECONDITIONED_SOLVERS(MAT, TYPE)             \
   bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::cg_tag&, PRECOND&,                               \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::mixed_precision_cg_tag&, PRECOND&,               \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::bicgstab_tag&, PRECOND&,                         \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::gmres_tag&, PRECOND&,                            \
+          MAT&, vcl::vector<TYPE>&,                                     \
+          vcl::linalg::mixed_precision_cg_tag&, vcl::linalg::no_precond, \
           op_solve_precond>);
 
-#define EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, PRECOND)     \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          MAT&, vcl::vector<TYPE>&,                                     \
-          vcl::linalg::cg_tag&, PRECOND&,                               \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::mixed_precision_cg_tag&, PRECOND&,               \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          MAT&, vcl::vector<TYPE>&,                                     \
-          vcl::linalg::bicgstab_tag&, PRECOND&,                         \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          MAT&, vcl::vector<TYPE>&,                                     \
-          vcl::linalg::gmres_tag&, PRECOND&,                            \
-          op_solve_precond>);
-
-#define EXPORT_SPARSE_ITERATIVE_SOLVERS(TYPE)                           \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE, vcl::linalg::no_precond); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::ichol0_precond<  \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::ilut_precond<    \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::ilu0_precond<    \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::block_ilu_precond<vcl::compressed_matrix<TYPE> COMMA vcl::linalg::ilut_tag>); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::block_ilu_precond<vcl::compressed_matrix<TYPE> COMMA vcl::linalg::ilu0_tag>); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::jacobi_precond<  \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::row_scaling<     \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::amg_precond<     \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::spai_precond<    \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::fspai_precond<   \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>, \
-                                          TYPE, vcl::linalg::no_precond); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::jacobi_precond<  \
-                                          vcl::coordinate_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::row_scaling<     \
-                                          vcl::coordinate_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::ell_matrix<TYPE>,        \
-                                          TYPE, vcl::linalg::no_precond); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::hyb_matrix<TYPE>,        \
-                                          TYPE, vcl::linalg::no_precond);
+#define EXPORT_OPENCL_SOLVERS(MAT, TYPE)                \
+  EXPORT_OPENCL_PRECONDITIONED_SOLVERS(MAT, TYPE);      \
+  EXPORT_OPENCL_NON_PRECONDITIONED_SOLVERS(MAT, TYPE);
 
 #else
 
-#define EXPORT_DENSE_ITERATIVE_SOLVERS_F(TYPE, F, PRECOND)              \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::cg_tag&, PRECOND&,                               \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::bicgstab_tag&, PRECOND&,                         \
-          op_solve_precond>);                                           \
-  bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
-          vcl::matrix_base<TYPE, F>&, vcl::vector<TYPE>&,               \
-          vcl::linalg::gmres_tag&, PRECOND&,                            \
-          op_solve_precond>);
+#define EXPORT_OPENCL_PRECONDITIONED_SOLVERS(MAT, TYPE)
+#define EXPORT_OPENCL_NON_PRECONDITIONED_SOLVERS(MAT, TYPE)
+#define EXPORT_OPENCL_SOLVERS(MAT, TYPE)
 
-#define EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, PRECOND)     \
+#endif // VIENNACL_WITH_OPENCL
+
+#define EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, PRECOND)            \
   bp::def("iterative_solve", pyvcl_do_4ary_op<vcl::vector<TYPE>,        \
           MAT&, vcl::vector<TYPE>&,                                     \
           vcl::linalg::cg_tag&, PRECOND&,                               \
@@ -142,54 +58,35 @@
           vcl::linalg::gmres_tag&, PRECOND&,                            \
           op_solve_precond>);
 
+#define EXPORT_ALL_ITERATIVE_SOLVERS(MAT, TYPE)                         \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::no_precond); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::ichol0_precond<MAT >); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::ilut_precond<MAT >); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::ilu0_precond<MAT >); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE,                           \
+                                   vcl::linalg::block_ilu_precond<MAT COMMA vcl::linalg::ilut_tag>); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE,                           \
+                                   vcl::linalg::block_ilu_precond<MAT COMMA vcl::linalg::ilu0_tag>); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::jacobi_precond<MAT>); \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(MAT, TYPE, vcl::linalg::row_scaling<MAT>); \
+  EXPORT_OPENCL_SOLVERS(MAT, TYPE);
+
+// TODO: Other sparse types than compressed don't support many preconditioners
 #define EXPORT_SPARSE_ITERATIVE_SOLVERS(TYPE)                           \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE, vcl::linalg::no_precond); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::ichol0_precond<  \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::ilut_precond<    \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::ilu0_precond<    \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::block_ilu_precond<vcl::compressed_matrix<TYPE> COMMA vcl::linalg::ilut_tag>); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::block_ilu_precond<vcl::compressed_matrix<TYPE> COMMA vcl::linalg::ilu0_tag>); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::jacobi_precond<  \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::compressed_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::row_scaling<     \
-                                          vcl::compressed_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>, \
-                                          TYPE, vcl::linalg::no_precond); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::jacobi_precond<  \
-                                          vcl::coordinate_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>, \
-                                          TYPE,                         \
-                                          vcl::linalg::row_scaling<     \
-                                          vcl::coordinate_matrix<TYPE> >); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::ell_matrix<TYPE>,        \
-                                          TYPE, vcl::linalg::no_precond); \
-  EXPORT_SPARSE_ITERATIVE_SOLVERS_GENERAL(vcl::hyb_matrix<TYPE>,        \
-                                          TYPE, vcl::linalg::no_precond);
-
-#endif
-
-#define EXPORT_DENSE_ITERATIVE_SOLVERS(TYPE, PRECOND)                   \
-  EXPORT_DENSE_ITERATIVE_SOLVERS_F(TYPE, vcl::row_major, PRECOND);      \
-  EXPORT_DENSE_ITERATIVE_SOLVERS_F(TYPE, vcl::column_major, PRECOND); 
+  EXPORT_ALL_ITERATIVE_SOLVERS(vcl::compressed_matrix<TYPE>, TYPE)      \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>,        \
+                                   TYPE, vcl::linalg::no_precond);      \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>,        \
+                                   TYPE,                                \
+                                   vcl::linalg::jacobi_precond<         \
+                                   vcl::coordinate_matrix<TYPE> >);     \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(vcl::coordinate_matrix<TYPE>,        \
+                                   TYPE,                                \
+                                   vcl::linalg::row_scaling<            \
+                                   vcl::coordinate_matrix<TYPE> >);     \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(vcl::ell_matrix<TYPE>,               \
+                                   TYPE, vcl::linalg::no_precond);      \
+  EXPORT_ITERATIVE_SOLVERS_GENERAL(vcl::hyb_matrix<TYPE>,               \
+                                     TYPE, vcl::linalg::no_precond);
 
 #endif
