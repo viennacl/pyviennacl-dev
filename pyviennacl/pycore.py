@@ -172,7 +172,7 @@ scalar case, simple numerical equality is used.
 from __future__ import division
 import logging, math
 from pyviennacl import (_viennacl as _v,
-                        util)
+                        backend, util)
 from numpy import (ndarray, array, zeros,
                    inf, nan, dtype,
                    equal as np_equal, array_equal,
@@ -1112,6 +1112,11 @@ class Vector(Leaf):
             args = list(args)
             args.insert(0, kwargs['shape'][0])
 
+        if 'context' in kwargs.keys():
+            ctx = kwargs['context']
+        else:
+            ctx = backend.Context()
+
         # TODO: Create Vector from row or column matrix..
 
         if len(args) == 0:
@@ -1120,6 +1125,8 @@ class Vector(Leaf):
         elif len(args) == 1:
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type, Vector):
+                    if args[0].handle.domain is not ctx.domain:
+                        raise TypeError("Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     def get_leaf(vcl_t):
@@ -1136,15 +1143,17 @@ class Vector(Leaf):
                     a = args[0]
                 self.dtype = np_result_type(args[0])
                 def get_leaf(vcl_t):
-                    return vcl_t(a)
+                    return vcl_t(a, ctx.vcl_context)
             elif isinstance(args[0], _v.vector_base):
+                if backend.vcl_memory_types[args[0].memory_domain] is not ctx.domain:
+                    raise TypeError("Can only construct from objects with same memory domain")
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
                     return args[0]
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0])
+                    return vcl_t(args[0], ctx.vcl_context)
         elif len(args) == 2:
             if self.dtype is None:
                 try:
@@ -1152,7 +1161,7 @@ class Vector(Leaf):
                 except TypeError:
                     self.dtype = np_result_type(args[1])
             def get_leaf(vcl_t):
-                return vcl_t(args[0], args[1])
+                return vcl_t(args[0], args[1], ctx.vcl_context)
         else:
             raise TypeError("Vector cannot be constructed in this way")
 
@@ -1168,7 +1177,10 @@ class Vector(Leaf):
         except (KeyError, AttributeError):
             raise TypeError(
                 "dtype %s not supported" % self.statement_node_numeric_type)
+
         self.vcl_leaf = get_leaf(vcl_type)
+        self._context = ctx
+        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
         self.size = self.vcl_leaf.size
         self.shape = (self.size,)
         self.internal_size = self.vcl_leaf.internal_size
@@ -1198,6 +1210,16 @@ class Vector(Leaf):
                               dtype=self.dtype)
         else:
             raise IndexError("Can't understand index")
+
+    @property
+    def handle(self):
+        # TODO: Need setter
+        return self._handle
+
+    @property
+    def context(self):
+        # TODO: Need setter
+        return self._context
 
     @property
     def index_norm_inf(self):
@@ -2190,6 +2212,20 @@ class Node(MagicMethods):
         """
         return self.result.value
 
+    @property
+    def handle(self):
+        """
+        Returns the memory handle of the result of the operation.
+        
+        Be aware that this incurs the execution of the statement.
+        """
+        return self.result.handle
+
+    @property
+    def context(self):
+        # NB: This assumes all operands have the same context (TODO: fix?)
+        return self.operands[0].context
+
     def as_ndarray(self):
         """
         Return the value of computing the operation represented by this Node
@@ -2781,7 +2817,8 @@ class Statement:
             self.result = root.result_container_type(
                 shape = root.shape,
                 dtype = root.dtype,
-                layout = root.layout)
+                layout = root.layout,
+                context = root.operands[0].context)
             top = Assign(self.result, root)
             next_node.append(top)
 
@@ -2798,6 +2835,9 @@ class Statement:
                     #    n._vcl_node_init()
                     #else:
                     next_node.append(operand)
+                if isinstance(operand, Leaf):
+                    if operand.context.domain is not self.result.context.domain:
+                        raise TypeError("All leaves in statement must have same memory domain")
                 op_num += 1
             append_node = True
             for N in self.statement:
