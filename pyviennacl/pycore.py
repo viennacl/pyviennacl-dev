@@ -885,6 +885,16 @@ class Leaf(MagicMethods):
         raise NotImplementedError("Should you be trying to flush this type?")
 
     @property
+    def handle(self):
+        # TODO: Need setter
+        return self._handle
+
+    @property
+    def context(self):
+        # TODO: Need setter
+        return self._context
+
+    @property
     def result_container_type(self):
         """
         The result_container_type for a leaf is always its own type.
@@ -1045,7 +1055,8 @@ class ScalarBase(Leaf):
         else:
             return self.result_container_type(rhs ** self.value,
                                               dtype = self.dtype)
-        
+
+# TODO SCALAR HANDLE / CONTEXT        
 
 class HostScalar(ScalarBase):
     """
@@ -1210,16 +1221,6 @@ class Vector(Leaf):
                               dtype=self.dtype)
         else:
             raise IndexError("Can't understand index")
-
-    @property
-    def handle(self):
-        # TODO: Need setter
-        return self._handle
-
-    @property
-    def context(self):
-        # TODO: Need setter
-        return self._context
 
     @property
     def index_norm_inf(self):

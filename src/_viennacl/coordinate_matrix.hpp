@@ -3,11 +3,46 @@
 
 #include "sparse_matrix.hpp"
 
+// TODO: coordinate matrix does not have [switch_]memory_context yet..
+
 #define EXPORT_COORDINATE_MATRIX(TYPE)                                  \
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::coordinate_matrix<TYPE>,         \
+                                  const vcl::coordinate_matrix<TYPE>    \
+                                  ::handle_type&,                       \
+                                  handle,                               \
+                                  get_coordinate_matrix_##TYPE##_handle, \
+                                  () const);                            \
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::coordinate_matrix<TYPE>,         \
+                                  const vcl::coordinate_matrix<TYPE>    \
+                                  ::handle_type&,                       \
+                                  handle12,                              \
+                                  get_coordinate_matrix_##TYPE##_handle12, \
+                                  () const);                            \
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::coordinate_matrix<TYPE>,         \
+                                  const vcl::coordinate_matrix<TYPE>    \
+                                  ::handle_type&,                       \
+                                  handle3,                              \
+                                  get_coordinate_matrix_##TYPE##_handle3, \
+                                  () const);                            \
   bp::class_<vcl::coordinate_matrix<TYPE>,                              \
              vcl::tools::shared_ptr<vcl::coordinate_matrix<TYPE> >,     \
              boost::noncopyable >                                       \
   ("coordinate_matrix_" #TYPE, bp::no_init)                             \
+  /*.add_property("memory_domain",                                      \
+                &vcl::coordinate_matrix<TYPE>::memory_context,          \
+                &vcl::coordinate_matrix<TYPE>::switch_memory_context) */ \
+  .add_property("handle", bp::make_function                             \
+                (get_coordinate_matrix_##TYPE##_handle,                 \
+                 bp::return_internal_reference<>()))                    \
+  .add_property("handle12", bp::make_function                           \
+                (get_coordinate_matrix_##TYPE##_handle12,               \
+                 bp::return_internal_reference<>()))                    \
+  .add_property("handle3", bp::make_function                            \
+                (get_coordinate_matrix_##TYPE##_handle3,                \
+                 bp::return_internal_reference<>()))                    \
+  .add_property("groups",                                               \
+                make_function(&vcl::coordinate_matrix<TYPE>::groups,    \
+                              bp::return_value_policy<bp::return_by_value>())) \
   .add_property("size1",                                                \
                 make_function(&vcl::coordinate_matrix<TYPE>::size1,     \
                               bp::return_value_policy<bp::return_by_value>())) \

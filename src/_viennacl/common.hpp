@@ -190,14 +190,6 @@ DO_OP_FUNC(op_prod)
 }
 CLOSE_OP_FUNC;
 
-/** @brief Returns a double describing the VCL_T */
-template <class HostT>
-HostT vcl_scalar_to_host(const vcl::scalar<HostT>& vcl_s)
-{
-  HostT cpu_s = vcl_s;
-  return cpu_s;
-}
-
 #define COMMA ,
 
 #define DISAMBIGUATE_FUNCTION_PTR(RET, OLD_NAME, NEW_NAME, ARGS) \

@@ -33,11 +33,11 @@ public:
 
 template<class SCALARTYPE, class F>
 vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >
-matrix_init_scalar(vcl::vcl_size_t n, vcl::vcl_size_t m, SCALARTYPE value)
+matrix_init_scalar(vcl::vcl_size_t n, vcl::vcl_size_t m, SCALARTYPE value, const vcl::context& ctx)
 {
   ublas::scalar_matrix<SCALARTYPE> s_m(n, m, value);
   ublas::matrix<SCALARTYPE> cpu_m(s_m);
-  vcl::matrix<SCALARTYPE, F>* mat = new vcl::matrix<SCALARTYPE, F>(n, m);
+  vcl::matrix<SCALARTYPE, F>* mat = new vcl::matrix<SCALARTYPE, F>(n, m, ctx);
   vcl::copy(cpu_m, (*mat));
   return vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >(mat);
 }
@@ -46,7 +46,7 @@ matrix_init_scalar(vcl::vcl_size_t n, vcl::vcl_size_t m, SCALARTYPE value)
 /** @brief Creates the matrix from the supplied ndarray */
 template<class SCALARTYPE, class F>
 vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >
-matrix_init_ndarray(const np::ndarray& array)
+matrix_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
 {
   int d = array.get_nd();
   if (d != 2) {
@@ -56,11 +56,25 @@ matrix_init_ndarray(const np::ndarray& array)
   
   ndarray_wrapper<SCALARTYPE> wrapper(array);
 
-  vcl::matrix<SCALARTYPE, F>* mat = new vcl::matrix<SCALARTYPE, F>(wrapper.size1(), wrapper.size2());
+  vcl::matrix<SCALARTYPE, F>* mat = new vcl::matrix<SCALARTYPE, F>(wrapper.size1(), wrapper.size2(), ctx);
 
   vcl::copy(wrapper, (*mat));
   
   return vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >(mat);
+}
+
+template <class SCALARTYPE, class F>
+vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >
+matrix_init_scalar_default_context(vcl::vcl_size_t n, vcl::vcl_size_t m, SCALARTYPE value)
+{
+  return matrix_init_scalar<SCALARTYPE, F>(n, m, value, vcl::context());
+}
+
+template <class SCALARTYPE, class F>
+vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >
+matrix_init_ndarray_default_context(const np::ndarray& array)
+{
+  return matrix_init_ndarray<SCALARTYPE, F>(array, vcl::context());
 }
 
 template<class SCALARTYPE>
@@ -110,7 +124,11 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
                                   ());                                  \
   bp::class_<vcl::matrix_base<TYPE>,                                    \
 	     vcl::tools::shared_ptr<vcl::matrix_base<TYPE> > >          \
-  ("matrix_base", bp::no_init)                                          \
+  ("matrix_base",                                                       \
+   bp::init<vcl::backend::mem_handle&,                                  \
+   vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \
+   vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \
+   bool>())                                                             \
   .def("get_entry", &get_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE> >) \
   .def("set_entry", &set_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE> >) \
   .def("as_ndarray",                                                    \
@@ -138,6 +156,7 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   ("matrix_slice", bp::no_init)                                         \
   ;
 
+// TODO: cl_mem ctr
 #define EXPORT_DENSE_MATRIX_CLASS(TYPE, LAYOUT, F, CPU_F)               \
   bp::class_<vcl::matrix<TYPE, F>,                                      \
              vcl::tools::shared_ptr<vcl::matrix<TYPE, F> >,             \
@@ -145,8 +164,12 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   ( "matrix_" #LAYOUT "_" #TYPE )                                       \
   .def(bp::init<vcl::matrix<TYPE, F> >())                               \
   .def(bp::init<vcl::vcl_size_t, vcl::vcl_size_t>())                    \
+  .def(bp::init<vcl::vcl_size_t, vcl::vcl_size_t, vcl::context>())      \
+  /*.def("__init__", bp::make_constructor(matrix_init_mem<TYPE, F>))  */ \
   .def("__init__", bp::make_constructor(matrix_init_ndarray<TYPE, F>))  \
   .def("__init__", bp::make_constructor(matrix_init_scalar<TYPE, F>))   \
+  .def("__init__", bp::make_constructor(matrix_init_ndarray_default_context<TYPE, F>)) \
+  .def("__init__", bp::make_constructor(matrix_init_scalar_default_context<TYPE, F>)) \
   ;                                                                     \
   bp::class_<vcl::matrix_range<vcl::matrix<TYPE, F> >,                  \
              vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix<TYPE, F> > >, \
