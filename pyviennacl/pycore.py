@@ -1097,7 +1097,7 @@ class Scalar(ScalarBase):
 
         if isinstance(self._value, vcl_type):
             self._value = self._value.to_host()
-        self.vcl_leaf = vcl_type(self._value, self.context)
+        self.vcl_leaf = vcl_type(self._value, self.context.vcl_context)
         self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
 
 
@@ -1130,9 +1130,9 @@ class Vector(Leaf):
             args.insert(0, kwargs['shape'][0])
 
         if 'context' in kwargs.keys():
-            ctx = kwargs['context']
+            self._context = kwargs['context']
         else:
-            ctx = backend.Context()
+            self._context = backend.Context()
 
         # TODO: Create Vector from row or column matrix..
 
@@ -1142,8 +1142,8 @@ class Vector(Leaf):
         elif len(args) == 1:
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type, Vector):
-                    if args[0].handle.domain is not ctx.domain:
-                        raise TypeError("Can only construct from objects with same memory domain")
+                    if args[0].handle.domain is not self._context.domain:
+                        raise TypeError("TODO Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     def get_leaf(vcl_t):
@@ -1160,17 +1160,17 @@ class Vector(Leaf):
                     a = args[0]
                 self.dtype = np_result_type(args[0])
                 def get_leaf(vcl_t):
-                    return vcl_t(a, ctx.vcl_context)
+                    return vcl_t(a, self._context.vcl_context)
             elif isinstance(args[0], _v.vector_base):
-                if backend.vcl_memory_types[args[0].memory_domain] is not ctx.domain:
-                    raise TypeError("Can only construct from objects with same memory domain")
+                if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
+                    raise TypeError("TODO Can only construct from objects with same memory domain")
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
                     return args[0]
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0], ctx.vcl_context)
+                    return vcl_t(args[0], self._context.vcl_context)
         elif len(args) == 2:
             if self.dtype is None:
                 try:
@@ -1178,7 +1178,7 @@ class Vector(Leaf):
                 except TypeError:
                     self.dtype = np_result_type(args[1])
             def get_leaf(vcl_t):
-                return vcl_t(args[0], args[1], ctx.vcl_context)
+                return vcl_t(args[0], args[1], self._context.vcl_context)
         else:
             raise TypeError("Vector cannot be constructed in this way")
 
@@ -1196,7 +1196,6 @@ class Vector(Leaf):
                 "dtype %s not supported" % self.statement_node_numeric_type)
 
         self.vcl_leaf = get_leaf(vcl_type)
-        self._context = ctx
         self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
         self.size = self.vcl_leaf.size
         self.shape = (self.size,)
@@ -1377,9 +1376,9 @@ class SparseMatrixBase(Leaf):
             self.layout = ROW_MAJOR
 
         if 'context' in kwargs.keys():
-            ctx = kwargs['context']
+            self._context = kwargs['context']
         else:
-            ctx = backend.Context()
+            self._context = backend.Context()
 
         if len(args) == 0:
             # 0: empty -> empty
@@ -1468,7 +1467,6 @@ class SparseMatrixBase(Leaf):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
         self.cpu_leaf = get_cpu_leaf(self.cpu_leaf_type)
-        self._context = ctx
         self.base = self
 
     @property
@@ -1723,6 +1721,11 @@ class Matrix(Leaf):
         Construct the underlying ViennaCL vector object according to the 
         given arguments and types.
         """
+        if 'context' in kwargs.keys():
+            self._context = kwargs['context']
+        else:
+            self._context = backend.Context()
+
         if 'shape' in kwargs.keys():
             if len(kwargs['shape']) != 2:
                 raise TypeError("Matrix can only have a 2-d shape")
@@ -1749,8 +1752,11 @@ class Matrix(Leaf):
                         self.dtype = args[0].result.dtype
                     self.layout = args[0].result.layout
                     def get_leaf(vcl_t):
-                        return vcl_t(args[0].result.as_ndarray())
+                        return vcl_t(args[0].result.as_ndarray(),
+                                     self._context.vcl_context)
                 elif issubclass(args[0].result_container_type, Matrix):
+                    if args[0].context.domain is not self._context.domain:
+                        raise TypeError("TODO Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     self.layout = args[0].result.layout
@@ -1761,12 +1767,18 @@ class Matrix(Leaf):
                         "Matrix cannot be constructed in this way")
             elif isinstance(args[0], tuple) or isinstance(args[0], list):
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0][0], args[0][1])
+                    return vcl_t(args[0][0], args[0][1],
+                                 self._context.vcl_context)
+            elif isinstance(args[0], _v.matrix_base):
+                if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
+                    raise TypeError("TODO Can only construct from objects with same memory domain")
+                def get_leaf(vcl_t):
+                    return args[0]
             elif isinstance(args[0], ndarray):
                 if self.dtype is None:
                     self.dtype = args[0].dtype
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0])
+                    return vcl_t(args[0], self._context.vcl_context)
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
@@ -1776,15 +1788,17 @@ class Matrix(Leaf):
                 if self.dtype is None:
                     self.dtype = np_result_type(args[1])
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0][0], args[0][1], args[1])
+                    return vcl_t(args[0][0], args[0][1], args[1],
+                                 self._context.vcl_context)
             else:
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0], args[1])
+                    return vcl_t(args[0], args[1], self._context.vcl_context)
         elif len(args) == 3:
             if self.dtype is None:
                 self.dtype = np_result_type(args[2])
             def get_leaf(vcl_t):
-                return vcl_t(args[0], args[1], args[2])
+                return vcl_t(args[0], args[1], args[2],
+                             self._context.vcl_context)
         else:
             raise TypeError("Matrix cannot be constructed in this way")
 
@@ -1803,6 +1817,7 @@ class Matrix(Leaf):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
         self.vcl_leaf = get_leaf(vcl_type)
+        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
         self.size1 = self.vcl_leaf.size1
         self.size2 = self.vcl_leaf.size2
         self.size = self.size1 * self.size2 # Flat size
