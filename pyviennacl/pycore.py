@@ -1370,6 +1370,11 @@ class SparseMatrixBase(Leaf):
         else:
             self.layout = ROW_MAJOR
 
+        if 'context' in kwargs.keys():
+            ctx = kwargs['context']
+        else:
+            ctx = backend.Context()
+
         if len(args) == 0:
             # 0: empty -> empty
             def get_cpu_leaf(cpu_t):
@@ -1457,7 +1462,17 @@ class SparseMatrixBase(Leaf):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
         self.cpu_leaf = get_cpu_leaf(self.cpu_leaf_type)
+        self._context = ctx
         self.base = self
+
+    @property
+    def handle(self):
+        """
+        TODO docstring
+        """
+        if not self.flushed:
+            self.flush()
+        return self._handle
 
     @property
     def nonzeros(self):
@@ -1519,7 +1534,7 @@ class SparseMatrixBase(Leaf):
         """
         Returns the sparse matrix as a dense PyViennaCL ``Matrix``.
         """
-        return Matrix(self)
+        return Matrix(self, context = self._context)
 
     @property
     def vcl_leaf(self):
@@ -1588,6 +1603,9 @@ class CompressedMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_compressed_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle1),
+                        backend.MemoryHandle(self._vcl_leaf.handle2))
         self.flushed = True
 
 
@@ -1604,6 +1622,9 @@ class CoordinateMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_coordinate_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle12),
+                        backend.MemoryHandle(self._vcl_leaf.handle3))
         self.flushed = True
 
 
@@ -1629,6 +1650,8 @@ class ELLMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_ell_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle2))
         self.flushed = True
 
 
@@ -1647,6 +1670,11 @@ class HybridMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_hyb_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle2),
+                        backend.MemoryHandle(self._vcl_leaf.handle3),
+                        backend.MemoryHandle(self._vcl_leaf.handle4),
+                        backend.MemoryHandle(self._vcl_leaf.handle5))
         self.flushed = True
 
 
