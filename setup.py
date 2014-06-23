@@ -167,7 +167,9 @@ def main():
 
         "structured_matrices",
 
-        "compressed_matrix", "coordinate_matrix", "ell_matrix", "hyb_matrix",
+        "cpu_compressed_matrix",
+        "compressed_matrix", "compressed_compressed_matrix",
+        "coordinate_matrix", "ell_matrix", "hyb_matrix",
         "preconditioners","direct_solvers", "iterative_solvers",
 
         "extra_functions", "eig", #"bandwidth_reduction",

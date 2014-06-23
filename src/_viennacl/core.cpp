@@ -21,7 +21,9 @@ PYVCL_SUBMODULE(dense_matrix_double);
 
 PYVCL_SUBMODULE(structured_matrices);
 
+PYVCL_SUBMODULE(cpu_compressed_matrix);
 PYVCL_SUBMODULE(compressed_matrix);
+PYVCL_SUBMODULE(compressed_compressed_matrix);
 PYVCL_SUBMODULE(coordinate_matrix);
 PYVCL_SUBMODULE(ell_matrix);
 PYVCL_SUBMODULE(hyb_matrix);
@@ -112,7 +114,9 @@ BOOST_PYTHON_MODULE(_viennacl)
 
   export_structured_matrices();
 
+  export_cpu_compressed_matrix();
   export_compressed_matrix();
+  export_compressed_compressed_matrix();
   export_coordinate_matrix();
   export_ell_matrix();
   export_hyb_matrix();
