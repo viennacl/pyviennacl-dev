@@ -962,6 +962,11 @@ class ScalarBase(Leaf):
         else:
             self._value = 0
 
+        if 'context' in kwargs.keys():
+            self._context = kwargs['context']
+        else:
+            self._context = backend.Context()
+
         if self.dtype is None:
             self.dtype = np_result_type(self._value)
 
@@ -1056,7 +1061,6 @@ class ScalarBase(Leaf):
             return self.result_container_type(rhs ** self.value,
                                               dtype = self.dtype)
 
-# TODO SCALAR HANDLE / CONTEXT        
 
 class HostScalar(ScalarBase):
     """
@@ -1070,6 +1074,8 @@ class HostScalar(ScalarBase):
     
     def _init_scalar(self):
         self.vcl_leaf = self._value
+        self._handle = None
+        self._context = backend.Context(backend.MainMemory)
 
 
 class Scalar(ScalarBase):
@@ -1088,11 +1094,11 @@ class Scalar(ScalarBase):
             vcl_type = getattr(_v, "scalar_" + vcl_statement_node_numeric_type_strings[self.statement_node_numeric_type])
         except (KeyError, AttributeError):
             raise TypeError("ViennaCL type %s not supported" % self.statement_node_numeric_type)
+
         if isinstance(self._value, vcl_type):
-            self.vcl_leaf = self._value
             self._value = self._value.to_host()
-        else:
-            self.vcl_leaf = vcl_type(self._value)
+        self.vcl_leaf = vcl_type(self._value, self.context)
+        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
 
 
 class Vector(Leaf):
