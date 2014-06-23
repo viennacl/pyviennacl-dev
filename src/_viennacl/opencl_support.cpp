@@ -50,12 +50,14 @@ PYVCL_SUBMODULE(opencl_support)
 #ifdef VIENNACL_WITH_OPENCL
   PYTHON_SCOPE_SUBMODULE(opencl_support);
 
-  bp::class_<vcl::ocl::platform>("platform", bp::no_init)
+  bp::class_<vcl::ocl::platform, vcl::tools::shared_ptr<vcl::ocl::platform> >
+    ("platform", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_object_from_int_ptr<vcl::ocl::platform, cl_platform_id>))
     .add_property("info", &vcl::ocl::platform::info)
     .add_property("devices", get_platform_devices)
     .add_property("int_ptr", get_platform_ptr)
     ;
+
   bp::to_python_converter<std::vector<vcl::ocl::platform>,
                           vector_to_list_converter<vcl::ocl::platform> >();
 
@@ -73,7 +75,8 @@ PYVCL_SUBMODULE(opencl_support)
     .add_property("extensions", &vcl::ocl::device::extensions)
     .add_property("double_support", &vcl::ocl::device::double_support)
     .add_property("int_ptr", get_device_ptr)
-  ;
+    ;
+
   bp::to_python_converter<std::vector<vcl::ocl::device>,
                           vector_to_list_converter<vcl::ocl::device> >();
   
