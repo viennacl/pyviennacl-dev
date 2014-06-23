@@ -6,23 +6,31 @@ TODO:
 * Get associated context from data types
 """
 from pyviennacl import _viennacl as _v
+
+WITH_OPENCL = True
+try:
+    import pyviennacl.opencl as vcl
+    import pyopencl as ocl
+except ImportError:
+    WITH_OPENCL = False
+
 import logging
 
 log = logging.getLogger(__name__)
 
-class MemoryType(object):
+class MemoryDomain(object):
     pass
 
-class UninitializedMemory(MemoryType):
+class UninitializedMemory(MemoryDomain):
     vcl_memory_type = _v.memory_types.MEMORY_NOT_INITIALIZED
 
-class MainMemory(MemoryType):
+class MainMemory(MemoryDomain):
     vcl_memory_type = _v.memory_types.MAIN_MEMORY
 
-class OpenCLMemory(MemoryType):
+class OpenCLMemory(MemoryDomain):
     vcl_memory_type = _v.memory_types.OPENCL_MEMORY
 
-class CUDAMemory(MemoryType):
+class CUDAMemory(MemoryDomain):
     vcl_memory_type = _v.memory_types.CUDA_MEMORY
 
 vcl_memory_types = {
@@ -74,7 +82,21 @@ class MemoryHandle(object):
 class Context(object):
     domain = UninitializedMemory
     vcl_context = None
+    sub_context = None
 
-    def __init__(self, domain = DefaultMemory):
-        self.domain = domain
-        self.vcl_context = _v.context(domain.vcl_memory_type)
+    def __init__(self, domain_or_context = DefaultMemory):
+        if isinstance(domain_or_context, MemoryDomain):
+            self.domain = domain_or_context
+            self.vcl_context = _v.context(self.domain.vcl_memory_type)
+            return
+
+        if isinstance(domain_or_context, Context):
+            self.domain = domain_or_context.domain
+            self.vcl_context = domain_or_context.vcl_context
+
+        if WITH_OPENCL:
+            if isinstance(domain_or_context, ocl.Context):
+                self.domain = OpenCLMemory
+                self.sub_context = domain_or_context
+                self.vcl_context = _v.context(vcl.get_viennacl_object(domain_or_context))
+                return
