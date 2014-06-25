@@ -71,21 +71,23 @@ public:
     return bp::len(*_places);
   }
 
-  cpu_compressed_matrix_wrapper()
+  cpu_compressed_matrix_wrapper() : _dirty(true)
   {
     _places = NULL;
     set_vcl_context(vcl::context());
     cpu_compressed_matrix = ublas_sparse_t(0,0,0);
   }
 
-  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2)
+  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2) : _dirty(true)
   {
     _places = NULL;
     set_vcl_context(vcl::context());
     cpu_compressed_matrix = ublas_sparse_t(_size1, _size2);
   }
 
-  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2, vcl::vcl_size_t _nnz)
+  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1,
+                                vcl::vcl_size_t _size2,
+                                vcl::vcl_size_t _nnz) : _dirty(true)
   {
     _places = NULL;
     set_vcl_context(vcl::context());
@@ -93,25 +95,23 @@ public:
   }
 
   cpu_compressed_matrix_wrapper(const cpu_compressed_matrix_wrapper& w)
-    : cpu_compressed_matrix(w.cpu_compressed_matrix)
+    : cpu_compressed_matrix(w.cpu_compressed_matrix), _dirty(true)
   { 
     _places = NULL;
     set_vcl_context(vcl::context());
-    _dirty = true;
   }
 
   template<class SparseT>
-  cpu_compressed_matrix_wrapper(const SparseT& vcl_sparse_matrix)
+  cpu_compressed_matrix_wrapper(const SparseT& vcl_sparse_matrix) : _dirty(true)
   {
     cpu_compressed_matrix = ublas_sparse_t(vcl_sparse_matrix.size1(),
                                            vcl_sparse_matrix.size2());
     vcl::copy(vcl_sparse_matrix, cpu_compressed_matrix);
     set_vcl_context(vcl::context());
     _places = NULL;
-    _dirty = true;
   }
 
-  cpu_compressed_matrix_wrapper(const np::ndarray& array)
+  cpu_compressed_matrix_wrapper(const np::ndarray& array) : _dirty(true)
   {
     _places = NULL;
     set_vcl_context(vcl::context());
