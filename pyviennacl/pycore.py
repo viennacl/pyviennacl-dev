@@ -1816,6 +1816,7 @@ class Matrix(Leaf):
         except (KeyError, AttributeError):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
+        print(self._context.domain)
         self.vcl_leaf = get_leaf(vcl_type)
         self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
         self.size1 = self.vcl_leaf.size1

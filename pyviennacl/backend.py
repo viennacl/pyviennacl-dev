@@ -19,7 +19,8 @@ import logging
 log = logging.getLogger(__name__)
 
 class MemoryDomain(object):
-    pass
+    def __init__(*args, **kwargs):
+        raise TypeError("This class is not supposed to be instantiated")
 
 class UninitializedMemory(MemoryDomain):
     vcl_memory_type = _v.memory_types.MEMORY_NOT_INITIALIZED
@@ -83,20 +84,91 @@ class Context(object):
     domain = UninitializedMemory
     vcl_context = None
     sub_context = None
+    vcl_sub_context = None
 
     def __init__(self, domain_or_context = DefaultMemory):
-        if isinstance(domain_or_context, MemoryDomain):
-            self.domain = domain_or_context
-            self.vcl_context = _v.context(self.domain.vcl_memory_type)
-            return
+        try:
+            if issubclass(domain_or_context, MemoryDomain):
+                self.domain = domain_or_context
+                self.vcl_context = _v.context(self.domain.vcl_memory_type)
+                if domain_or_context is OpenCLMemory:
+                    self.vcl_sub_context = self.vcl_context.opencl_context
+                    self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)                    
+                return
+        except TypeError: pass
 
         if isinstance(domain_or_context, Context):
             self.domain = domain_or_context.domain
             self.vcl_context = domain_or_context.vcl_context
+            return
 
         if WITH_OPENCL:
             if isinstance(domain_or_context, ocl.Context):
                 self.domain = OpenCLMemory
                 self.sub_context = domain_or_context
-                self.vcl_context = _v.context(vcl.get_viennacl_object(domain_or_context))
+                self.vcl_sub_context = vcl.get_viennacl_object(domain_or_context)
+                self.vcl_context = _v.context(self.vcl_sub_context)
                 return
+
+    @property
+    def devices(self):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only the OpenCL backend currently supports multiple devices")
+        return self.sub_context.devices
+  
+    @property
+    def current_device(self):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only the OpenCL backend currently supports multiple devices")
+        return vcl.get_pyopencl_object(self.vcl_sub_context.current_device)
+
+    @property
+    def queues(self):
+        """
+        TODO docstring
+        """
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only the OpenCL backend currently supports multiple devices")
+        queues = {}
+        for d in self.devices:
+            device_queues = []
+            idx = 0
+            while True:
+                try:
+                    vcl_queue = self.vcl_sub_context.get_queue(d.int_ptr, idx)
+                except RuntimeError:
+                    break
+                queue = vcl.get_pyopencl_object(vcl_queue)
+                device_queues.append(queue)
+                idx += 1
+            queues[d] = device_queues
+        return queues
+
+    def add_queue(self, device, queue = None):
+        """
+        TODO docstring
+        """
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only the OpenCL backend currently supports queues")
+        if queue is None:
+            queue = ocl.CommandQueue(self.sub_context, device)
+        if queue in self.queues[device]:
+            return
+        self.vcl_sub_context.add_existing_queue(device.int_ptr, queue.int_ptr)
+
+    def switch_queue(self, queue):
+        """
+        TODO docstring
+        """
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only the OpenCL backend currently supports queues")
+        if queue not in self.queues[queue.device]:
+            self.add_queue(queue.device, queue)
+        vcl_queue = vcl.get_viennacl_object(queue, self.sub_context)
+        self.vcl_sub_context.switch_queue(vcl_queue)
+
+    @property
+    def current_queue(self):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only the OpenCL backend currently supports multiple devices")
+        return vcl.get_pyopencl_object(self.vcl_sub_context.current_queue)

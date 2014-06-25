@@ -60,8 +60,11 @@ PYVCL_SUBMODULE(platform_support)
     .def(bp::init<vcl::memory_types>())
 #ifdef VIENNACL_WITH_OPENCL
     .def(bp::init<const vcl::ocl::context&>())
+    .add_property("opencl_context",
+                  bp::make_function(&vcl::context::opencl_context,
+                                    bp::return_value_policy<bp::copy_const_reference>()))
 #endif
-    .def("memory_type", &vcl::context::memory_type)
+    .add_property("memory_type", &vcl::context::memory_type)
     ;
 
 }
