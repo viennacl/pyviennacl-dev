@@ -10,7 +10,7 @@ from pyviennacl import _viennacl as _v
 WITH_OPENCL = True
 try:
     import pyviennacl.opencl as vcl
-    import pyopencl as ocl
+    import pyopencl as cl
 except ImportError:
     WITH_OPENCL = False
 
@@ -105,7 +105,7 @@ class Context(object):
             return
 
         if WITH_OPENCL:
-            if isinstance(domain_or_context, ocl.Context):
+            if isinstance(domain_or_context, cl.Context):
                 self.domain = OpenCLMemory
                 self.sub_context = domain_or_context
                 self.vcl_sub_context = vcl.get_viennacl_object(domain_or_context)
@@ -120,6 +120,12 @@ class Context(object):
         if self.vcl_sub_context != other.vcl_sub_context:
             return False
         return True
+
+    @property
+    def opencl_context(self):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("You can only get the OpenCL context with the OpenCL backend")
+        return self.sub_context
 
     @property
     def devices(self):
@@ -162,7 +168,7 @@ class Context(object):
         if self.domain is not OpenCLMemory:
             raise TypeError("Only the OpenCL backend currently supports queues")
         if queue is None:
-            queue = ocl.CommandQueue(self.sub_context, device)
+            queue = cl.CommandQueue(self.sub_context, device)
         if queue in self.queues[device]:
             return
         self.vcl_sub_context.add_existing_queue(device.int_ptr, queue.int_ptr)

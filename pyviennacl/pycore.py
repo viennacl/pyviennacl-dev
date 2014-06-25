@@ -190,7 +190,8 @@ except ImportError:
 WITH_OPENCL = True
 try:
     import pyviennacl.opencl as vcl
-    import pyopencl as ocl
+    import pyopencl as cl
+    import pyopencl.array
 except ImportError:
     WITH_OPENCL = False
 
@@ -244,8 +245,8 @@ HostScalarTypes = {
 }
 
 # Constants for choosing matrix storage layout
-ROW_MAJOR = 1
-COL_MAJOR = 2
+ROW_MAJOR = 'C'
+COL_MAJOR = 'F'
 
 vcl_layout_strings = {
     ROW_MAJOR: 'row',
@@ -271,6 +272,20 @@ class MagicMethods(object):
     to PyViennaCL. For more information, see the individual methods below.
     """
     flushed = False
+
+    @property
+    def itemsize(self):
+        return np_result_type(self).itemsize
+
+    def as_opencl_array(self):
+        if self.context.domain is not backend.OpenCLMemory:
+            raise TypeError("This operation is currently only supported with the OpenCL backend")
+        mem = cl.MemoryObject.from_int_ptr(self.handle.int_ptr)
+        return cl.array.Array(self.context.current_queue,
+                              self.internal_shape,
+                              self.dtype,
+                              order = self.layout,
+                              data = mem)
 
     def result_container_type(self):
         """
@@ -836,7 +851,7 @@ class Leaf(MagicMethods):
                 self._context = backend.Context(arg)
                 REMOVE_ARG = True
             elif WITH_OPENCL:
-                if isinstance(arg, ocl.Context):
+                if isinstance(arg, cl.Context):
                     self._context = backend.Context(arg)
                     REMOVE_ARG = True
 
@@ -1234,6 +1249,9 @@ class Vector(Leaf):
         self.size = self.vcl_leaf.size
         self.shape = (self.size,)
         self.internal_size = self.vcl_leaf.internal_size
+        self.internal_shape = (self.internal_size,)
+        self.strides = (self.itemsize,)
+        self.layout = ROW_MAJOR
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -1848,6 +1866,11 @@ class Matrix(Leaf):
         self.shape = (self.size1, self.size2)
         self.internal_size1 = self.vcl_leaf.internal_size1
         self.internal_size2 = self.vcl_leaf.internal_size2
+        self.internal_shape = (self.internal_size1, self.internal_size2)
+        if self.layout == ROW_MAJOR:
+            self.strides = (self.internal_size1 * self.itemsize, self.itemsize)
+        else:
+            self.strides = (self.itemsize, self.itemsize * self.internal_size2)
 
     def __getitem__(self, key):
         project = getattr(_v,

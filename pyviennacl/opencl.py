@@ -9,13 +9,13 @@ try:
 except ImportError:
     raise ImportError("OpenCL support not included in this installation of ViennaCL")
 
-import pyopencl as ocl
+import pyopencl as cl
 
 vcl_ocl_type_mapping = {
-    vcl.platform: ocl.Platform,
-    vcl.device: ocl.Device,
-    vcl.context: ocl.Context,
-    vcl.command_queue: ocl.CommandQueue
+    vcl.platform: cl.Platform,
+    vcl.device: cl.Device,
+    vcl.context: cl.Context,
+    vcl.command_queue: cl.CommandQueue
 }
 
 ocl_vcl_type_mapping = {o: v for v, o in vcl_ocl_type_mapping.items()}
