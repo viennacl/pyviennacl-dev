@@ -824,7 +824,7 @@ class Leaf(MagicMethods):
                     ARG_IS_NUMBER = True
             except TypeError: pass
             if ARG_IS_NUMBER:
-                self.dtype = arg
+                self.dtype = np_result_type(arg)
                 REMOVE_ARG = True
 
             ARG_IS_MEM_DOMAIN = False
@@ -832,11 +832,8 @@ class Leaf(MagicMethods):
                 if issubclass(arg, backend.MemoryDomain):
                     ARG_IS_MEM_DOMAIN = True
             except TypeError: pass
-            if ARG_IS_MEM_DOMAIN:
+            if ARG_IS_MEM_DOMAIN or isinstance(arg, backend.Context):
                 self._context = backend.Context(arg)
-                REMOVE_ARG = True
-            elif isinstance(arg, backend.Context):
-                self._context = arg
                 REMOVE_ARG = True
             elif WITH_OPENCL:
                 if isinstance(arg, ocl.Context):
@@ -2913,8 +2910,8 @@ class Statement:
                     #else:
                     next_node.append(operand)
                 if isinstance(operand, Leaf):
-                    if operand.context.domain is not self.result.context.domain:
-                        raise TypeError("All leaves in statement must have same memory domain")
+                    if operand.context != self.result.context:
+                        raise TypeError("All leaves in statement must have same context")
                 op_num += 1
             append_node = True
             for N in self.statement:

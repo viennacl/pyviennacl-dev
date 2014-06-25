@@ -112,6 +112,15 @@ class Context(object):
                 self.vcl_context = _v.context(self.vcl_sub_context)
                 return
 
+    def __eq__(self, other):
+        if not isinstance(other, type(self)):
+            return False
+        if self.domain != other.domain:
+            return False
+        if self.vcl_sub_context != other.vcl_sub_context:
+            return False
+        return True
+
     @property
     def devices(self):
         if self.domain is not OpenCLMemory:

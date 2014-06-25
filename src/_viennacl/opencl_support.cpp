@@ -130,6 +130,7 @@ PYVCL_SUBMODULE(opencl_support)
                                   (const vcl::ocl::command_queue&));
   bp::class_<vcl::ocl::context>("context")
     .def("__init__", bp::make_constructor(vcl_context_from_int_ptr))
+    .def(bp::self == vcl::ocl::context())
     .def("init_new_context", init_new_context)
     .add_property("current_device",
                   bp::make_function(&vcl::ocl::context::current_device,
