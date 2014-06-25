@@ -100,6 +100,8 @@ class Context(object):
         if isinstance(domain_or_context, Context):
             self.domain = domain_or_context.domain
             self.vcl_context = domain_or_context.vcl_context
+            self.sub_context = domain_or_context.sub_context
+            self.vcl_sub_context = domain_or_context.vcl_sub_context
             return
 
         if WITH_OPENCL:

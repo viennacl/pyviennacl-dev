@@ -174,18 +174,25 @@ import logging, math
 from pyviennacl import (_viennacl as _v,
                         backend, util)
 from numpy import (ndarray, array, zeros,
-                   inf, nan, dtype,
+                   inf, nan, dtype, number,
                    equal as np_equal, array_equal,
                    result_type as np_result_type,
                    int8, int16, int32, int64,
                    uint8, uint16, uint32, uint64,
                    float16, float32, float64)
 
+WITH_SCIPY = True
 try:
     from scipy import sparse
-    WITH_SCIPY = True
-except:
+except ImportError:
     WITH_SCIPY = False
+
+WITH_OPENCL = True
+try:
+    import pyviennacl.opencl as vcl
+    import pyopencl as ocl
+except ImportError:
+    WITH_OPENCL = False
 
 log = logging.getLogger(__name__)
 
@@ -799,22 +806,62 @@ class Leaf(MagicMethods):
         Tasks include expression computation and configuration of data types
         and views.
         """
+        self._context = None
+        self.dtype = None
+
+        args = list(args)
         for arg in args:
+            REMOVE_ARG = False
+
             if isinstance(arg, list):
                 for item in arg:
                     if isinstance(item, MagicMethods):
                         arg[arg.index(item)] = item.value
 
+            ARG_IS_NUMBER = False
+            try:
+                if issubclass(arg, number) or issubclass(arg, dtype):
+                    ARG_IS_NUMBER = True
+            except TypeError: pass
+            if ARG_IS_NUMBER:
+                self.dtype = arg
+                REMOVE_ARG = True
+
+            ARG_IS_MEM_DOMAIN = False
+            try:
+                if issubclass(arg, backend.MemoryDomain):
+                    ARG_IS_MEM_DOMAIN = True
+            except TypeError: pass
+            if ARG_IS_MEM_DOMAIN:
+                self._context = backend.Context(arg)
+                REMOVE_ARG = True
+            elif isinstance(arg, backend.Context):
+                self._context = arg
+                REMOVE_ARG = True
+            elif WITH_OPENCL:
+                if isinstance(arg, ocl.Context):
+                    self._context = backend.Context(arg)
+                    REMOVE_ARG = True
+
+            if REMOVE_ARG:
+                args.remove(arg)
+
         if 'dtype' in kwargs.keys():    
             dt = dtype(kwargs['dtype']) 
             self.dtype = dt
-        else:
-            self.dtype = None
             
+        if 'context' in kwargs.keys():
+            self._context = backend.Context(kwargs['context'])
+        elif self._context is None:
+            self._context = backend.Context()
+
         if 'view_of' in kwargs.keys():
             self.view_of = kwargs['view_of']
         if 'view' in kwargs.keys():
             self.view = kwargs['view']
+
+        if not self._context.queues[self._context.current_device]:
+            self._context.add_queue(self._context.current_device)
 
         self._init_leaf(args, kwargs)
 
@@ -962,11 +1009,6 @@ class ScalarBase(Leaf):
         else:
             self._value = 0
 
-        if 'context' in kwargs.keys():
-            self._context = kwargs['context']
-        else:
-            self._context = backend.Context()
-
         if self.dtype is None:
             self.dtype = np_result_type(self._value)
 
@@ -1097,7 +1139,7 @@ class Scalar(ScalarBase):
 
         if isinstance(self._value, vcl_type):
             self._value = self._value.to_host()
-        self.vcl_leaf = vcl_type(self._value, self.context.vcl_context)
+        self.vcl_leaf = vcl_type(self._value, self._context.vcl_context)
         self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
 
 
@@ -1128,11 +1170,6 @@ class Vector(Leaf):
                 raise TypeError("Vector can only have a 1-d shape")
             args = list(args)
             args.insert(0, kwargs['shape'][0])
-
-        if 'context' in kwargs.keys():
-            self._context = kwargs['context']
-        else:
-            self._context = backend.Context()
 
         # TODO: Create Vector from row or column matrix..
 
@@ -1374,11 +1411,6 @@ class SparseMatrixBase(Leaf):
                 self.layout = ROW_MAJOR
         else:
             self.layout = ROW_MAJOR
-
-        if 'context' in kwargs.keys():
-            self._context = kwargs['context']
-        else:
-            self._context = backend.Context()
 
         if len(args) == 0:
             # 0: empty -> empty
@@ -1721,11 +1753,6 @@ class Matrix(Leaf):
         Construct the underlying ViennaCL vector object according to the 
         given arguments and types.
         """
-        if 'context' in kwargs.keys():
-            self._context = kwargs['context']
-        else:
-            self._context = backend.Context()
-
         if 'shape' in kwargs.keys():
             if len(kwargs['shape']) != 2:
                 raise TypeError("Matrix can only have a 2-d shape")
@@ -1816,7 +1843,6 @@ class Matrix(Leaf):
         except (KeyError, AttributeError):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
-        print(self._context.domain)
         self.vcl_leaf = get_leaf(vcl_type)
         self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
         self.size1 = self.vcl_leaf.size1
