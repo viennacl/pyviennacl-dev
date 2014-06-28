@@ -147,7 +147,9 @@ def main():
         platform_cflags["unix"] += ["-fopenmp"]
 
     EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
-    EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
+
+    UNDEF_MACROS = [] # ['NDEBUG']
+    #EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
 
     if not sys.platform.startswith("darwin"):
         platform_libs['unix'] = ['rt']
@@ -231,7 +233,7 @@ def main():
             extra_link_args=conf["LDFLAGS"],
 
             define_macros=list(EXTRA_DEFINES.items()),
-            undef_macros=['NDEBUG'],
+            undef_macros=UNDEF_MACROS,
 
             include_dirs=INCLUDE_DIRS,
             library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"] + conf["OpenMP_LIB_DIR"],
