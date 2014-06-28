@@ -79,6 +79,12 @@ class MemoryHandle(object):
         self.__init__(other.vcl_handle)
         other.__init__(tmp_vcl_handle)
 
+    @property
+    def buffer(self):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("You can currently only get a buffer with the OpenCL backend")
+        return cl.MemoryObject.from_int_ptr(self.int_ptr)
+
 
 class Context(object):
     domain = UninitializedMemory

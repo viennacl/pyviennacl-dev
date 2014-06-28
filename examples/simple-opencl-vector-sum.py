@@ -30,9 +30,9 @@ __kernel void sum(__global const float *a,
 print("Computing x = v + w using a custom kernel")
 
 prg.sum(queue, v.shape, None,
-        v.as_opencl_array().data,
-        w.as_opencl_array().data,
-        x.as_opencl_array().data)
+        v.handle.buffer,
+        w.handle.buffer,
+        x.handle.buffer)
 queue.finish()
 
 print("Done!")

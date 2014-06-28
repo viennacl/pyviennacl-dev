@@ -280,12 +280,11 @@ class MagicMethods(object):
     def as_opencl_array(self):
         if self.context.domain is not backend.OpenCLMemory:
             raise TypeError("This operation is currently only supported with the OpenCL backend")
-        mem = cl.MemoryObject.from_int_ptr(self.handle.int_ptr)
         c = cl.array.Array(self.context.current_queue,
                            self.shape,
                            self.dtype,
                            order = self.layout,
-                           data = mem,
+                           data = self.handle.memory_object,
                            strides = self.strides)
         return c
 
