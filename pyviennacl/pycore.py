@@ -2957,7 +2957,7 @@ class Statement:
                     n.get_vcl_operand_setter(operand)(op_num, operand.vcl_leaf)
                 elif isinstance(operand, Node):
                     if operand.flushed:
-                        n.get_vcl_operand_setter(operand)(op_num, operand.result.vcl_leaf)
+                        n.get_vcl_operand_setter(operand.result)(op_num, operand.result.vcl_leaf)
                     else:
                         op_idx = 0
                         for next_op in self.statement:
