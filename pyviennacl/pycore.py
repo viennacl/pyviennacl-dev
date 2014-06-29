@@ -2956,12 +2956,15 @@ class Statement:
                 if isinstance(operand, Leaf):
                     n.get_vcl_operand_setter(operand)(op_num, operand.vcl_leaf)
                 elif isinstance(operand, Node):
-                    op_idx = 0
-                    for next_op in self.statement:
-                        if hash(operand) == hash(next_op):
-                            break
-                        op_idx += 1
-                    n.get_vcl_operand_setter(operand)(op_num, op_idx)
+                    if operand.flushed:
+                        n.get_vcl_operand_setter(operand)(op_num, operand.result.vcl_leaf)
+                    else:
+                        op_idx = 0
+                        for next_op in self.statement:
+                            if hash(operand) == hash(next_op):
+                                break
+                            op_idx += 1
+                        n.get_vcl_operand_setter(operand)(op_num, op_idx)
                 elif np_result_type(operand).name in HostScalarTypes.keys():
                     n.get_vcl_operand_setter(HostScalar(operand))(
                         op_num, operand)
