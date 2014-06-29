@@ -2340,6 +2340,7 @@ class CustomNode(Node):
         """
         TODO docstring
         """
+        # TODO: check operand context compatibility
         # TODO: compute operands if necessary
         # TODO: assign operands to kernel
         #       - use back-end specific functions for this
@@ -2898,6 +2899,8 @@ class Statement:
     the resultant types, and generates the appropriate underlying ViennaCL
     C++ object.
     """
+    statement = []  # A list to hold the flattened expression tree
+    vcl_statement = None # Will reference the ViennaCL statement object
 
     def __init__(self, root):
         """
@@ -2915,8 +2918,7 @@ class Statement:
         if not isinstance(root, Node):
             raise RuntimeError("Statement must be initialised on a Node")
 
-        self.statement = []  # A list to hold the flattened expression tree
-        next_node = []       # Holds nodes as we travel down the tree
+        next_node = [] # Holds nodes as we travel down the tree
 
         # Test to see that we can actually do the operation
         if not root.result_container_type:
@@ -2940,7 +2942,9 @@ class Statement:
         for n in next_node:
             op_num = 0
             for operand in n.operands:
-                if isinstance(operand, Node):
+                # If operand is a CustomNode, then we treat it as a Leaf here,
+                # since CustomNode is not mapped to a ViennaCL statement node
+                if isinstance(operand, Node) and not isinstance(operand, CustomNode):
                     #if op_num == 0 and len(n.operands) > 1:
                     #    # ViennaCL cannot cope with complex LHS
                     #    operand = operand.result
@@ -2948,11 +2952,12 @@ class Statement:
                     #    n._vcl_node_init()
                     #else:
                     next_node.append(operand)
-                if isinstance(operand, Leaf):
+                if isinstance(operand, Leaf) or isinstance(operand, CustomNode):
                     if operand.context != self.result.context:
-                        raise TypeError("All leaves in statement must have same context")
+                        raise TypeError(
+                            "All objects in statement must have same context")
                 op_num += 1
-            append_node = True
+            append_node = not isinstance(n, CustomNode)
             for N in self.statement:
                 if id(N) == id(n):
                     append_node = False
@@ -2971,8 +2976,11 @@ class Statement:
                 if isinstance(operand, Leaf):
                     n.get_vcl_operand_setter(operand)(op_num, operand.vcl_leaf)
                 elif isinstance(operand, Node):
-                    if operand.flushed:
-                        n.get_vcl_operand_setter(operand.result)(op_num, operand.result.vcl_leaf)
+                    if operand.flushed or isinstance(operand, CustomNode):
+                        # NB: CustomNode instances are dispatched here,
+                        #     or the cached result used
+                        n.get_vcl_operand_setter(operand.result)(
+                            op_num, operand.result.vcl_leaf)
                     else:
                         op_idx = 0
                         for next_op in self.statement:
