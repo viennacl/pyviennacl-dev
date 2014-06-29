@@ -1997,18 +1997,7 @@ class Node(MagicMethods):
         else:
             raise TypeError("Only unary or binary nodes supported currently")
 
-        def fix_operand(opand):
-            """
-            If opand is a scalar type, wrap it in a PyViennaCL scalar class.
-            """
-            if isinstance(opand, list):
-                opand = array(opand)
-            if (np_result_type(opand).name in HostScalarTypes
-                and not (isinstance(opand, MagicMethods)
-                         or isinstance(opand, ndarray))):
-                return HostScalar(opand)
-            else: return opand
-        self.operands = list(map(fix_operand, args))
+        self.operands = list(map(util.fix_operand, args))
 
         if self.result_container_type is None:
             # Try swapping the operands, in case the operation supports
@@ -2315,7 +2304,8 @@ class Node(MagicMethods):
         """
         Returns the memory handle of the result of the operation.
         
-        Be aware that this incurs the execution of the statement.
+        Be aware that this incurs the execution of the statement, if this
+        has not yet occurred.
         """
         return self.result.handle
 
@@ -2330,6 +2320,31 @@ class Node(MagicMethods):
         as a NumPy ``ndarray``.
         """
         return array(self.value, dtype=self.dtype)
+
+
+class CustomNode(Node):
+    """
+    TODO docstring
+    """
+    result_types = {}
+    kernels = {}
+
+    def __init__(self, *args):
+        """
+        TODO docstring
+        """
+        # TODO: compile kernels for given context
+        self.operands = list(map(util.fix_operand, args))
+
+    def execute(self):
+        """
+        TODO docstring
+        """
+        # TODO: compute operands if necessary
+        # TODO: assign operands to kernel
+        #       - use back-end specific functions for this
+        # TODO: dispatch appropriate kernel
+        # TODO: cache result
 
 
 class Norm_1(Node):
