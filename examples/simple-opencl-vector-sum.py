@@ -38,4 +38,3 @@ queue.finish()
 print("Done!")
 
 print("Euclidean norm of the difference between x and v+w (computed using ViennaCL): %s" % (x-(v+w)).norm(2))
-

@@ -38,4 +38,5 @@ x = CustomSum(v, w)
 print(x.express())
 
 print("Euclidean norm of the difference between x and v+w (computed using ViennaCL): %s" % (x-(v+w)).norm(2))
+print("Done")
 

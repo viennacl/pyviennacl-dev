@@ -2318,17 +2318,27 @@ class CustomNode(Node):
 
     def _compile_kernels(self):
         # TODO: compile kernels for given context if not already compiled
-        try:
-            kernel = self.kernels[self.context.domain][self.operand_types_string]
-        except AttributeError:
-            log.error("No kernel for memory domain %s and operand types %s"
-                    % (self.context.domain, self.operand_types_string))
+        # TODO: global cache, so every instantiation doesn't necessitate a full compile
+        self.compiled_kernels = {}
+        for domain in self.kernels.keys():
+            self.compiled_kernels[domain] = {}
+            for op_type in self.kernels[domain]:
+                kernel = self.kernels[domain][op_type]
+                if domain is backend.MainMemory:
+                    self.compiled_kernels[domain][op_type] = kernel
+                elif domain is backend.OpenCLMemory:
+                    prg = cl.Program(self.context.sub_context, kernel)
+                    prg = prg.build()
+                    built_kernel = prg.all_kernels()[0]
+                    self.compiled_kernels[domain][op_type] = built_kernel
+                    
+
 
     def execute(self):
         """
         TODO docstring
         """
-        # NB: should support just calling a function for HostMemory
+        # NB: should support just calling a function for MainMemory
         # NB: should support OpenCL source and pre-compiled kernel objects
         #
         # TODO: compute operands if necessary
@@ -2336,6 +2346,20 @@ class CustomNode(Node):
         #       - use back-end specific functions for this
         # TODO: dispatch appropriate kernel
         # TODO: cache result and mark flushed
+        try:
+            kernel = self.compiled_kernels[self.context.domain][self.operand_types_string]
+        except AttributeError:
+            log.error("No kernel for memory domain %s and operand types %s"
+                    % (self.context.domain, self.operand_types_string))
+        operands = [x.handle.buffer for x in self.operands]
+        result = self.result_container_type(self.operands[0].shape[0])
+        operands.append(result.handle.buffer)
+        kernel(self.context.current_queue,
+               self.operands[0].shape,
+               None,
+               *operands)
+        self._result = result
+        flused = True
 
 
 class Norm_1(Node):
