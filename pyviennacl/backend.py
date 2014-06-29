@@ -7,16 +7,16 @@ TODO:
 """
 from pyviennacl import _viennacl as _v
 
+import logging
+log = logging.getLogger(__name__)
+
 WITH_OPENCL = True
 try:
     import pyviennacl.opencl as vcl
     import pyopencl as cl
-except ImportError:
+except ImportError as e:
+    #log.warning("OpenCL not available: %s", e)
     WITH_OPENCL = False
-
-import logging
-
-log = logging.getLogger(__name__)
 
 class MemoryDomain(object):
     def __init__(*args, **kwargs):

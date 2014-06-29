@@ -2,7 +2,7 @@
 TODO docstring
 """
 
-from pycore import MagicMethods
+import pyviennacl as p
 from pyviennacl import _viennacl as _v
 
 try:
@@ -30,7 +30,7 @@ def update_instance_mapping(vcl_object, ocl_object):
     ocl_vcl_instance_mapping[ocl_object.int_ptr] = vcl_object    
 
 def get_pyopencl_object(vcl_object):
-    if isinstance(vcl_object, MagicMethods):
+    if isinstance(vcl_object, p.MagicMethods):
         return vcl_object.as_opencl_array()
 
     if vcl_object.int_ptr in vcl_ocl_instance_mapping.keys():
