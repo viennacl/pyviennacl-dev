@@ -54,7 +54,7 @@ print("a and b have dtypes of %s and %s" %
 # PyViennaCL makes an effort to convert objects to the appropriate dtype where
 # dtypes have been mixed, but this is often ambiguous and unpredictable, and
 # so it is recommended that users make efforts to keep they dtypes consistent.
-i = 1L # Create a long integer
+i = int(1) # Create an integer
 print("i has dtype of %s" % (np.result_type(i)))
 y[0] = i # Remember, this sort of elementwise assignation is *very slow*!
 print("y has values %s and dtype %s" %

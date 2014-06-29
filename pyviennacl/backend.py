@@ -5,7 +5,7 @@ TODO:
 * Construct data types with associated context
 * Get associated context from data types
 """
-from pyviennacl import _viennacl as _v
+from . import _viennacl as _v
 
 import logging
 log = logging.getLogger(__name__)

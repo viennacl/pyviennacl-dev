@@ -1,4 +1,7 @@
+import pyviennacl as p
 from . import _viennacl
+from numpy import (ndarray, array,
+                   result_type as np_result_type)
 import logging
 
 default_log_handler = logging.StreamHandler()
@@ -9,14 +12,15 @@ logging.getLogger('pyviennacl').addHandler(default_log_handler)
 
 def fix_operand(opand):
     """
-    If opand is a scalar type, wrap it in a PyViennaCL scalar class.
+    TODO docstring
     """
     if isinstance(opand, list):
-        opand = array(opand)
-    if (np_result_type(opand).name in HostScalarTypes
-        and not (isinstance(opand, MagicMethods)
-                 or isinstance(opand, ndarray))):
-        return HostScalar(opand)
+        opand = from_ndarray(array(opand))
+    if isinstance(opand, ndarray):
+        return from_ndarray(opand)
+    if (np_result_type(opand).name in p.HostScalarTypes
+        and not isinstance(opand, p.MagicMethods)):
+        return p.HostScalar(opand)
     else: return opand
 
 def backend_finish():
@@ -45,9 +49,9 @@ def from_ndarray(obj):
         If ``obj`` has less than 1 or more than 2 dimensions.
     """
     if obj.ndim == 1:
-        new = Vector(obj)
+        new = p.Vector(obj)
     elif obj.ndim == 2:
-        new = Matrix(obj)
+        new = p.Matrix(obj)
     else:
         raise AttributeError("Cannot cope with %d dimensions!" % self.operands[0].ndim)
     return new

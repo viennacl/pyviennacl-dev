@@ -3,7 +3,7 @@ TODO docstring
 """
 
 import pyviennacl as p
-from pyviennacl import _viennacl as _v
+from . import _viennacl as _v
 
 try:
     vcl = _v.opencl_support

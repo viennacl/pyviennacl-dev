@@ -891,7 +891,7 @@ class Leaf(MagicMethods):
                     try:
                         value = np_result_type(item).type(value)
                     except:
-                        log.exception("Failed to convert value dtype (%s) to item dtype (%s)" % 
+                        log.error("Failed to convert value dtype (%s) to item dtype (%s)" % 
                                       (np_result_type(item), np_result_type(value)))
                 try:
                     try: # Assume matrix type
@@ -899,7 +899,7 @@ class Leaf(MagicMethods):
                     except: # Otherwise, assume vector
                         return self.vcl_leaf.set_entry(key, value) ## set
                 except:
-                    log.exception("Failed to set vcl entry")
+                    log.error("Failed to set vcl entry")
             raise TypeError("Cannot assign %s to %s" % (type(value),
                                                         type(item)))
         if item.dtype != value.dtype:
@@ -2086,6 +2086,20 @@ class Node(MagicMethods):
         return complexity
 
     @property
+    def operand_types_string(self):
+        """
+        TODO docstring
+        """
+        types = []
+        for o in self.operands:
+            try:
+                t = o.result_container_type.__name__
+            except AttributeError:
+                t = 'HostScalar'
+            types.append(t)
+        return tuple(types)
+
+    @property
     def result_container_type(self):
         """
         Determine the container type (ie, Scalar, Vector, etc) needed to
@@ -2096,45 +2110,8 @@ class Node(MagicMethods):
         """
         if len(self.result_types) < 1:
             return NoResult
-
-        if len(self.operands) > 0:
-            try:
-                op0_t = self.operands[0].result_container_type.__name__
-            except AttributeError:
-                # Not a PyViennaCL type, so we have a number of options.
-                # Suppose an ndarray...
-                if isinstance(self.operands[0], ndarray):
-                    self.operands[0] = from_ndarray(self.operands[0])
-                    op0_t = self.operands[0].result_container_type.__name__
-                else:
-                    # Otherwise, assume some scalar and hope for the best
-                    op0_t = 'HostScalar'
-        else:
-            raise RuntimeError("What is a 0-ary operation?")
-
-        if len(self.operands) > 1:
-            try:
-                op1_t = self.operands[1].result_container_type.__name__
-            except AttributeError:
-                if isinstance(self.operands[1], ndarray):
-                    if self.operands[1].ndim == 1:
-                        self.operands[1] = Vector(self.operands[1])
-                    elif self.operands[1].ndim == 2:
-                        self.operands[1] = Matrix(self.operands[1])
-                    else:
-                        raise AttributeError("Cannot cope with %d dimensions!" % self.operands[1].ndim)
-                    op1_t = self.operands[1].result_container_type.__name__
-                else:
-                    # Again, hope for the best..
-                    op1_t = 'HostScalar'
-            try: return self.result_types[(op0_t, op1_t)]
-            except KeyError:
-                # Operation not supported for given operand types
-                return None
-        else:
-            # No more operands, so test for 1-ary result_type
-            try: return self.result_types[(op0_t, )]
-            except KeyError: return None            
+        try: return self.result_types[self.operand_types_string]
+        except KeyError: return None
 
     @property
     def dtype(self):
@@ -2333,19 +2310,32 @@ class CustomNode(Node):
         """
         TODO docstring
         """
-        # TODO: compile kernels for given context
         self.operands = list(map(util.fix_operand, args))
+        for op in self.operands:
+            if op.context != self.context and not isinstance(op, HostScalar):
+                raise TypeError("Operands must all have the same context")
+        self._compile_kernels()
+
+    def _compile_kernels(self):
+        # TODO: compile kernels for given context if not already compiled
+        try:
+            kernel = self.kernels[self.context.domain][self.operand_types_string]
+        except AttributeError:
+            log.error("No kernel for memory domain %s and operand types %s"
+                    % (self.context.domain, self.operand_types_string))
 
     def execute(self):
         """
         TODO docstring
         """
-        # TODO: check operand context compatibility
+        # NB: should support just calling a function for HostMemory
+        # NB: should support OpenCL source and pre-compiled kernel objects
+        #
         # TODO: compute operands if necessary
         # TODO: assign operands to kernel
         #       - use back-end specific functions for this
         # TODO: dispatch appropriate kernel
-        # TODO: cache result
+        # TODO: cache result and mark flushed
 
 
 class Norm_1(Node):
@@ -2953,9 +2943,11 @@ class Statement:
                     #else:
                     next_node.append(operand)
                 if isinstance(operand, Leaf) or isinstance(operand, CustomNode):
-                    if operand.context != self.result.context:
+                    if (operand.context != self.result.context
+                        and not isinstance(operand, HostScalar)):
                         raise TypeError(
-                            "All objects in statement must have same context")
+                            "All objects in statement must have same context: %s"
+                            % (operand.express))
                 op_num += 1
             append_node = not isinstance(n, CustomNode)
             for N in self.statement:
