@@ -2311,6 +2311,9 @@ class CustomNode(Node):
         TODO docstring
         """
         self.operands = list(map(util.fix_operand, args))
+        self.statement_node_type_family = self.result_container_type.statement_node_type_family
+        self.statement_node_subtype = self.result_container_type.statement_node_subtype
+        self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
         for op in self.operands:
             if op.context != self.context and not isinstance(op, HostScalar):
                 raise TypeError("Operands must all have the same context")
@@ -2331,8 +2334,6 @@ class CustomNode(Node):
                     prg = prg.build()
                     built_kernel = prg.all_kernels()[0]
                     self.compiled_kernels[domain][op_type] = built_kernel
-                    
-
 
     def execute(self):
         """
@@ -2352,14 +2353,18 @@ class CustomNode(Node):
             log.error("No kernel for memory domain %s and operand types %s"
                     % (self.context.domain, self.operand_types_string))
         operands = [x.handle.buffer for x in self.operands]
-        result = self.result_container_type(self.operands[0].shape[0])
+        result = self.result_container_type(
+            shape = self.shape,
+            dtype = self.dtype,
+            layout = self.layout,
+            context = self.context)
         operands.append(result.handle.buffer)
         kernel(self.context.current_queue,
-               self.operands[0].shape,
+               self.shape,
                None,
                *operands)
         self._result = result
-        flused = True
+        self.flushed = True
 
 
 class Norm_1(Node):
