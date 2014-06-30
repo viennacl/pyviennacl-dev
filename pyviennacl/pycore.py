@@ -263,6 +263,11 @@ class NoResult(object):
     """
     pass
 
+def noop(*args):
+    """
+    A no-op function.
+    """
+    pass
 
 class MagicMethods(object):
     """
@@ -287,6 +292,9 @@ class MagicMethods(object):
                            data = self.handle.memory_object,
                            strides = self.strides)
         return c
+
+    def as_opencl_kernel_operands(self):
+        raise NotImplementedError("This needs to be overridden by derived classes")
 
     def result_container_type(self):
         """
@@ -333,6 +341,12 @@ class MagicMethods(object):
             'fro' means the string 'fro', and denotes the Frobenius norm.
             If None and self is a Matrix instance, then assumes 'fro'.
         """
+        if ord is None: # TODO: Tidy this up
+            try:
+                return self.norm('fro')
+            except:
+                return self.norm(2)
+
         if ord == 1:
             #return Norm_1(self) TODO NOT WORKING WITH SCHEDULER
             return Scalar(_v.norm_1(self.vcl_leaf),
@@ -1087,6 +1101,12 @@ class ScalarBase(Leaf):
         """
         return array(self.value, dtype=self.dtype)
 
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring
+        """
+        return [np_result_type(self).type(self.value)]
+
     def __pow__(self, rhs):
         """
         x.__pow__(y) <==> x**y
@@ -1352,6 +1372,12 @@ class Vector(Leaf):
         for i in range(self.size):
             tmp_m[i][i] = tmp_v[i]
         return Matrix(tmp_m, dtype=self.dtype) # TODO: Ought to be sparse here
+
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring
+        """
+        return [self.handle.buffer, uint32(self.internal_size)]
 
     def __mul__(self, rhs):
         """
@@ -1763,6 +1789,7 @@ class Matrix(Leaf):
     """
     ndim = 2
     statement_node_type_family = _v.statement_node_type_family.MATRIX_TYPE_FAMILY
+    statement_node_subtype = _v.statement_node_subtype.DENSE_MATRIX_TYPE
 
     def _init_leaf(self, args, kwargs):
         """
@@ -1782,7 +1809,6 @@ class Matrix(Leaf):
                 self.layout = ROW_MAJOR
         else:
             self.layout = ROW_MAJOR
-        self.statement_node_subtype = _v.statement_node_subtype.DENSE_MATRIX_TYPE
 
         if len(args) == 0:
             def get_leaf(vcl_t):
@@ -1952,6 +1978,13 @@ class Matrix(Leaf):
             return self[slice(key)]
         else:
             raise IndexError("Did not understand key")
+
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring
+        """
+        return [self.handle.buffer,
+                uint32(self.internal_size1), uint32(self.internal_size2)]
 
     #def clear(self):
     #    """
@@ -2298,6 +2331,12 @@ class Node(MagicMethods):
         """
         return array(self.value, dtype=self.dtype)
 
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring -- beware dispatch
+        """
+        return self.result.as_opencl_kernel_operands()
+
 
 class CustomNode(Node):
     """
@@ -2320,7 +2359,6 @@ class CustomNode(Node):
         self._compile_kernels()
 
     def _compile_kernels(self):
-        # NB: should support OpenCL source and pre-compiled kernel objects
         # TODO: global cache, so every instantiation doesn't necessitate a
         #       full compile
         self.compiled_kernels = {}
@@ -2331,7 +2369,11 @@ class CustomNode(Node):
                 if domain is backend.OpenCLMemory and isinstance(kernel, str):
                     prg = cl.Program(self.context.sub_context, kernel)
                     prg = prg.build()
-                    built_kernel = prg.all_kernels()[0]
+                    try:
+                        built_kernel = prg.all_kernels()[0]
+                    except IndexError:
+                        log.warning("Failed to build kernel for domain %s and operand types %s" % (domain, op_type))
+                        built_kernel = noop
                     self.compiled_kernels[domain][op_type] = built_kernel
                 else:
                     self.compiled_kernels[domain][op_type] = kernel
@@ -2362,14 +2404,9 @@ class CustomNode(Node):
         self.flushed = True
 
     def _execute_opencl_kernel(self, *operands):
-        handles = [x.handle for x in operands]
-        def get_buffers(handle):
-            try: return [handle.buffer]
-            except AttributeError:
-                handle = list(handle)
-                return [x.buffer for x in handle]
-        buffers = itertools.chain(*map(get_buffers, handles))
-        self._kernel(self.context.current_queue, self.shape, None, *buffers)
+        args = [x.as_opencl_kernel_operands() for x in operands]
+        args = itertools.chain(*args)
+        self._kernel(self.context.current_queue, self.shape, None, *args)
 
 
 class Norm_1(Node):
