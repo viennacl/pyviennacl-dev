@@ -2342,10 +2342,8 @@ class CustomNode(Node):
         # NB: should support just calling a function for MainMemory
         # NB: should support OpenCL source and pre-compiled kernel objects
         #
-        # TODO: compute operands if necessary
-        # TODO: assign operands to kernel
-        #       - use back-end specific functions for this
-        # TODO: dispatch appropriate kernel
+        # TODO: objects with more than one handle
+        # TODO: other compute backends
         # TODO: cache result and mark flushed
         try:
             kernel = self.compiled_kernels[self.context.domain][self.operand_types_string]
