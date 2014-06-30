@@ -1,12 +1,16 @@
 #ifndef _PYVIENNACL_STRUCTURED_MATRIX_HPP
 #define _PYVIENNACL_STRUCTURED_MATRIX_HPP
 
+#include "dense_matrix.hpp"
+
+#ifdef VIENNACL_WITH_OPENCL
+
 #include <viennacl/circulant_matrix.hpp>
 #include <viennacl/hankel_matrix.hpp>
 #include <viennacl/toeplitz_matrix.hpp>
 #include <viennacl/vandermonde_matrix.hpp>
 
-#include "dense_matrix.hpp"
+#endif
 
 template<class MATRIXTYPE>
 np::ndarray vcl_structured_matrix_to_ndarray(MATRIXTYPE& m)

@@ -1,13 +1,14 @@
 #ifndef _PYVIENNACL_VECTOR_H
 #define _PYVIENNACL_VECTOR_H
 
-#include "pyviennacl.hpp"
+#include "common.hpp"
 
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 #include <boost/numeric/ublas/vector_of_vector.hpp>
 
 #include <viennacl/linalg/sparse_matrix_operations.hpp>
 #include <viennacl/compressed_matrix.hpp>
+#include <viennacl/compressed_compressed_matrix.hpp>
 #include <viennacl/coordinate_matrix.hpp>
 #include <viennacl/ell_matrix.hpp>
 #include <viennacl/hyb_matrix.hpp>
@@ -21,6 +22,7 @@ class cpu_compressed_matrix_wrapper
   ublas_sparse_t cpu_compressed_matrix;
   bool _dirty;
   bp::list* _places;
+  vcl::context _context;
 
 public:
 
@@ -69,44 +71,50 @@ public:
     return bp::len(*_places);
   }
 
-  cpu_compressed_matrix_wrapper()
+  cpu_compressed_matrix_wrapper() : _dirty(true)
   {
     _places = NULL;
+    set_vcl_context(vcl::context());
     cpu_compressed_matrix = ublas_sparse_t(0,0,0);
   }
 
-  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2)
+  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2) : _dirty(true)
   {
     _places = NULL;
+    set_vcl_context(vcl::context());
     cpu_compressed_matrix = ublas_sparse_t(_size1, _size2);
   }
 
-  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2, vcl::vcl_size_t _nnz)
+  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1,
+                                vcl::vcl_size_t _size2,
+                                vcl::vcl_size_t _nnz) : _dirty(true)
   {
     _places = NULL;
+    set_vcl_context(vcl::context());
     cpu_compressed_matrix = ublas_sparse_t(_size1, _size2, _nnz);
   }
 
   cpu_compressed_matrix_wrapper(const cpu_compressed_matrix_wrapper& w)
-    : cpu_compressed_matrix(w.cpu_compressed_matrix)
+    : cpu_compressed_matrix(w.cpu_compressed_matrix), _dirty(true)
   { 
     _places = NULL;
-    _dirty = true;
+    set_vcl_context(vcl::context());
   }
 
   template<class SparseT>
-  cpu_compressed_matrix_wrapper(const SparseT& vcl_sparse_matrix)
+  cpu_compressed_matrix_wrapper(const SparseT& vcl_sparse_matrix) : _dirty(true)
   {
     cpu_compressed_matrix = ublas_sparse_t(vcl_sparse_matrix.size1(),
                                            vcl_sparse_matrix.size2());
     vcl::copy(vcl_sparse_matrix, cpu_compressed_matrix);
+    set_vcl_context(vcl::context());
     _places = NULL;
-    _dirty = true;
   }
 
-  cpu_compressed_matrix_wrapper(const np::ndarray& array)
+  cpu_compressed_matrix_wrapper(const np::ndarray& array) : _dirty(true)
   {
     _places = NULL;
+    set_vcl_context(vcl::context());
 
     int d = array.get_nd();
     if (d != 2) {
@@ -156,7 +164,7 @@ public:
   vcl::tools::shared_ptr<SparseT>
   as_vcl_sparse_matrix()
   {
-    SparseT* vcl_sparse_matrix = new SparseT();
+    SparseT* vcl_sparse_matrix = new SparseT(_context);
     vcl::copy(cpu_compressed_matrix, *vcl_sparse_matrix);
     return vcl::tools::shared_ptr<SparseT>(vcl_sparse_matrix);
   }
@@ -165,7 +173,8 @@ public:
   vcl::tools::shared_ptr<SparseT>
   as_vcl_sparse_matrix_with_size()
   {
-    SparseT* vcl_sparse_matrix = new SparseT(size1(), size2(), nnz());
+    SparseT* vcl_sparse_matrix = new SparseT(size1(), size2(), nnz(),
+                                             _context);
     vcl::copy(cpu_compressed_matrix, *vcl_sparse_matrix);
     return vcl::tools::shared_ptr<SparseT>(vcl_sparse_matrix);
   }
@@ -214,6 +223,14 @@ public:
 
     _dirty = true; //false;
 
+  }
+
+  void set_vcl_context(vcl::context ctx) {
+    _context = ctx;
+  }
+
+  const vcl::context& get_vcl_context() const {
+    return _context;
   }
   
   void set_entry(vcl::vcl_size_t n, vcl::vcl_size_t m, ScalarType val) 

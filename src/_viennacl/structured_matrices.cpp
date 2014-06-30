@@ -3,6 +3,7 @@
 PYVCL_SUBMODULE(structured_matrices)
 {
 
+#ifdef VIENNACL_WITH_OPENCL
   using viennacl::circulant_matrix;
   EXPORT_STRUCTURED_MATRIX(circulant_matrix, float);
   EXPORT_STRUCTURED_MATRIX(circulant_matrix, double);
@@ -20,5 +21,6 @@ PYVCL_SUBMODULE(structured_matrices)
   EXPORT_STRUCTURED_MATRIX(vandermonde_matrix, float);
   EXPORT_STRUCTURED_MATRIX(vandermonde_matrix, double);
   */
+#endif
 
 }

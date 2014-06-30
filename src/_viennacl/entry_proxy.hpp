@@ -1,7 +1,7 @@
 #ifndef _PYVIENNACL_ENTRY_PROXY_H
 #define _PYVIENNACL_ENTRY_PROXY_H
 
-#include "pyviennacl.hpp"
+#include "common.hpp"
 #include <viennacl/forwards.h>
 
 // THIS IS NOT VERY C++ !!

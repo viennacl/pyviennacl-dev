@@ -170,22 +170,30 @@ scalar case, simple numerical equality is used.
 """
 
 from __future__ import division
-import logging, math
+import itertools, logging, math
 from pyviennacl import (_viennacl as _v,
-                        util)
+                        backend, util)
 from numpy import (ndarray, array, zeros,
-                   inf, nan, dtype,
+                   inf, nan, dtype, number,
                    equal as np_equal, array_equal,
                    result_type as np_result_type,
                    int8, int16, int32, int64,
                    uint8, uint16, uint32, uint64,
                    float16, float32, float64)
 
+WITH_SCIPY = True
 try:
     from scipy import sparse
-    WITH_SCIPY = True
-except:
+except ImportError:
     WITH_SCIPY = False
+
+WITH_OPENCL = True
+try:
+    import pyviennacl.opencl as vcl
+    import pyopencl as cl
+    import pyopencl.array
+except ImportError:
+    WITH_OPENCL = False
 
 log = logging.getLogger(__name__)
 
@@ -237,8 +245,8 @@ HostScalarTypes = {
 }
 
 # Constants for choosing matrix storage layout
-ROW_MAJOR = 1
-COL_MAJOR = 2
+ROW_MAJOR = 'C'
+COL_MAJOR = 'F'
 
 vcl_layout_strings = {
     ROW_MAJOR: 'row',
@@ -255,6 +263,11 @@ class NoResult(object):
     """
     pass
 
+def noop(*args):
+    """
+    A no-op function.
+    """
+    pass
 
 class MagicMethods(object):
     """
@@ -264,6 +277,24 @@ class MagicMethods(object):
     to PyViennaCL. For more information, see the individual methods below.
     """
     flushed = False
+
+    @property
+    def itemsize(self):
+        return np_result_type(self).itemsize
+
+    def as_opencl_array(self):
+        if self.context.domain is not backend.OpenCLMemory:
+            raise TypeError("This operation is currently only supported with the OpenCL backend")
+        c = cl.array.Array(self.context.current_queue,
+                           self.shape,
+                           self.dtype,
+                           order = self.layout,
+                           data = self.handle.memory_object,
+                           strides = self.strides)
+        return c
+
+    def as_opencl_kernel_operands(self):
+        raise NotImplementedError("This needs to be overridden by derived classes")
 
     def result_container_type(self):
         """
@@ -310,6 +341,12 @@ class MagicMethods(object):
             'fro' means the string 'fro', and denotes the Frobenius norm.
             If None and self is a Matrix instance, then assumes 'fro'.
         """
+        if ord is None: # TODO: Tidy this up
+            try:
+                return self.norm('fro')
+            except:
+                return self.norm(2)
+
         if ord == 1:
             #return Norm_1(self) TODO NOT WORKING WITH SCHEDULER
             return Scalar(_v.norm_1(self.vcl_leaf),
@@ -799,22 +836,59 @@ class Leaf(MagicMethods):
         Tasks include expression computation and configuration of data types
         and views.
         """
+        self._context = None
+        self.dtype = None
+
+        args = list(args)
         for arg in args:
+            REMOVE_ARG = False
+
             if isinstance(arg, list):
                 for item in arg:
                     if isinstance(item, MagicMethods):
                         arg[arg.index(item)] = item.value
 
+            ARG_IS_NUMBER = False
+            try:
+                if issubclass(arg, number) or issubclass(arg, dtype):
+                    ARG_IS_NUMBER = True
+            except TypeError: pass
+            if ARG_IS_NUMBER:
+                self.dtype = np_result_type(arg)
+                REMOVE_ARG = True
+
+            ARG_IS_MEM_DOMAIN = False
+            try:
+                if issubclass(arg, backend.MemoryDomain):
+                    ARG_IS_MEM_DOMAIN = True
+            except TypeError: pass
+            if ARG_IS_MEM_DOMAIN or isinstance(arg, backend.Context):
+                self._context = backend.Context(arg)
+                REMOVE_ARG = True
+            elif WITH_OPENCL:
+                if isinstance(arg, cl.Context):
+                    self._context = backend.Context(arg)
+                    REMOVE_ARG = True
+
+            if REMOVE_ARG:
+                args.remove(arg)
+
         if 'dtype' in kwargs.keys():    
             dt = dtype(kwargs['dtype']) 
             self.dtype = dt
-        else:
-            self.dtype = None
             
+        if 'context' in kwargs.keys():
+            self._context = backend.Context(kwargs['context'])
+        elif self._context is None:
+            self._context = backend.Context()
+
         if 'view_of' in kwargs.keys():
             self.view_of = kwargs['view_of']
         if 'view' in kwargs.keys():
             self.view = kwargs['view']
+
+        if not self._context.queues[self._context.current_device]:
+            self._context.add_queue(self._context.current_device)
 
         self._init_leaf(args, kwargs)
 
@@ -831,7 +905,7 @@ class Leaf(MagicMethods):
                     try:
                         value = np_result_type(item).type(value)
                     except:
-                        log.exception("Failed to convert value dtype (%s) to item dtype (%s)" % 
+                        log.error("Failed to convert value dtype (%s) to item dtype (%s)" % 
                                       (np_result_type(item), np_result_type(value)))
                 try:
                     try: # Assume matrix type
@@ -839,7 +913,7 @@ class Leaf(MagicMethods):
                     except: # Otherwise, assume vector
                         return self.vcl_leaf.set_entry(key, value) ## set
                 except:
-                    log.exception("Failed to set vcl entry")
+                    log.error("Failed to set vcl entry")
             raise TypeError("Cannot assign %s to %s" % (type(value),
                                                         type(item)))
         if item.dtype != value.dtype:
@@ -883,6 +957,16 @@ class Leaf(MagicMethods):
         Override this function to implement caching functionality.
         """
         raise NotImplementedError("Should you be trying to flush this type?")
+
+    @property
+    def handle(self):
+        # TODO: Need setter
+        return self._handle
+
+    @property
+    def context(self):
+        # TODO: Need setter
+        return self._context
 
     @property
     def result_container_type(self):
@@ -1017,6 +1101,12 @@ class ScalarBase(Leaf):
         """
         return array(self.value, dtype=self.dtype)
 
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring
+        """
+        return [np_result_type(self).type(self.value)]
+
     def __pow__(self, rhs):
         """
         x.__pow__(y) <==> x**y
@@ -1045,7 +1135,7 @@ class ScalarBase(Leaf):
         else:
             return self.result_container_type(rhs ** self.value,
                                               dtype = self.dtype)
-        
+
 
 class HostScalar(ScalarBase):
     """
@@ -1059,6 +1149,8 @@ class HostScalar(ScalarBase):
     
     def _init_scalar(self):
         self.vcl_leaf = self._value
+        self._handle = None
+        self._context = backend.Context(backend.MainMemory)
 
 
 class Scalar(ScalarBase):
@@ -1077,11 +1169,11 @@ class Scalar(ScalarBase):
             vcl_type = getattr(_v, "scalar_" + vcl_statement_node_numeric_type_strings[self.statement_node_numeric_type])
         except (KeyError, AttributeError):
             raise TypeError("ViennaCL type %s not supported" % self.statement_node_numeric_type)
+
         if isinstance(self._value, vcl_type):
-            self.vcl_leaf = self._value
             self._value = self._value.to_host()
-        else:
-            self.vcl_leaf = vcl_type(self._value)
+        self.vcl_leaf = vcl_type(self._value, self._context.vcl_context)
+        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
 
 
 class Vector(Leaf):
@@ -1120,6 +1212,8 @@ class Vector(Leaf):
         elif len(args) == 1:
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type, Vector):
+                    if args[0].handle.domain is not self._context.domain:
+                        raise TypeError("TODO Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     def get_leaf(vcl_t):
@@ -1136,15 +1230,17 @@ class Vector(Leaf):
                     a = args[0]
                 self.dtype = np_result_type(args[0])
                 def get_leaf(vcl_t):
-                    return vcl_t(a)
+                    return vcl_t(a, self._context.vcl_context)
             elif isinstance(args[0], _v.vector_base):
+                if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
+                    raise TypeError("TODO Can only construct from objects with same memory domain")
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
                     return args[0]
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0])
+                    return vcl_t(args[0], self._context.vcl_context)
         elif len(args) == 2:
             if self.dtype is None:
                 try:
@@ -1152,7 +1248,7 @@ class Vector(Leaf):
                 except TypeError:
                     self.dtype = np_result_type(args[1])
             def get_leaf(vcl_t):
-                return vcl_t(args[0], args[1])
+                return vcl_t(args[0], args[1], self._context.vcl_context)
         else:
             raise TypeError("Vector cannot be constructed in this way")
 
@@ -1168,10 +1264,15 @@ class Vector(Leaf):
         except (KeyError, AttributeError):
             raise TypeError(
                 "dtype %s not supported" % self.statement_node_numeric_type)
+
         self.vcl_leaf = get_leaf(vcl_type)
+        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
         self.size = self.vcl_leaf.size
         self.shape = (self.size,)
         self.internal_size = self.vcl_leaf.internal_size
+        self.internal_shape = (self.internal_size,)
+        self.strides = (self.itemsize,)
+        self.layout = ROW_MAJOR
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -1271,6 +1372,12 @@ class Vector(Leaf):
         for i in range(self.size):
             tmp_m[i][i] = tmp_v[i]
         return Matrix(tmp_m, dtype=self.dtype) # TODO: Ought to be sparse here
+
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring
+        """
+        return [self.handle.buffer, uint32(self.internal_size)]
 
     def __mul__(self, rhs):
         """
@@ -1437,6 +1544,15 @@ class SparseMatrixBase(Leaf):
         self.base = self
 
     @property
+    def handle(self):
+        """
+        TODO docstring
+        """
+        if not self.flushed:
+            self.flush()
+        return self._handle
+
+    @property
     def nonzeros(self):
         """
         A ``list`` of coordinates of the nonzero elements of the matrix.
@@ -1496,7 +1612,7 @@ class SparseMatrixBase(Leaf):
         """
         Returns the sparse matrix as a dense PyViennaCL ``Matrix``.
         """
-        return Matrix(self)
+        return Matrix(self, context = self._context)
 
     @property
     def vcl_leaf(self):
@@ -1565,6 +1681,9 @@ class CompressedMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_compressed_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle1),
+                        backend.MemoryHandle(self._vcl_leaf.handle2))
         self.flushed = True
 
 
@@ -1581,6 +1700,9 @@ class CoordinateMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_coordinate_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle12),
+                        backend.MemoryHandle(self._vcl_leaf.handle3))
         self.flushed = True
 
 
@@ -1606,6 +1728,8 @@ class ELLMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_ell_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle2))
         self.flushed = True
 
 
@@ -1624,6 +1748,11 @@ class HybridMatrix(SparseMatrixBase):
 
     def flush(self):
         self._vcl_leaf = self.cpu_leaf.as_hyb_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle2),
+                        backend.MemoryHandle(self._vcl_leaf.handle3),
+                        backend.MemoryHandle(self._vcl_leaf.handle4),
+                        backend.MemoryHandle(self._vcl_leaf.handle5))
         self.flushed = True
 
 
@@ -1660,6 +1789,7 @@ class Matrix(Leaf):
     """
     ndim = 2
     statement_node_type_family = _v.statement_node_type_family.MATRIX_TYPE_FAMILY
+    statement_node_subtype = _v.statement_node_subtype.DENSE_MATRIX_TYPE
 
     def _init_leaf(self, args, kwargs):
         """
@@ -1679,7 +1809,6 @@ class Matrix(Leaf):
                 self.layout = ROW_MAJOR
         else:
             self.layout = ROW_MAJOR
-        self.statement_node_subtype = _v.statement_node_subtype.DENSE_MATRIX_TYPE
 
         if len(args) == 0:
             def get_leaf(vcl_t):
@@ -1692,8 +1821,11 @@ class Matrix(Leaf):
                         self.dtype = args[0].result.dtype
                     self.layout = args[0].result.layout
                     def get_leaf(vcl_t):
-                        return vcl_t(args[0].result.as_ndarray())
+                        return vcl_t(args[0].result.as_ndarray(),
+                                     self._context.vcl_context)
                 elif issubclass(args[0].result_container_type, Matrix):
+                    if args[0].context.domain is not self._context.domain:
+                        raise TypeError("TODO Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     self.layout = args[0].result.layout
@@ -1704,12 +1836,18 @@ class Matrix(Leaf):
                         "Matrix cannot be constructed in this way")
             elif isinstance(args[0], tuple) or isinstance(args[0], list):
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0][0], args[0][1])
+                    return vcl_t(args[0][0], args[0][1],
+                                 self._context.vcl_context)
+            elif isinstance(args[0], _v.matrix_base):
+                if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
+                    raise TypeError("TODO Can only construct from objects with same memory domain")
+                def get_leaf(vcl_t):
+                    return args[0]
             elif isinstance(args[0], ndarray):
                 if self.dtype is None:
                     self.dtype = args[0].dtype
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0])
+                    return vcl_t(args[0], self._context.vcl_context)
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
@@ -1719,15 +1857,17 @@ class Matrix(Leaf):
                 if self.dtype is None:
                     self.dtype = np_result_type(args[1])
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0][0], args[0][1], args[1])
+                    return vcl_t(args[0][0], args[0][1], args[1],
+                                 self._context.vcl_context)
             else:
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0], args[1])
+                    return vcl_t(args[0], args[1], self._context.vcl_context)
         elif len(args) == 3:
             if self.dtype is None:
                 self.dtype = np_result_type(args[2])
             def get_leaf(vcl_t):
-                return vcl_t(args[0], args[1], args[2])
+                return vcl_t(args[0], args[1], args[2],
+                             self._context.vcl_context)
         else:
             raise TypeError("Matrix cannot be constructed in this way")
 
@@ -1746,12 +1886,18 @@ class Matrix(Leaf):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
         self.vcl_leaf = get_leaf(vcl_type)
+        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
         self.size1 = self.vcl_leaf.size1
         self.size2 = self.vcl_leaf.size2
         self.size = self.size1 * self.size2 # Flat size
         self.shape = (self.size1, self.size2)
         self.internal_size1 = self.vcl_leaf.internal_size1
         self.internal_size2 = self.vcl_leaf.internal_size2
+        self.internal_shape = (self.internal_size1, self.internal_size2)
+        if self.layout == ROW_MAJOR:
+            self.strides = (self.internal_size1 * self.itemsize, self.itemsize)
+        else:
+            self.strides = (self.itemsize, self.itemsize * self.internal_size2)
 
     def __getitem__(self, key):
         project = getattr(_v,
@@ -1833,6 +1979,13 @@ class Matrix(Leaf):
         else:
             raise IndexError("Did not understand key")
 
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring
+        """
+        return [self.handle.buffer,
+                uint32(self.internal_size1), uint32(self.internal_size2)]
+
     #def clear(self):
     #    """
     #    Set every element of the matrix to 0.
@@ -1877,18 +2030,7 @@ class Node(MagicMethods):
         else:
             raise TypeError("Only unary or binary nodes supported currently")
 
-        def fix_operand(opand):
-            """
-            If opand is a scalar type, wrap it in a PyViennaCL scalar class.
-            """
-            if isinstance(opand, list):
-                opand = array(opand)
-            if (np_result_type(opand).name in HostScalarTypes
-                and not (isinstance(opand, MagicMethods)
-                         or isinstance(opand, ndarray))):
-                return HostScalar(opand)
-            else: return opand
-        self.operands = list(map(fix_operand, args))
+        self.operands = list(map(util.fix_operand, args))
 
         if self.result_container_type is None:
             # Try swapping the operands, in case the operation supports
@@ -1977,6 +2119,20 @@ class Node(MagicMethods):
         return complexity
 
     @property
+    def operand_types_string(self):
+        """
+        TODO docstring
+        """
+        types = []
+        for o in self.operands:
+            try:
+                t = o.result_container_type.__name__
+            except AttributeError:
+                t = 'HostScalar'
+            types.append(t)
+        return tuple(types)
+
+    @property
     def result_container_type(self):
         """
         Determine the container type (ie, Scalar, Vector, etc) needed to
@@ -1987,45 +2143,8 @@ class Node(MagicMethods):
         """
         if len(self.result_types) < 1:
             return NoResult
-
-        if len(self.operands) > 0:
-            try:
-                op0_t = self.operands[0].result_container_type.__name__
-            except AttributeError:
-                # Not a PyViennaCL type, so we have a number of options.
-                # Suppose an ndarray...
-                if isinstance(self.operands[0], ndarray):
-                    self.operands[0] = from_ndarray(self.operands[0])
-                    op0_t = self.operands[0].result_container_type.__name__
-                else:
-                    # Otherwise, assume some scalar and hope for the best
-                    op0_t = 'HostScalar'
-        else:
-            raise RuntimeError("What is a 0-ary operation?")
-
-        if len(self.operands) > 1:
-            try:
-                op1_t = self.operands[1].result_container_type.__name__
-            except AttributeError:
-                if isinstance(self.operands[1], ndarray):
-                    if self.operands[1].ndim == 1:
-                        self.operands[1] = Vector(self.operands[1])
-                    elif self.operands[1].ndim == 2:
-                        self.operands[1] = Matrix(self.operands[1])
-                    else:
-                        raise AttributeError("Cannot cope with %d dimensions!" % self.operands[1].ndim)
-                    op1_t = self.operands[1].result_container_type.__name__
-                else:
-                    # Again, hope for the best..
-                    op1_t = 'HostScalar'
-            try: return self.result_types[(op0_t, op1_t)]
-            except KeyError:
-                # Operation not supported for given operand types
-                return None
-        else:
-            # No more operands, so test for 1-ary result_type
-            try: return self.result_types[(op0_t, )]
-            except KeyError: return None            
+        try: return self.result_types[self.operand_types_string]
+        except KeyError: return None
 
     @property
     def dtype(self):
@@ -2190,12 +2309,104 @@ class Node(MagicMethods):
         """
         return self.result.value
 
+    @property
+    def handle(self):
+        """
+        Returns the memory handle of the result of the operation.
+        
+        Be aware that this incurs the execution of the statement, if this
+        has not yet occurred.
+        """
+        return self.result.handle
+
+    @property
+    def context(self):
+        # NB: This assumes all operands have the same context (TODO: fix?)
+        return self.operands[0].context
+
     def as_ndarray(self):
         """
         Return the value of computing the operation represented by this Node
         as a NumPy ``ndarray``.
         """
         return array(self.value, dtype=self.dtype)
+
+    def as_opencl_kernel_operands(self):
+        """
+        TODO docstring -- beware dispatch
+        """
+        return self.result.as_opencl_kernel_operands()
+
+
+class CustomNode(Node):
+    """
+    TODO docstring
+    """
+    result_types = {}
+    kernels = {}
+
+    def __init__(self, *args):
+        """
+        TODO docstring
+        """
+        self.operands = list(map(util.fix_operand, args))
+        self.statement_node_type_family = self.result_container_type.statement_node_type_family
+        self.statement_node_subtype = self.result_container_type.statement_node_subtype
+        self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
+        for op in self.operands:
+            if op.context != self.context and not isinstance(op, HostScalar):
+                raise TypeError("Operands must all have the same context")
+        self._compile_kernels()
+
+    def _compile_kernels(self):
+        # TODO: global cache, so every instantiation doesn't necessitate a
+        #       full compile
+        self.compiled_kernels = {}
+        for domain in self.kernels.keys():
+            self.compiled_kernels[domain] = {}
+            for op_type in self.kernels[domain]:
+                kernel = self.kernels[domain][op_type]
+                if domain is backend.OpenCLMemory and isinstance(kernel, str):
+                    prg = cl.Program(self.context.sub_context, kernel)
+                    prg = prg.build()
+                    try:
+                        built_kernel = prg.all_kernels()[0]
+                    except IndexError:
+                        log.warning("Failed to build kernel for domain %s and operand types %s" % (domain, op_type))
+                        built_kernel = noop
+                    self.compiled_kernels[domain][op_type] = built_kernel
+                else:
+                    self.compiled_kernels[domain][op_type] = kernel
+
+    def execute(self):
+        """
+        TODO docstring
+        """
+        try:
+            self._kernel = self.compiled_kernels[self.context.domain][self.operand_types_string]
+        except AttributeError:
+            log.error("No kernel for memory domain %s and operand types %s"
+                    % (self.context.domain, self.operand_types_string))
+        result = self.result_container_type(
+            shape = self.shape,
+            dtype = self.dtype,
+            layout = self.layout,
+            context = self.context)
+        operands = self.operands + [result]
+        if self.context.domain is backend.OpenCLMemory:
+            if isinstance(self._kernel, cl.Kernel):
+                self._execute_opencl_kernel(*operands)
+            else:
+                self._kernel(*operands)
+        else:
+            self._kernel(*operands)
+        self._result = result
+        self.flushed = True
+
+    def _execute_opencl_kernel(self, *operands):
+        args = [x.as_opencl_kernel_operands() for x in operands]
+        args = itertools.chain(*args)
+        self._kernel(self.context.current_queue, self.shape, None, *args)
 
 
 class Norm_1(Node):
@@ -2749,6 +2960,8 @@ class Statement:
     the resultant types, and generates the appropriate underlying ViennaCL
     C++ object.
     """
+    statement = []  # A list to hold the flattened expression tree
+    vcl_statement = None # Will reference the ViennaCL statement object
 
     def __init__(self, root):
         """
@@ -2766,8 +2979,7 @@ class Statement:
         if not isinstance(root, Node):
             raise RuntimeError("Statement must be initialised on a Node")
 
-        self.statement = []  # A list to hold the flattened expression tree
-        next_node = []       # Holds nodes as we travel down the tree
+        next_node = [] # Holds nodes as we travel down the tree
 
         # Test to see that we can actually do the operation
         if not root.result_container_type:
@@ -2781,7 +2993,8 @@ class Statement:
             self.result = root.result_container_type(
                 shape = root.shape,
                 dtype = root.dtype,
-                layout = root.layout)
+                layout = root.layout,
+                context = root.operands[0].context)
             top = Assign(self.result, root)
             next_node.append(top)
 
@@ -2790,7 +3003,9 @@ class Statement:
         for n in next_node:
             op_num = 0
             for operand in n.operands:
-                if isinstance(operand, Node):
+                # If operand is a CustomNode, then we treat it as a Leaf here,
+                # since CustomNode is not mapped to a ViennaCL statement node
+                if isinstance(operand, Node) and not isinstance(operand, CustomNode):
                     #if op_num == 0 and len(n.operands) > 1:
                     #    # ViennaCL cannot cope with complex LHS
                     #    operand = operand.result
@@ -2798,8 +3013,14 @@ class Statement:
                     #    n._vcl_node_init()
                     #else:
                     next_node.append(operand)
+                if isinstance(operand, Leaf) or isinstance(operand, CustomNode):
+                    if (operand.context != self.result.context
+                        and not isinstance(operand, HostScalar)):
+                        raise TypeError(
+                            "All objects in statement must have same context: %s"
+                            % (operand.express))
                 op_num += 1
-            append_node = True
+            append_node = not isinstance(n, CustomNode)
             for N in self.statement:
                 if id(N) == id(n):
                     append_node = False
@@ -2818,12 +3039,18 @@ class Statement:
                 if isinstance(operand, Leaf):
                     n.get_vcl_operand_setter(operand)(op_num, operand.vcl_leaf)
                 elif isinstance(operand, Node):
-                    op_idx = 0
-                    for next_op in self.statement:
-                        if hash(operand) == hash(next_op):
-                            break
-                        op_idx += 1
-                    n.get_vcl_operand_setter(operand)(op_num, op_idx)
+                    if operand.flushed or isinstance(operand, CustomNode):
+                        # NB: CustomNode instances are dispatched here,
+                        #     or the cached result used
+                        n.get_vcl_operand_setter(operand.result)(
+                            op_num, operand.result.vcl_leaf)
+                    else:
+                        op_idx = 0
+                        for next_op in self.statement:
+                            if hash(operand) == hash(next_op):
+                                break
+                            op_idx += 1
+                        n.get_vcl_operand_setter(operand)(op_num, op_idx)
                 elif np_result_type(operand).name in HostScalarTypes.keys():
                     n.get_vcl_operand_setter(HostScalar(operand))(
                         op_num, operand)

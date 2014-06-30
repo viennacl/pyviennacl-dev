@@ -1,7 +1,7 @@
 #ifndef _PYVIENNACL_VECTOR_H
 #define _PYVIENNACL_VECTOR_H
 
-#include "pyviennacl.hpp"
+#include "common.hpp"
 
 #include <viennacl/scheduler/execute.hpp>
 

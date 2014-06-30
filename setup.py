@@ -44,7 +44,8 @@ def get_config_schema():
                 "/Developer/SDKs/MacOSX%s.sdk" % osx_ver
                 ]
 
-        default_libs = []
+        default_cl_libs = []
+        default_omp_libs = ["gomp"]
         default_cxxflags = ['-arch', 'i386', '-arch', 'x86_64']
 
         from os.path import isdir
@@ -56,7 +57,8 @@ def get_config_schema():
         default_ldflags = default_cxxflags[:] + ["-Wl,-framework,OpenCL"]
 
     else:
-        default_libs = ["OpenCL"]
+        default_cl_libs = ["OpenCL"]
+        default_omp_libs = ["gomp"]
         default_cxxflags = []
         default_ldflags = []
 
@@ -74,10 +76,14 @@ def get_config_schema():
             Switch("USE_SHIPPED_VIENNACL", True, "Use included ViennaCL library"),
 
             Switch("USE_OPENCL", True, "Use OpenCL"),
-
             IncludeDir("CL", []),
             LibraryDir("CL", []),
-            Libraries("CL", default_libs),
+            Libraries("CL", default_cl_libs),
+
+            Switch("USE_OPENMP", True, "Use OpenMP"),
+            IncludeDir("OpenMP", []),
+            LibraryDir("OpenMP", []),
+            Libraries("OpenMP", default_omp_libs),
 
             IncludeDir("VIENNACL", []),
 
@@ -129,13 +135,21 @@ def main():
 
     # }}}
 
-    if conf["USE_OPENCL"]:
-        EXTRA_DEFINES["VIENNACL_WITH_OPENCL"] = None
-    EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
-
     platform_cflags["msvc"] = ["/EHsc"]
     platform_cflags["mingw32"] = ["-Wno-unused-function"]
     platform_cflags["unix"] = ["-Wno-unused-function"]
+
+    if conf["USE_OPENCL"]:
+        EXTRA_DEFINES["VIENNACL_WITH_OPENCL"] = None
+
+    if conf["USE_OPENMP"]:
+        EXTRA_DEFINES["VIENNACL_WITH_OPENMP"] = None
+        platform_cflags["unix"] += ["-fopenmp"]
+
+    EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
+
+    UNDEF_MACROS = ['NDEBUG']
+    EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
 
     if not sys.platform.startswith("darwin"):
         platform_libs['unix'] = ['rt']
@@ -156,12 +170,14 @@ def main():
 
         "structured_matrices",
 
-        "compressed_matrix", "coordinate_matrix", "ell_matrix", "hyb_matrix",
+        "cpu_compressed_matrix",
+        "compressed_matrix", "compressed_compressed_matrix",
+        "coordinate_matrix", "ell_matrix", "hyb_matrix",
         "preconditioners","direct_solvers", "iterative_solvers",
 
         "extra_functions", "eig", #"bandwidth_reduction",
 
-        "scheduler", "opencl_support"]
+        "scheduler", "platform_support", "opencl_support"]
 
     from glob import glob
 
@@ -217,10 +233,11 @@ def main():
             extra_link_args=conf["LDFLAGS"],
 
             define_macros=list(EXTRA_DEFINES.items()),
+            undef_macros=UNDEF_MACROS,
 
             include_dirs=INCLUDE_DIRS,
-            library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"],
-            libraries=LIBRARIES + conf["CL_LIBNAME"],
+            library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"] + conf["OpenMP_LIB_DIR"],
+            libraries=LIBRARIES + conf["CL_LIBNAME"] + conf["OpenMP_LIBNAME"],
         )],
         cmdclass={'build_ext': build_ext_subclass}
     )

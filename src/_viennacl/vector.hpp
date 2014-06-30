@@ -1,7 +1,6 @@
 #ifndef _PYVIENNACL_VECTOR_H
 #define _PYVIENNACL_VECTOR_H
 
-#include "pyviennacl.hpp"
 #include "entry_proxy.hpp"
 
 #include <boost/numeric/ublas/vector_sparse.hpp>
@@ -99,7 +98,18 @@ np::ndarray vcl_vector_to_ndarray(const vcl::vector_base<SCALARTYPE>& v)
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_ndarray(const np::ndarray& array)
+vcl_vector_init_mem(SCALARTYPE* ptr, vcl::memory_types mem_type,
+                    vcl::vcl_size_t size, vcl::vcl_size_t start = 0,
+                    vcl::vcl_ptrdiff_t stride = 1)
+{
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>
+    (ptr, mem_type, size, start, stride);
+  return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
 {
   int d = array.get_nd();
   if (d != 1) {
@@ -109,7 +119,7 @@ vcl_vector_init_ndarray(const np::ndarray& array)
   
   vcl::vcl_size_t s = (vcl::vcl_size_t) array.shape(0);
   
-  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s);
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s, ctx);
   std::vector<SCALARTYPE> cpu_vector(s);
   
   for (vcl::vcl_size_t i=0; i < s; ++i)
@@ -122,20 +132,42 @@ vcl_vector_init_ndarray(const np::ndarray& array)
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_list(const bp::list& l)
+vcl_vector_init_list(const bp::list& l, const vcl::context& ctx)
 {
   return vcl_vector_init_ndarray<SCALARTYPE>
-    (np::from_object(l, np::dtype::get_builtin<SCALARTYPE>()));
+    (np::from_object(l, np::dtype::get_builtin<SCALARTYPE>()), ctx);
 }
 
 template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value)
+vcl_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value,
+                       const vcl::context &ctx)
 {
   ublas::scalar_vector<SCALARTYPE> s_v(length, value);
-  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(length);
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(length, ctx);
   vcl::copy(s_v.begin(), s_v.end(), v->begin());
   return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_ndarray_default_context(const np::ndarray& array)
+{
+  return vcl_vector_init_ndarray<SCALARTYPE>(array, vcl::context());
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_list_default_context(const bp::list& l)
+{
+  return vcl_vector_init_list<SCALARTYPE>(l, vcl::context());
+}
+
+template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_scalar_default_context(vcl::vcl_size_t length, SCALARTYPE value)
+{
+  return vcl_vector_init_scalar<SCALARTYPE>(length, value, vcl::context());
 }
 
 template <class SCALARTYPE>
@@ -179,16 +211,28 @@ bp::list list_from_vector(std::vector<T> v) {
 DO_OP_FUNC(op_index_norm_inf)
 {
   return vcl::linalg::index_norm_inf(o.operand1);
-} };
+}
+CLOSE_OP_FUNC;
 
 #define EXPORT_VECTOR_CLASS(TYPE)					\
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::vector_base<TYPE>,               \
+                                  vcl::vector_base<TYPE>::handle_type&, \
+                                  handle, get_vector_##TYPE##_handle, ()); \
   bp::class_<vcl::vector_base<TYPE>,                                    \
              vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >          \
-    ("vector_base", bp::no_init)                                        \
+  ("vector_base",                                                       \
+   bp::init<vcl::backend::mem_handle&,                                  \
+   vcl::vector_base<TYPE>::size_type,                                   \
+   vcl::vector_base<TYPE>::size_type,                                   \
+   vcl::vector_base<TYPE>::difference_type>())                          \
     .def("get_entry", &get_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("set_entry", &set_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("as_ndarray", &vcl_vector_to_ndarray<TYPE>)			\
     .def("as_list", &vcl_vector_to_list<TYPE>)                          \
+    .add_property("memory_domain", &vcl::vector_base<TYPE>::memory_domain) \
+    .add_property("handle", bp::make_function                           \
+                  (get_vector_##TYPE##_handle,                          \
+                   bp::return_internal_reference<>()))                  \
     .add_property("size", &vcl::vector_base<TYPE>::size)                \
     .add_property("internal_size", &vcl::vector_base<TYPE>::internal_size) \
     .add_property("index_norm_inf", pyvcl_do_1ary_op<vcl::scalar<TYPE>,	\
@@ -208,16 +252,21 @@ DO_OP_FUNC(op_index_norm_inf)
              bp::bases<vcl::vector_base<TYPE> > >                       \
     ( "vector_" #TYPE )                                                 \
     .def(bp::init<int>())						\
+    .def(bp::init<int, vcl::context>())                                 \
     .def(bp::init<vcl::vector_base<TYPE> >())				\
+    .def("__init__", bp::make_constructor(vcl_vector_init_mem<TYPE>))   \
     .def("__init__", bp::make_constructor(vcl_vector_init_ndarray<TYPE>)) \
     .def("__init__", bp::make_constructor(vcl_vector_init_list<TYPE>))	\
     .def("__init__", bp::make_constructor(vcl_vector_init_scalar<TYPE>))\
+    .def("__init__", bp::make_constructor(vcl_vector_init_ndarray_default_context<TYPE>)) \
+    .def("__init__", bp::make_constructor(vcl_vector_init_list_default_context<TYPE>))	\
+    .def("__init__", bp::make_constructor(vcl_vector_init_scalar_default_context<TYPE>))\
     ;                                                                   \
   bp::class_<std::vector<TYPE>,						\
 	     vcl::tools::shared_ptr<std::vector<TYPE> > >			\
     ( "std_vector_" #TYPE )                                             \
     .def(bp::init<int>())						\
-    .def(bp::init<std::vector<TYPE> >())				\
+  .def(bp::init<std::vector<TYPE> >())                                  \
     .def("__init__", bp::make_constructor(std_vector_init_ndarray<TYPE>)) \
     .def("__init__", bp::make_constructor(std_vector_init_list<TYPE>))	\
     .def("__init__", bp::make_constructor(std_vector_init_scalar<TYPE>))\

@@ -87,6 +87,8 @@ PYVCL_SUBMODULE(preconditioners)
   EXPORT_ROW_SCALING_PRECOND(vcl::coordinate_matrix<float>);
   EXPORT_ROW_SCALING_PRECOND(vcl::coordinate_matrix<double>);
 
+#ifdef VIENNACL_WITH_OPENCL
+
   // AMG
 
   bp::scope().attr("VIENNACL_AMG_COARSE_RS") = VIENNACL_AMG_COARSE_RS;
@@ -175,5 +177,7 @@ PYVCL_SUBMODULE(preconditioners)
 
   EXPORT_FSPAI_PRECOND(vcl::compressed_matrix<float>);
   EXPORT_FSPAI_PRECOND(vcl::compressed_matrix<double>);
+
+#endif // VIENNACL_WITH_OPENCL
 
 }

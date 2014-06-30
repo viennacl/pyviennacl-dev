@@ -1,15 +1,17 @@
 #ifndef _PYVIENNACL_PRECONDITIONERS_HPP
 #define _PYVIENNACL_PRECONDITIONERS_HPP
 
-#include "pyviennacl.hpp"
 #include "sparse_matrix.hpp"
 
-#include <viennacl/linalg/amg.hpp>
 #include <viennacl/linalg/ichol.hpp>
 #include <viennacl/linalg/ilu.hpp>
 #include <viennacl/linalg/jacobi_precond.hpp>
 #include <viennacl/linalg/row_scaling.hpp>
+
+#ifdef VIENNACL_WITH_OPENCL
+#include <viennacl/linalg/amg.hpp>
 #include <viennacl/linalg/spai.hpp>
+#endif
 
 #define EXPORT_ICHOL0_PRECOND(MAT)                                      \
   bp::class_<vcl::linalg::ichol0_precond<MAT> >                         \
