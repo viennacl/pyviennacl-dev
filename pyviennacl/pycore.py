@@ -170,7 +170,7 @@ scalar case, simple numerical equality is used.
 """
 
 from __future__ import division
-import logging, math
+import itertools, logging, math
 from pyviennacl import (_viennacl as _v,
                         backend, util)
 from numpy import (ndarray, array, zeros,
@@ -2320,49 +2320,56 @@ class CustomNode(Node):
         self._compile_kernels()
 
     def _compile_kernels(self):
-        # TODO: compile kernels for given context if not already compiled
-        # TODO: global cache, so every instantiation doesn't necessitate a full compile
+        # NB: should support OpenCL source and pre-compiled kernel objects
+        # TODO: global cache, so every instantiation doesn't necessitate a
+        #       full compile
         self.compiled_kernels = {}
         for domain in self.kernels.keys():
             self.compiled_kernels[domain] = {}
             for op_type in self.kernels[domain]:
                 kernel = self.kernels[domain][op_type]
-                if domain is backend.MainMemory:
-                    self.compiled_kernels[domain][op_type] = kernel
-                elif domain is backend.OpenCLMemory:
+                if domain is backend.OpenCLMemory and isinstance(kernel, str):
                     prg = cl.Program(self.context.sub_context, kernel)
                     prg = prg.build()
                     built_kernel = prg.all_kernels()[0]
                     self.compiled_kernels[domain][op_type] = built_kernel
+                else:
+                    self.compiled_kernels[domain][op_type] = kernel
 
     def execute(self):
         """
         TODO docstring
         """
-        # NB: should support just calling a function for MainMemory
-        # NB: should support OpenCL source and pre-compiled kernel objects
-        #
-        # TODO: objects with more than one handle
-        # TODO: other compute backends
-        # TODO: cache result and mark flushed
         try:
-            kernel = self.compiled_kernels[self.context.domain][self.operand_types_string]
+            self._kernel = self.compiled_kernels[self.context.domain][self.operand_types_string]
         except AttributeError:
             log.error("No kernel for memory domain %s and operand types %s"
                     % (self.context.domain, self.operand_types_string))
-        operands = [x.handle.buffer for x in self.operands]
         result = self.result_container_type(
             shape = self.shape,
             dtype = self.dtype,
             layout = self.layout,
             context = self.context)
-        operands.append(result.handle.buffer)
-        kernel(self.context.current_queue,
-               self.shape,
-               None,
-               *operands)
+        operands = self.operands + [result]
+        if self.context.domain is backend.OpenCLMemory:
+            if isinstance(self._kernel, cl.Kernel):
+                self._execute_opencl_kernel(*operands)
+            else:
+                self._kernel(*operands)
+        else:
+            self._kernel(*operands)
         self._result = result
         self.flushed = True
+
+    def _execute_opencl_kernel(self, *operands):
+        handles = [x.handle for x in operands]
+        def get_buffers(handle):
+            try: return [handle.buffer]
+            except AttributeError:
+                handle = list(handle)
+                return [x.buffer for x in handle]
+        buffers = itertools.chain(*map(get_buffers, handles))
+        self._kernel(self.context.current_queue, self.shape, None, *buffers)
 
 
 class Norm_1(Node):
