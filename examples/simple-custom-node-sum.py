@@ -6,27 +6,6 @@ import numpy as np
 from pyviennacl import Vector, Matrix, CustomNode
 from pyviennacl.backend import OpenCLMemory
 
-size = 1025
-
-print("Initialising two random vectors v and w of size %d" % size)
-
-v = np.random.rand(size).astype(np.float32)
-w = np.random.rand(size).astype(np.float32)
-
-v = Vector(v)
-w = Vector(w)
-
-print("Initialising two random matrices A and B of shape (%d, %d)"
-      % (size, size))
-
-A = np.random.rand(size,size).astype(np.float32)
-B = np.random.rand(size,size).astype(np.float32)
-
-A = Matrix(A)
-B = Matrix(B)
-
-print("Representing x=v+w using custom kernel")
-
 vector_src = """
 __kernel void sum(__global const float *a, unsigned int a_size,
                   __global const float *b, unsigned int b_size,
@@ -55,6 +34,27 @@ class CustomSum(CustomNode):
 
     kernels = { OpenCLMemory: { ('Vector', 'Vector'): vector_src,
                                 ('Matrix', 'Matrix'): matrix_src } }
+
+size = 1025
+
+print("Initialising two random vectors v and w of size %d" % size)
+
+v = np.random.rand(size).astype(np.float32)
+w = np.random.rand(size).astype(np.float32)
+
+v = Vector(v)
+w = Vector(w)
+
+print("Initialising two random matrices A and B of shape (%d, %d)"
+      % (size, size))
+
+A = np.random.rand(size,size).astype(np.float32)
+B = np.random.rand(size,size).astype(np.float32)
+
+A = Matrix(A)
+B = Matrix(B)
+
+print("Representing x=v+w using custom kernel")
 
 x = CustomSum(v, w)
 print(x.express())
