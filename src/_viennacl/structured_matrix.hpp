@@ -24,7 +24,8 @@ np::ndarray vcl_structured_matrix_to_ndarray(MATRIXTYPE& m)
   vcl::matrix<SCALARTYPE> vcl_dense_m(m.size1(), m.size2());
   vcl::copy(m, cpu_dense_m);
   vcl::copy(cpu_dense_m, vcl_dense_m);
-  return vcl_matrix_to_ndarray<SCALARTYPE>(vcl_dense_m);
+  return vcl_matrix_to_ndarray<vcl::matrix<SCALARTYPE>, SCALARTYPE>
+    (vcl_dense_m);
 }
 
 #define EXPORT_STRUCTURED_MATRIX(MAT, SCALAR)                           \

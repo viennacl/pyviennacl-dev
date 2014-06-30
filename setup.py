@@ -72,6 +72,8 @@ def get_config_schema():
         make_boost_base_options() + [
             BoostLibraries("python"),
 
+            Switch("DEBUG", False, "Turn on debug mode"),
+
             Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
             Switch("USE_SHIPPED_VIENNACL", True, "Use included ViennaCL library"),
 
@@ -148,8 +150,10 @@ def main():
 
     EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
 
-    UNDEF_MACROS = ['NDEBUG']
-    EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
+    UNDEF_MACROS = []
+    if conf["DEBUG"]:
+         UNDEF_MACROS += ['NDEBUG']
+         EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
 
     if not sys.platform.startswith("darwin"):
         platform_libs['unix'] = ['rt']
