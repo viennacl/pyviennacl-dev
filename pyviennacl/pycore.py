@@ -2282,9 +2282,7 @@ class Node(MagicMethods):
         """
         if not self.flushed:
             self.execute()
-            return self._result
-        else:
-            return self._result
+        return self._result
 
     @property
     def vcl_leaf(self):
@@ -2999,13 +2997,14 @@ class Statement:
             next_node.append(top)
 
         next_node.append(root)
+        self.statement = []
         # Flatten the tree
         for n in next_node:
             op_num = 0
             for operand in n.operands:
                 # If operand is a CustomNode, then we treat it as a Leaf here,
                 # since CustomNode is not mapped to a ViennaCL statement node
-                if isinstance(operand, Node) and not isinstance(operand, CustomNode):
+                if isinstance(operand, Node) and not isinstance(operand, CustomNode) and not operand.flushed:
                     #if op_num == 0 and len(n.operands) > 1:
                     #    # ViennaCL cannot cope with complex LHS
                     #    operand = operand.result
