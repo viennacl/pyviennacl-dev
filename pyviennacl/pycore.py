@@ -177,6 +177,7 @@ from numpy import (ndarray, array, zeros,
                    inf, nan, dtype, number,
                    equal as np_equal, array_equal,
                    result_type as np_result_type,
+                   asscalar,
                    int8, int16, int32, int64,
                    uint8, uint16, uint32, uint64,
                    float16, float32, float64)
@@ -1230,7 +1231,8 @@ class Vector(Leaf):
                     a = args[0]
                 self.dtype = np_result_type(args[0])
                 def get_leaf(vcl_t):
-                    return vcl_t(a, self._context.vcl_context)
+                    vcl_context = self._context.vcl_context
+                    return vcl_t(a, vcl_context)
             elif isinstance(args[0], _v.vector_base):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
@@ -1440,10 +1442,7 @@ class SparseMatrixBase(Leaf):
         the shape, layout, dtype and host memory cache.
         """
         if 'shape' in kwargs.keys():
-            if len(kwargs['shape']) != 2:
-                raise TypeError("Sparse matrix can only have a 2-d shape")
-            args = list(args)
-            args.insert(0, kwargs['shape'])
+            shape = kwargs['shape']
 
         if 'layout' in kwargs.keys():
             if kwargs['layout'] == COL_MAJOR:
@@ -1454,23 +1453,33 @@ class SparseMatrixBase(Leaf):
         else:
             self.layout = ROW_MAJOR
 
+        CONSTRUCT_FROM_DATA = False
+
         if len(args) == 0:
             # 0: empty -> empty
             def get_cpu_leaf(cpu_t):
                 return cpu_t()
         elif len(args) == 1:
             if isinstance(args[0], tuple):
-                if len(args[0]) == 2:
-                    # 1: 2-tuple -> shape
-                    def get_cpu_leaf(cpu_t):
-                        return cpu_t(args[0][0], args[0][1])
-                elif len(args[0]) == 3:
-                    # 1: 3-tuple -> shape+nnz
-                    def get_cpu_leaf(cpu_t):
-                        return cpu_t(args[0][0], args[0][1], args[0][2])
+                # Then we construct from given data
+                if 'shape' in kwargs.keys():
+                    if len(kwargs['shape']) == 2:
+                        # 1: 2-tuple -> shape
+                        def get_cpu_leaf(cpu_t):
+                            return cpu_t(shape[0],  shape[1])
+                    elif len(kwargs['shape']) == 3:
+                        # 1: 3-tuple -> shape+nnz
+                        def get_cpu_leaf(cpu_t):
+                            return cpu_t(kwargs['shape'][0],
+                                         kwargs['shape'][1],
+                                         kwargs['shape'][2])
                 else:
-                    # error!
-                    raise TypeError("Sparse matrix cannot be constructed thus")
+                # args[0] is (rows, cols, values), so ...
+                    def get_cpu_leaf(cpu_t):
+                        return cpu_t(max(args[0][0]), max(args[0][1]),
+                                     len(args[0][2]))
+                CONSTRUCT_FROM_DATA = True
+                data = args[0]
             elif isinstance(args[0], Matrix):
                 # 1: Matrix instance -> copy
                 if self.dtype is None:
@@ -1541,6 +1550,15 @@ class SparseMatrixBase(Leaf):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
         self.cpu_leaf = get_cpu_leaf(self.cpu_leaf_type)
+
+        if CONSTRUCT_FROM_DATA:
+            idx = 0
+            def insert_entry(i):
+                self.cpu_leaf.insert_entry(asscalar(data[0][i]),
+                                           asscalar(data[1][i]),
+                                           asscalar(data[2][i]))
+            map(insert_entry, range(len(data[0])))
+
         self.base = self
 
     @property
@@ -2825,7 +2843,10 @@ class Mul(Node):
     result_types = {
         # OPERATION_BINARY_MAT_MAT_PROD_TYPE
         ('Matrix', 'Matrix'): Matrix,
-        # TODO: Sparse matrix support here
+        ('CompressedMatrix', 'CompressedMatrix'): Matrix,
+        ('CoordinateMatrix', 'CoordinateMatrix'): Matrix,
+        ('ELLMatrix', 'ELLMatrix'): Matrix,
+        ('HybridMatrix', 'HybridMatrix'): Matrix,
 
         # OPERATION_BINARY_MAT_VEC_PROD_TYPE
         ('Matrix', 'Vector'): Vector,

@@ -245,17 +245,27 @@ public:
         resize(size1(), m+1);
     }
 
-    ScalarType old = cpu_compressed_matrix(n, m);
-    if (val != old) {
-      cpu_compressed_matrix(n, m) = val;
-      _dirty = true;
-    }
+    //ScalarType old = cpu_compressed_matrix(n, m);
+    //if (val != old) {
+    cpu_compressed_matrix(n, m) = val;
+    _dirty = true;
+    //}
   }
 
   // Need this because bp cannot deal with operator()
   ScalarType get_entry(vcl::vcl_size_t n, vcl::vcl_size_t m) const
   {
     return cpu_compressed_matrix(n, m);
+  }
+
+  void erase_entry(vcl::vcl_size_t n, vcl::vcl_size_t m)
+  {
+    cpu_compressed_matrix.erase_element(n, m);
+  }
+
+  void insert_entry(vcl::vcl_size_t n, vcl::vcl_size_t m, ScalarType t)
+  {
+    cpu_compressed_matrix.insert_element(n, m, t);
   }
 
 };

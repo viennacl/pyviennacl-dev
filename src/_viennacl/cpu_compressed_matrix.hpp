@@ -27,6 +27,8 @@
   .def("resize", &cpu_compressed_matrix_wrapper<TYPE>::resize)          \
   .def("set_entry", &cpu_compressed_matrix_wrapper<TYPE>::set_entry)    \
   .def("get_entry", &cpu_compressed_matrix_wrapper<TYPE>::get_entry)    \
+  .def("erase_entry", &cpu_compressed_matrix_wrapper<TYPE>::erase_entry) \
+  .def("insert_entry", &cpu_compressed_matrix_wrapper<TYPE>::insert_entry) \
   .def("as_ndarray", &cpu_compressed_matrix_wrapper<TYPE>::as_ndarray)  \
   .def("as_compressed_matrix",                                          \
        &cpu_compressed_matrix_wrapper<TYPE>                             \
