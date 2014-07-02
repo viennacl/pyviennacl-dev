@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 
-PYVIENNACL = True
-NUMPY_SCIPY = True
-CUDA = True
+#
+# Configuration options for benchmarks
+#
 
-ADD = True
-GEMM = True
-SPARSE = True
+# Platforms
+
+PYVIENNACL = True  # PyViennaCL benchmarks
+NUMPY_SCIPY = True # NumPy / SciPy benchmarks
+CUDA = True        # Only if gnumpy is installed
+
+# Operations
+
+ADD = True    # Dense matrix elementwise addition
+GEMM = True   # GEMM
+SPARSE = True # Sparse matrix-vector product
+
+# Matrix structure parameters
 
 ADD_SIZES = [2**x for x in range(3,15)]
 GEMM_SIZES = [2**x for x in range(3,13)]
