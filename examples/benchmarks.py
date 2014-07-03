@@ -47,6 +47,9 @@ def do_benchmark(setup, stmt, sizes, num_iters=10, sparsity=None):
 setup_dense_pyvcl = """import numpy as np
 import pyviennacl as p
 
+from pyviennacl.backend import OpenCLMemory, Context
+ctx = Context(OpenCLMemory)
+
 dtype = np.float32
 
 size = %d
@@ -54,8 +57,8 @@ size = %d
 A = np.random.rand(size,size).astype(dtype)
 B = np.random.rand(size,size).astype(dtype)
 
-A = p.Matrix(A)
-B = p.Matrix(B)
+A = p.Matrix(A, context=ctx)
+B = p.Matrix(B, context=ctx)
 
 for i in range(3):
     %s
@@ -63,6 +66,10 @@ for i in range(3):
 
 setup_sparse_pyvcl = """import numpy as np
 import pyviennacl as p
+
+from pyviennacl.backend import OpenCLMemory, Context
+ctx = Context(OpenCLMemory)
+
 import math,random
 
 dtype = np.float32
@@ -73,7 +80,7 @@ nnz = math.ceil((size*size)*sparsity)
 mod = nnz
 
 x = np.random.rand(size).astype(dtype)
-x = p.Vector(x)
+x = p.Vector(x, context=ctx)
 
 values = np.array([], dtype=dtype)
 max_size = 10**6
@@ -88,7 +95,7 @@ rows = np.random.randint(0, size-1, size=nnz)
 cols = np.random.randint(0, size-1, size=nnz)
 
 A = p.CompressedMatrix((rows, cols, values), shape=(size, size, nnz),
-                       dtype=dtype)
+                       dtype=dtype, context=ctx)
 
 for i in range(3):
     %s
