@@ -84,7 +84,7 @@ template <class SCALARTYPE>
 bp::list vcl_vector_to_list(const vcl::vector_base<SCALARTYPE>& v)
 {
   std::vector<SCALARTYPE> c(v.size());
-  vcl::fast_copy(v.begin(), v.end(), c.begin());
+  vcl::copy(v.begin(), v.end(), c.begin());
 
   return std_vector_to_list(c);
 }
@@ -125,7 +125,7 @@ vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
   for (vcl::vcl_size_t i=0; i < s; ++i)
     cpu_vector[i] = bp::extract<SCALARTYPE>(array[i]);
   
-  vcl::fast_copy(cpu_vector.begin(), cpu_vector.end(), v->begin());
+  vcl::copy(cpu_vector.begin(), cpu_vector.end(), v->begin());
 
   return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
 }
