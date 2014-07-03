@@ -20,8 +20,8 @@ SPARSE = True # Sparse matrix-vector product
 
 ADD_SIZES = [2**x for x in range(3,15)]
 GEMM_SIZES = [2**x for x in range(3,13)]
-SPARSE_SIZES = [10**n for n in range(2,9)]
-SPARSITY = 0.01
+SPARSE_SIZES = [10**n for n in range(2,7)]
+SPARSITY = 0.02
 
 ################################################################################
 
@@ -76,7 +76,7 @@ dtype = np.float32
 
 size = %d
 sparsity = %f
-nnz = math.ceil((size*size)*sparsity)
+nnz = int(math.ceil((size*size)*sparsity))
 mod = nnz
 
 x = np.random.rand(size).astype(dtype)
@@ -139,7 +139,7 @@ dtype = np.float32
 
 size = %d
 sparsity = %f
-nnz = math.ceil((size*size)*sparsity)
+nnz = int(math.ceil((size*size)*sparsity))
 mod = nnz
 
 x = np.random.rand(size).astype(dtype)
