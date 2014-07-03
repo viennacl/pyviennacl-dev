@@ -2,6 +2,7 @@
 
 #include "vector.hpp"
 
+#include <viennacl/ocl/backend.hpp>
 #include <viennacl/ocl/platform.hpp>
 #include <viennacl/ocl/device.hpp>
 #include <viennacl/ocl/context.hpp>
@@ -79,6 +80,11 @@ PYVCL_SUBMODULE(opencl_support)
 
 #ifdef VIENNACL_WITH_OPENCL
   PYTHON_SCOPE_SUBMODULE(opencl_support);
+
+  bp::class_<vcl::ocl::backend<> >("backend")
+    //.def("add_context", &vcl::ocl::backend<>::add_context)
+    .def("switch_context", &vcl::ocl::backend<>::switch_context)
+    ;
 
   bp::class_<vcl::ocl::platform, vcl::tools::shared_ptr<vcl::ocl::platform> >
     ("platform", bp::no_init)

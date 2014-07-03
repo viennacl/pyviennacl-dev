@@ -20,9 +20,9 @@ class cpu_compressed_matrix_wrapper
 {
   typedef ublas::compressed_matrix<ScalarType, ublas::row_major> ublas_sparse_t;
   ublas_sparse_t cpu_compressed_matrix;
-  bool _dirty;
   bp::list* _places;
   vcl::context _context;
+  bool _dirty;
 
 public:
 
@@ -45,6 +45,8 @@ public:
       for (it2 j = i.begin(); j != i.end(); ++j) {
 
 	if (cpu_compressed_matrix(j.index1(), j.index2())) {
+          //std::cout << "--------------- ENTRY "
+          //          << j.index1() << "," << j.index2() << std::endl;
           _places->append(bp::make_tuple(j.index1(), j.index2()));
         }
 
@@ -57,16 +59,14 @@ public:
 
   bp::list places() 
   {
-    if (_dirty)
-      update_places();
+    update_places();
 
     return *_places;
   }
 
   vcl::vcl_size_t nnz()
   {
-    if (_dirty)
-      update_places();
+    update_places();
 
     return bp::len(*_places);
   }
@@ -78,7 +78,8 @@ public:
     cpu_compressed_matrix = ublas_sparse_t(0,0,0);
   }
 
-  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2) : _dirty(true)
+  cpu_compressed_matrix_wrapper(vcl::vcl_size_t _size1, vcl::vcl_size_t _size2)
+    : _dirty(true)
   {
     _places = NULL;
     set_vcl_context(vcl::context());
@@ -102,7 +103,8 @@ public:
   }
 
   template<class SparseT>
-  cpu_compressed_matrix_wrapper(const SparseT& vcl_sparse_matrix) : _dirty(true)
+  cpu_compressed_matrix_wrapper(const SparseT& vcl_sparse_matrix)
+    : _dirty(true)
   {
     cpu_compressed_matrix = ublas_sparse_t(vcl_sparse_matrix.size1(),
                                            vcl_sparse_matrix.size2());
@@ -173,6 +175,10 @@ public:
   vcl::tools::shared_ptr<SparseT>
   as_vcl_sparse_matrix_with_size()
   {
+    //std::cout << "!!!! DATA: "
+    //          << size1() << " "
+    //          << size2() << " "
+    //          << nnz() << std::endl;
     SparseT* vcl_sparse_matrix = new SparseT(size1(), size2(), nnz(),
                                              _context);
     vcl::copy(cpu_compressed_matrix, *vcl_sparse_matrix);
@@ -201,13 +207,6 @@ public:
     ublas_sparse_t temp(cpu_compressed_matrix); // Incurs a copy of all the data!!
     cpu_compressed_matrix.resize(_size1, _size2, false); // preserve == false!
 
-    /*
-    if (_places)
-      delete _places;
-
-    _places = new bp::list;
-    */
-
     typedef typename ublas_sparse_t::iterator1 it1;
     typedef typename ublas_sparse_t::iterator2 it2;
 
@@ -216,12 +215,9 @@ public:
 	if ((temp(j.index1(), j.index2()) != 0)
             && (j.index1() < _size1) && (j.index2() < _size2)) {
           cpu_compressed_matrix(j.index1(), j.index2()) = temp(j.index1(), j.index2());
-          //_places->append(bp::make_tuple(j.index1(), j.index2()));
         }
       }
     }
-
-    _dirty = true; //false;
 
   }
 
@@ -245,11 +241,8 @@ public:
         resize(size1(), m+1);
     }
 
-    //ScalarType old = cpu_compressed_matrix(n, m);
-    //if (val != old) {
     cpu_compressed_matrix(n, m) = val;
     _dirty = true;
-    //}
   }
 
   // Need this because bp cannot deal with operator()
@@ -261,11 +254,13 @@ public:
   void erase_entry(vcl::vcl_size_t n, vcl::vcl_size_t m)
   {
     cpu_compressed_matrix.erase_element(n, m);
+    _dirty = true;
   }
 
   void insert_entry(vcl::vcl_size_t n, vcl::vcl_size_t m, ScalarType t)
   {
     cpu_compressed_matrix.insert_element(n, m, t);
+    _dirty = true;
   }
 
 };

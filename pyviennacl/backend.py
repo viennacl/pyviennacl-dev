@@ -116,6 +116,7 @@ class Context(object):
                 self.sub_context = domain_or_context
                 self.vcl_sub_context = vcl.get_viennacl_object(domain_or_context)
                 self.vcl_context = _v.context(self.vcl_sub_context)
+                vcl.set_active_context(self)
                 return
 
     def __eq__(self, other):

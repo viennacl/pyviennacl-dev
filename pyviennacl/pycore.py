@@ -891,6 +891,9 @@ class Leaf(MagicMethods):
         if not self._context.queues[self._context.current_device]:
             self._context.add_queue(self._context.current_device)
 
+        if self._context.domain is backend.OpenCLMemory:
+            vcl.set_active_context(self._context)
+
         self._init_leaf(args, kwargs)
 
     def __setitem__(self, key, value):
@@ -1232,6 +1235,8 @@ class Vector(Leaf):
                 self.dtype = np_result_type(args[0])
                 def get_leaf(vcl_t):
                     vcl_context = self._context.vcl_context
+                    print("!!!!!!!!!!!!!!!! HERE")
+                    print(self._context.queues)
                     return vcl_t(a, vcl_context)
             elif isinstance(args[0], _v.vector_base):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
@@ -1463,18 +1468,10 @@ class SparseMatrixBase(Leaf):
             if isinstance(args[0], tuple):
                 # Then we construct from given data
                 if 'shape' in kwargs.keys():
-                    if len(kwargs['shape']) == 2:
-                        # 1: 2-tuple -> shape
-                        def get_cpu_leaf(cpu_t):
-                            return cpu_t(shape[0],  shape[1])
-                    elif len(kwargs['shape']) == 3:
-                        # 1: 3-tuple -> shape+nnz
-                        def get_cpu_leaf(cpu_t):
-                            return cpu_t(kwargs['shape'][0],
-                                         kwargs['shape'][1],
-                                         kwargs['shape'][2])
+                    def get_cpu_leaf(cpu_t):
+                        return cpu_t(*shape)
                 else:
-                # args[0] is (rows, cols, values), so ...
+                    # args[0] is (rows, cols, values), so ...
                     def get_cpu_leaf(cpu_t):
                         return cpu_t(max(args[0][0]), max(args[0][1]),
                                      len(args[0][2]))
@@ -1553,11 +1550,14 @@ class SparseMatrixBase(Leaf):
 
         if CONSTRUCT_FROM_DATA:
             idx = 0
-            def insert_entry(i):
-                self.cpu_leaf.insert_entry(asscalar(data[0][i]),
-                                           asscalar(data[1][i]),
-                                           asscalar(data[2][i]))
-            map(insert_entry, range(len(data[0])))
+            def insert_entry(row, col, value):
+                try:
+                    self.cpu_leaf.insert_entry(asscalar(row), asscalar(col),
+                                               asscalar(value))
+                except IndexError:
+                    self.cpu_leaf.set_entry(asscalar(row), asscalar(col),
+                                            asscalar(value))
+            x = list(map(insert_entry, data[0], data[1], data[2]))
 
         self.base = self
 
@@ -3082,6 +3082,8 @@ class Statement:
         Execute the statement -- don't do anything else -- then return the
         result (if any).
         """
+        if self.result.context.domain is backend.OpenCLMemory:
+            vcl.set_active_context(self.result.context)
         try:
             self.vcl_statement.execute()
         except RuntimeError:

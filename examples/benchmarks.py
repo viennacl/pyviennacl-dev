@@ -7,20 +7,20 @@
 # Platforms
 
 PYVIENNACL = True  # PyViennaCL benchmarks
-NUMPY_SCIPY = True # NumPy / SciPy benchmarks
-CUDA = True        # Only if gnumpy is installed
+NUMPY_SCIPY = False # NumPy / SciPy benchmarks
+CUDA = False        # Only if gnumpy is installed
 
 # Operations
 
-ADD = True    # Dense matrix elementwise addition
-GEMM = True   # GEMM
+ADD = False    # Dense matrix elementwise addition
+GEMM = False   # GEMM
 SPARSE = True # Sparse matrix-vector product
 
 # Matrix structure parameters
 
 ADD_SIZES = [2**x for x in range(3,15)]
 GEMM_SIZES = [2**x for x in range(3,13)]
-SPARSE_SIZES = [10**n for n in range(2,7)]
+SPARSE_SIZES = [10**n for n in range(2,5)]
 SPARSITY = 0.02
 
 ################################################################################
@@ -67,20 +67,22 @@ for i in range(3):
 setup_sparse_pyvcl = """import numpy as np
 import pyviennacl as p
 
-from pyviennacl.backend import OpenCLMemory, Context
-ctx = Context(OpenCLMemory)
-
 import math,random
 
 dtype = np.float32
 
 size = %d
 sparsity = %f
-nnz = int(math.ceil((size*size)*sparsity))
+print(sparsity, math.ceil((size*size)*sparsity))
+nnz = int(max(1, math.ceil((size*size)*sparsity)))
 mod = nnz
 
+print("!!!!!!!!!!!!!!!! Constructing vector")
+
 x = np.random.rand(size).astype(dtype)
-x = p.Vector(x, context=ctx)
+x = p.Vector(x)
+
+print("!!!!!!!!!!!!!!!! Done vector")
 
 values = np.array([], dtype=dtype)
 max_size = 10**6
@@ -95,7 +97,13 @@ rows = np.random.randint(0, size-1, size=nnz)
 cols = np.random.randint(0, size-1, size=nnz)
 
 A = p.CompressedMatrix((rows, cols, values), shape=(size, size, nnz),
-                       dtype=dtype, context=ctx)
+                       dtype=dtype) #, context=ctx)
+
+print("!!!!!!!!!!!!!!!! Flushing matrix")
+
+A.flush()
+
+print("!!!!!!!!!!!!!!!! Done")
 
 for i in range(3):
     %s

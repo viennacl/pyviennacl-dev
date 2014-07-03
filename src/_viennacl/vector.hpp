@@ -124,8 +124,14 @@ vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
   
   for (vcl::vcl_size_t i=0; i < s; ++i)
     cpu_vector[i] = bp::extract<SCALARTYPE>(array[i]);
+
+  std::cout << std::endl << "!!!!!!!!! Pre-copy with handle "
+            << v->handle().opencl_handle() << " and stride "
+            << v->stride() << std::endl;    
   
   vcl::copy(cpu_vector.begin(), cpu_vector.end(), v->begin());
+
+  //std::cout << "!!!!!!!!! Post-copy" << std::endl;
 
   return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
 }

@@ -153,7 +153,8 @@ def main():
     UNDEF_MACROS = []
     if conf["DEBUG"]:
          UNDEF_MACROS += ['NDEBUG']
-         EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
+         #EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
+         EXTRA_DEFINES["VIENNACL_BUILD_INFO"] = None
 
     if not sys.platform.startswith("darwin"):
         platform_libs['unix'] = ['rt']
