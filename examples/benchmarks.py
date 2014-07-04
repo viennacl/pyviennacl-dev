@@ -7,20 +7,22 @@
 # Platforms
 
 PYVIENNACL = True  # PyViennaCL benchmarks
-NUMPY_SCIPY = False # NumPy / SciPy benchmarks
-CUDA = False        # Only if gnumpy is installed
+NUMPY_SCIPY = True # NumPy / SciPy benchmarks
+CUDA = True        # Only if gnumpy is installed
 
 # Operations
 
-ADD = False    # Dense matrix elementwise addition
-GEMM = False   # GEMM
-SPARSE = True # Sparse matrix-vector product
+ADD = True     # Dense matrix elementwise addition
+GEMM = True    # GEMM
+GEMV = True    # Dense GEMV
+SPGEMV = True  # Sparse GEMV
 
 # Matrix structure parameters
 
 ADD_SIZES = [2**x for x in range(3,15)]
 GEMM_SIZES = [2**x for x in range(3,13)]
-SPARSE_SIZES = [10**n for n in range(2,5)]
+GEMV_SIZES = [2**x for x in range(3,13)]
+SPGEMV_SIZES = [10**n for n in range(2,9)]
 SPARSITY = 0.02
 
 ################################################################################
@@ -61,6 +63,9 @@ B = np.random.rand(size,size).astype(dtype)
 A = p.Matrix(A, context=ctx)
 B = p.Matrix(B, context=ctx)
 
+x = np.random.rand(size).astype(dtype)
+x = p.Vector(x, context=ctx)
+
 for i in range(3):
     %s
 """
@@ -81,12 +86,8 @@ print(sparsity, math.ceil((size*size)*sparsity))
 nnz = int(max(1, math.ceil((size*size)*sparsity)))
 mod = nnz
 
-print("!!!!!!!!!!!!!!!! Constructing vector")
-
 x = np.random.rand(size).astype(dtype)
 x = p.Vector(x, context=ctx)
-
-print("!!!!!!!!!!!!!!!! Done vector")
 
 values = np.array([], dtype=dtype)
 max_size = 10**6
@@ -108,16 +109,10 @@ data.append(values)
 del values
 data = tuple(data)
 
-A = p.CompressedMatrix(data, shape=(size, size, nnz),
+# TODO: CompressedMatrix
+A = p.CoordinateMatrix(data, shape=(size, size, nnz),
                        dtype=dtype, context=ctx)
-
-print("!!!!!!!!!!!!!!!! Flushing matrix")
-
 A.flush()
-
-print("!!!!!!!!!!!!!!!! Done")
-
-print("!!!!!!!!!!!!!!!!", A.context, x.context, A.context == x.context)
 
 for i in range(3):
     %s
@@ -136,6 +131,9 @@ B = np.random.rand(size,size).astype(dtype)
 A = gnp.garray(A)
 B = gnp.garray(B)
 
+x = np.random.rand(size).astype(dtype)
+x = gnp.garray(x)
+
 for i in range(3):
     %s
 """
@@ -148,6 +146,7 @@ size = %d
 
 A = np.random.rand(size,size).astype(dtype)
 B = np.random.rand(size,size).astype(dtype)
+x = np.random.rand(size).astype(dtype)
 
 for i in range(3):
     %s
@@ -178,7 +177,7 @@ while mod > 0:
 rows = np.random.randint(0, size-1, size=nnz)
 cols = np.random.randint(0, size-1, size=nnz)
 
-A = sp.csr_matrix((values, (rows, cols)), shape=(size, size), dtype=dtype)
+A = sp.coo_matrix((values, (rows, cols)), shape=(size, size), dtype=dtype)
 
 for i in range(3):
     %s
@@ -230,26 +229,50 @@ if GEMM:
         do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
         print("")
 
+
+#
+# Dense matrix-vector multiplication
+
+if GEMV:
+
+    if PYVIENNACL:
+        print("Dense matrix-vector multiplication -- PyViennaCL")
+        stmt = "(A*x).execute()"
+        do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES)
+        print("")
+
+    if NUMPY_SCIPY:
+        print("Dense matrix-vector multiplication -- NumPy")
+        stmt = "A.dot(x)"
+        do_benchmark(setup_dense_numpy, stmt, GEMM_SIZES)
+        print("")
+    
+    if WITH_CUDA and CUDA:
+        print("Dense matrix-vector multiplication -- gnumpy (CUDA)")
+        do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
+        print("")
+
+#
+
+
 #
 # Sparse matrix-vector multiplication
 #
 
-if SPARSE:
-
-    sparsity = 0.01
+if SPGEMV:
 
     if PYVIENNACL:
         print("Sparse matrix-vector multiplication -- PyViennaCL")
-        print("Sparsity: %f" % sparsity)
+        print("Sparsity: %f" % SPARSITY)
         stmt = "(A*x).execute()"
-        do_benchmark(setup_sparse_pyvcl, stmt, SPARSE_SIZES, sparsity=SPARSITY)
+        do_benchmark(setup_sparse_pyvcl, stmt, SPGEMV_SIZES, sparsity=SPARSITY)
         print("")
 
     if NUMPY_SCIPY:
         print("Sparse matrix-vector multiplication -- SciPy")
-        print("Sparsity: %f" % sparsity)
+        print("Sparsity: %f" % SPARSITY)
         stmt = "A.dot(x)"
-        do_benchmark(setup_sparse_scipy, stmt, SPARSE_SIZES, sparsity=SPARSITY)
+        do_benchmark(setup_sparse_scipy, stmt, SPGEMV_SIZES, sparsity=SPARSITY)
         print("")
 
     # TODO: sparse-vec mult (theano)
