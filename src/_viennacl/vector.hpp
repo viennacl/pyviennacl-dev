@@ -119,19 +119,47 @@ vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
   
   vcl::vcl_size_t s = (vcl::vcl_size_t) array.shape(0);
   
-  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s, ctx);
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s); //, ctx);
   std::vector<SCALARTYPE> cpu_vector(s);
+
+  std::cout << "!!!!!!!!!!!! internal_size " << v->internal_size() << std::endl;
   
   for (vcl::vcl_size_t i=0; i < s; ++i)
     cpu_vector[i] = bp::extract<SCALARTYPE>(array[i]);
 
   std::cout << std::endl << "!!!!!!!!! Pre-copy with handle "
             << v->handle().opencl_handle() << " and stride "
-            << v->stride() << std::endl;    
-  
-  vcl::copy(cpu_vector.begin(), cpu_vector.end(), v->begin());
+            << v->stride() << std::endl;
 
-  //std::cout << "!!!!!!!!! Post-copy" << std::endl;
+  v->handle().opencl_handle().context().get_queue().finish();
+
+  std::cout << "Finish" << std::endl;
+  
+  cl_uint refcnt;
+  cl_int err = clGetCommandQueueInfo(v->handle().opencl_handle().context().get_queue().handle().get(), CL_QUEUE_REFERENCE_COUNT, sizeof(cl_uint), &refcnt, NULL);
+  VIENNACL_ERR_CHECK(err);
+
+  std::cout << "Queue refcount: " << refcnt << std::endl;
+
+  //vcl::copy(cpu_vector.begin(), cpu_vector.end(), v->begin());
+
+  vcl::vcl_size_t dst_offset = sizeof(SCALARTYPE)*v->begin().offset();
+  vcl::vcl_size_t bytes_to_copy = sizeof(SCALARTYPE)*v->stride()*cpu_vector.size();
+
+  std::cout << "!!!!!!!!!!! offset, bytes = "
+            << dst_offset << ", " << bytes_to_copy << std::endl;
+
+  err = clEnqueueWriteBuffer(v->handle().opencl_handle().context().get_queue().handle().get(),
+                             v->handle().opencl_handle().get(),
+                             CL_TRUE,             //blocking
+                             dst_offset,
+                             bytes_to_copy,
+                             &(*cpu_vector.begin()),
+                             0, NULL, NULL);      //events
+  VIENNACL_ERR_CHECK(err);
+
+
+  std::cout << "!!!!!!!!! Post-copy" << std::endl;
 
   return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
 }

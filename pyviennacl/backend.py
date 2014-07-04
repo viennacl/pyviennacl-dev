@@ -200,3 +200,11 @@ class Context(object):
         if self.domain is not OpenCLMemory:
             raise TypeError("Only the OpenCL backend currently supports multiple devices")
         return vcl.get_pyopencl_object(self.vcl_sub_context.current_queue)
+
+
+def backend_finish():
+    """
+    Block until any computation active on the compute backend is finished.
+    """
+    return _v.backend_finish()
+
