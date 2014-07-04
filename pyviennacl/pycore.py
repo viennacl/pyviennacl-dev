@@ -205,8 +205,9 @@ vcl_statement_node_subtype_strings = {
     _v.statement_node_subtype.DEVICE_SCALAR_TYPE: 'scalar',
     _v.statement_node_subtype.DENSE_VECTOR_TYPE: 'vector',
     _v.statement_node_subtype.IMPLICIT_VECTOR_TYPE: 'implicit_vector',
-    _v.statement_node_subtype.DENSE_MATRIX_TYPE: 'matrix',
-    _v.statement_node_subtype.IMPLICIT_MATRIX_TYPE: 'implicit_matrix',
+    _v.statement_node_subtype.DENSE_ROW_MATRIX_TYPE: 'matrix_row',
+    _v.statement_node_subtype.DENSE_COL_MATRIX_TYPE: 'matrix_col',
+    #_v.statement_node_subtype.IMPLICIT_MATRIX_TYPE: 'implicit_matrix',
     _v.statement_node_subtype.COMPRESSED_MATRIX_TYPE: 'compressed_matrix',
     _v.statement_node_subtype.COORDINATE_MATRIX_TYPE: 'coordinate_matrix',
     _v.statement_node_subtype.ELL_MATRIX_TYPE: 'ell_matrix',
@@ -1234,10 +1235,7 @@ class Vector(Leaf):
                     a = args[0]
                 self.dtype = np_result_type(args[0])
                 def get_leaf(vcl_t):
-                    vcl_context = self._context.vcl_context
-                    print("!!!!!!!!!!!!!!!! HERE")
-                    print(self._context.queues)
-                    return vcl_t(a, vcl_context)
+                    return vcl_t(a, self._context.vcl_context)
             elif isinstance(args[0], _v.vector_base):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
@@ -1805,7 +1803,7 @@ class Matrix(Leaf):
     """
     ndim = 2
     statement_node_type_family = _v.statement_node_type_family.MATRIX_TYPE_FAMILY
-    statement_node_subtype = _v.statement_node_subtype.DENSE_MATRIX_TYPE
+    statement_node_subtype = _v.statement_node_subtype.DENSE_ROW_MATRIX_TYPE
 
     def _init_leaf(self, args, kwargs):
         """
@@ -1821,6 +1819,7 @@ class Matrix(Leaf):
         if 'layout' in kwargs.keys():
             if kwargs['layout'] == COL_MAJOR:
                 self.layout = COL_MAJOR
+                self.statement_node_subtype = _v.statement_node_subtype.DENSE_COL_MATRIX_TYPE
             else:
                 self.layout = ROW_MAJOR
         else:
@@ -3034,9 +3033,6 @@ class Statement:
                 if isinstance(operand, Leaf) or isinstance(operand, CustomNode):
                     if (operand.context != self.result.context
                         and not isinstance(operand, HostScalar)):
-                        print(operand.context, self.result.context)
-                        print(self.result.express())
-                        print(self.result.context == operand.context)
                         raise TypeError(
                             "All objects in statement must have same context: %s"
                             % (operand.express()))
