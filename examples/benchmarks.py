@@ -43,6 +43,7 @@ def do_benchmark(setup, stmt, sizes, num_iters=10, sparsity=None):
             print(size, per_call)
         except Exception as e:
             print("Exception with size %d: %s" % (size, e))
+            raise
 
 setup_dense_pyvcl = """import numpy as np
 import pyviennacl as p
@@ -67,6 +68,9 @@ for i in range(3):
 setup_sparse_pyvcl = """import numpy as np
 import pyviennacl as p
 
+from pyviennacl.backend import OpenCLMemory, Context
+ctx = Context(OpenCLMemory)
+
 import math,random
 
 dtype = np.float32
@@ -80,7 +84,7 @@ mod = nnz
 print("!!!!!!!!!!!!!!!! Constructing vector")
 
 x = np.random.rand(size).astype(dtype)
-x = p.Vector(x)
+x = p.Vector(x, context=ctx)
 
 print("!!!!!!!!!!!!!!!! Done vector")
 
@@ -93,17 +97,27 @@ while mod > 0:
     else:
         values = np.append(values, np.random.rand(max_size).astype(dtype))
         mod -= max_size
-rows = np.random.randint(0, size-1, size=nnz)
-cols = np.random.randint(0, size-1, size=nnz)
+data = []
+while len(data) < nnz:
+    r = np.random.randint(0, size-1)
+    c = np.random.randint(0, size-1)
+    if (r, c) not in data:
+        data.append((r, c))
+data = list(map(list, zip(*data)))
+data.append(values)
+del values
+data = tuple(data)
 
-A = p.CompressedMatrix((rows, cols, values), shape=(size, size, nnz),
-                       dtype=dtype) #, context=ctx)
+A = p.CompressedMatrix(data, shape=(size, size, nnz),
+                       dtype=dtype, context=ctx)
 
 print("!!!!!!!!!!!!!!!! Flushing matrix")
 
 A.flush()
 
 print("!!!!!!!!!!!!!!!! Done")
+
+print("!!!!!!!!!!!!!!!!", A.context, x.context, A.context == x.context)
 
 for i in range(3):
     %s

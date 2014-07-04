@@ -1552,11 +1552,9 @@ class SparseMatrixBase(Leaf):
             idx = 0
             def insert_entry(row, col, value):
                 try:
-                    self.cpu_leaf.insert_entry(asscalar(row), asscalar(col),
-                                               asscalar(value))
+                    self.cpu_leaf.insert_entry(row, col, value)
                 except IndexError:
-                    self.cpu_leaf.set_entry(asscalar(row), asscalar(col),
-                                            asscalar(value))
+                    self.cpu_leaf.set_entry(row, col, value)
             x = list(map(insert_entry, data[0], data[1], data[2]))
 
         self.base = self
@@ -3036,9 +3034,12 @@ class Statement:
                 if isinstance(operand, Leaf) or isinstance(operand, CustomNode):
                     if (operand.context != self.result.context
                         and not isinstance(operand, HostScalar)):
+                        print(operand.context, self.result.context)
+                        print(self.result.express())
+                        print(self.result.context == operand.context)
                         raise TypeError(
                             "All objects in statement must have same context: %s"
-                            % (operand.express))
+                            % (operand.express()))
                 op_num += 1
             append_node = not isinstance(n, CustomNode)
             for N in self.statement:

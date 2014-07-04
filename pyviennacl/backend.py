@@ -99,7 +99,8 @@ class Context(object):
                 self.vcl_context = _v.context(self.domain.vcl_memory_type)
                 if domain_or_context is OpenCLMemory:
                     self.vcl_sub_context = self.vcl_context.opencl_context
-                    self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)                    
+                    self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)
+                    vcl.set_active_context(self)
                 return
         except TypeError: pass
 
@@ -127,6 +128,9 @@ class Context(object):
         if self.vcl_sub_context != other.vcl_sub_context:
             return False
         return True
+
+    def __ne__(self, other):
+        return not self == other
 
     @property
     def opencl_context(self):
