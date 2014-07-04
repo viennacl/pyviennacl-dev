@@ -23,12 +23,6 @@ def fix_operand(opand):
         return p.HostScalar(opand)
     else: return opand
 
-def backend_finish():
-    """
-    Block until any computation active on the compute backend is finished.
-    """
-    return _viennacl.backend_finish()
-
 def from_ndarray(obj):
     """
     Convert a NumPy ``ndarray`` into a PyViennaCL object of appropriate
