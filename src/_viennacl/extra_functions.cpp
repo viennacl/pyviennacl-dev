@@ -132,11 +132,11 @@ DO_OP_FUNC(op_nmf) {
 CLOSE_OP_FUNC;
 
 #define EXPORT_FUNCTIONS_F(TYPE, F)                                     \
-  bp::def("outer", pyvcl_do_2ary_op<vcl::matrix<TYPE, F>,               \
+  bp::def("outer", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           op_outer_prod>);                                              \
   bp::def("element_pow", pyvcl_do_2ary_op<vcl::matrix<TYPE, F>,         \
-          vcl::matrix_base<TYPE, F>&, vcl::matrix_base<TYPE, F>&,       \
+          vcl::matrix_base<TYPE>&, vcl::matrix_base<TYPE>&,             \
           op_element_pow>);                                             \
   bp::def("norm_frobenius", pyvcl_do_1ary_op<vcl::scalar<TYPE>,         \
           vcl::matrix<TYPE, F>&,                                        \
