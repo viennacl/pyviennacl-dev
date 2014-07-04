@@ -2,6 +2,7 @@
 #define _PYVIENNACL_VECTOR_H
 
 #include "entry_proxy.hpp"
+#include "dense_matrix.hpp"
 
 #include <boost/numeric/ublas/vector_sparse.hpp>
 
@@ -111,16 +112,47 @@ template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
 vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
 {
+
+  cl_command_queue queue;
+  queue = ctx.opencl_context().get_queue().handle().get();
+  cl_int err; // = clRetainCommandQueue(queue);
+  //VIENNACL_ERR_CHECK(err);
+
   int d = array.get_nd();
   if (d != 1) {
     PyErr_SetString(PyExc_TypeError, "Can only create a vector from a 1-D array!");
     bp::throw_error_already_set();
   }
+
+  //#ifndef MYSTERY_BUG_ALTERNATIVE
   
+  cl_uint refcnt;
+
+  err = clGetContextInfo(ctx.opencl_context().handle().get(),
+                         CL_CONTEXT_REFERENCE_COUNT, sizeof(cl_uint),
+                         &refcnt, NULL);
+  VIENNACL_ERR_CHECK(err);
+
+  std::cout << "!!!!!!!!!!!!!! context refcnt = " << refcnt << std::endl;
+
   vcl::vcl_size_t s = (vcl::vcl_size_t) array.shape(0);
-  
-  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s); //, ctx);
   std::vector<SCALARTYPE> cpu_vector(s);
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(s, ctx);
+
+#ifdef MYSTERY_WITH_NEW_QUEUE
+
+  std::cout << "!!!!!!!!!!!! constructing new command queue with context "
+            << ctx.opencl_context().handle().get() << " and device "
+            << ctx.opencl_context().current_device().name() << std::endl;
+
+  // New command queue
+
+  queue = clCreateCommandQueue(ctx.opencl_context().handle().get(),  // v->handle().opencl_handle().context().handle().get(),
+                               ctx.opencl_context().current_device().id(),
+                               0, &err);
+  VIENNACL_ERR_CHECK(err);
+
+#endif
 
   std::cout << "!!!!!!!!!!!! internal_size " << v->internal_size() << std::endl;
   
@@ -131,17 +163,19 @@ vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
             << v->handle().opencl_handle() << " and stride "
             << v->stride() << std::endl;
 
-  v->handle().opencl_handle().context().get_queue().finish();
+  clFinish(queue);
 
-  std::cout << "Finish" << std::endl;
+  std::cout << "!!!!!!!!!!!!!! Finish" << std::endl;
   
-  cl_uint refcnt;
-  cl_int err = clGetCommandQueueInfo(v->handle().opencl_handle().context().get_queue().handle().get(), CL_QUEUE_REFERENCE_COUNT, sizeof(cl_uint), &refcnt, NULL);
+  err = clGetCommandQueueInfo(queue, CL_QUEUE_REFERENCE_COUNT,
+                              sizeof(cl_uint), &refcnt, NULL);
   VIENNACL_ERR_CHECK(err);
 
   std::cout << "Queue refcount: " << refcnt << std::endl;
 
   //vcl::copy(cpu_vector.begin(), cpu_vector.end(), v->begin());
+  //
+  // Copy manually instead, to be sure the bug isn't in ViennaCL
 
   vcl::vcl_size_t dst_offset = sizeof(SCALARTYPE)*v->begin().offset();
   vcl::vcl_size_t bytes_to_copy = sizeof(SCALARTYPE)*v->stride()*cpu_vector.size();
@@ -149,7 +183,7 @@ vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
   std::cout << "!!!!!!!!!!! offset, bytes = "
             << dst_offset << ", " << bytes_to_copy << std::endl;
 
-  err = clEnqueueWriteBuffer(v->handle().opencl_handle().context().get_queue().handle().get(),
+  err = clEnqueueWriteBuffer(queue,
                              v->handle().opencl_handle().get(),
                              CL_TRUE,             //blocking
                              dst_offset,
@@ -157,9 +191,26 @@ vcl_vector_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
                              &(*cpu_vector.begin()),
                              0, NULL, NULL);      //events
   VIENNACL_ERR_CHECK(err);
-
+  // ...
+  // Give up and try a horrid hack
+  /*if (err) {
+    for (vcl::vcl_size_t i=0; i < s; ++i)
+      (*v)[i] = cpu_vector[i];
+      }*/
 
   std::cout << "!!!!!!!!! Post-copy" << std::endl;
+
+  /*#else
+
+  ndarray_wrapper<SCALARTYPE> wrapper(array.reshape(bp::make_tuple(1, s)));
+  vcl::matrix<SCALARTYPE> m(wrapper.size1(), wrapper.size2(), ctx);
+  vcl::copy(wrapper, m);
+  *v = vcl::row(m, 0);
+
+  #endif*/
+
+  //err = clReleaseCommandQueue(queue);
+  //VIENNACL_ERR_CHECK(err);
 
   return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
 }

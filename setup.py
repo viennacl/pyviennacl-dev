@@ -155,6 +155,7 @@ def main():
          UNDEF_MACROS += ['NDEBUG']
          #EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
          EXTRA_DEFINES["VIENNACL_BUILD_INFO"] = None
+         platform_cflags["unix"] += ["-O0","-ggdb"]
 
     if not sys.platform.startswith("darwin"):
         platform_libs['unix'] = ['rt']
