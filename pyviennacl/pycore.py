@@ -1551,6 +1551,7 @@ class SparseMatrixBase(Leaf):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
         self.cpu_leaf = get_cpu_leaf(self.cpu_leaf_type)
+        self.cpu_leaf.vcl_context = self._context.vcl_context
 
         if CONSTRUCT_FROM_DATA:
             idx = 0
