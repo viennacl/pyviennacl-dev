@@ -28,16 +28,24 @@ SPARSITY = 0.02
 ################################################################################
 
 from timeit import timeit
-WITH_CUDA = True
 try: import gnumpy
-except ImportError: WITH_CUDA = False
+except ImportError: CUDA = False
+try: import pyopencl as cl
+except ImportError: PYVIENNACL = False
 
-def do_benchmark(setup, stmt, sizes, num_iters=10, sparsity=None):
+def do_benchmark(setup, stmt, sizes, num_iters=10,
+                 sparsity=None, cl_device=None):
     for size in sizes:
         if sparsity is None:
-            setup_fmt = setup%(size,stmt)
+            if cl_device is None:
+                setup_fmt = setup%(size,stmt)
+            else:
+                setup_fmt = setup%(cl_device,size,stmt)
         else:
-            setup_fmt = setup%(size,sparsity,stmt)
+            if cl_device is None:
+                setup_fmt = setup%(size,sparsity,stmt)
+            else:
+                setup_fmt = setup%(cl_device,size,sparsity,stmt)
         try:
             per_call = timeit(stmt,
                               setup=setup_fmt,
@@ -49,9 +57,13 @@ def do_benchmark(setup, stmt, sizes, num_iters=10, sparsity=None):
 
 setup_dense_pyvcl = """import numpy as np
 import pyviennacl as p
+import pyopencl as cl
 
-from pyviennacl.backend import OpenCLMemory, Context
-ctx = Context(OpenCLMemory)
+device = cl.Device.from_int_ptr(%d)
+cl_ctx = cl.Context([device])
+
+from pyviennacl.backend import Context
+ctx = Context(cl_ctx)
 
 dtype = np.float32
 
@@ -72,9 +84,13 @@ for i in range(3):
 
 setup_sparse_pyvcl = """import numpy as np
 import pyviennacl as p
+import pyopencl as cl
 
-from pyviennacl.backend import OpenCLMemory, Context
-ctx = Context(OpenCLMemory)
+device = cl.Device.from_int_ptr(%d)
+cl_ctx = cl.Context([device])
+
+from pyviennacl.backend import Context
+ctx = Context(cl_ctx)
 
 import math,random
 
@@ -191,7 +207,11 @@ if ADD:
     if PYVIENNACL:
         print("Dense matrix elementwise addition -- PyViennaCL")
         stmt = "(A+B).execute()"
-        do_benchmark(setup_dense_pyvcl, stmt, ADD_SIZES)
+        for platform in cl.get_platforms():
+            for device in platform.get_devices():
+                print("Using OpenCL device %s" % device)
+                do_benchmark(setup_dense_pyvcl, stmt, ADD_SIZES,
+                             cl_device=device.int_ptr)
         print("")
 
     if NUMPY_SCIPY:
@@ -200,7 +220,7 @@ if ADD:
         do_benchmark(setup_dense_numpy, stmt, ADD_SIZES)
         print("")
 
-    if WITH_CUDA and CUDA:
+    if CUDA:
         print("Dense matrix elementwise addition -- gnumpy (CUDA)")
         do_benchmark(setup_dense_gnumpy, stmt, ADD_SIZES)
         print("")
@@ -214,7 +234,11 @@ if GEMM:
     if PYVIENNACL:
         print("Dense matrix multiplication -- PyViennaCL")
         stmt = "(A*B).execute()"
-        do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES)
+        for platform in cl.get_platforms():
+            for device in platform.get_devices():
+                print("Using OpenCL device %s" % device)
+                do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES,
+                             cl_device=device.int_ptr)
         print("")
 
     if NUMPY_SCIPY:
@@ -223,7 +247,7 @@ if GEMM:
         do_benchmark(setup_dense_numpy, stmt, GEMM_SIZES)
         print("")
     
-    if WITH_CUDA and CUDA:
+    if CUDA:
         print("Dense matrix multiplication -- gnumpy (CUDA)")
         do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
         print("")
@@ -237,7 +261,11 @@ if GEMV:
     if PYVIENNACL:
         print("Dense matrix-vector multiplication -- PyViennaCL")
         stmt = "(A*x).execute()"
-        do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES)
+        for platform in cl.get_platforms():
+            for device in platform.get_devices():
+                print("Using OpenCL device %s" % device)
+                do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES,
+                             cl_device=device.int_ptr)
         print("")
 
     if NUMPY_SCIPY:
@@ -246,7 +274,7 @@ if GEMV:
         do_benchmark(setup_dense_numpy, stmt, GEMM_SIZES)
         print("")
     
-    if WITH_CUDA and CUDA:
+    if CUDA:
         print("Dense matrix-vector multiplication -- gnumpy (CUDA)")
         do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
         print("")
@@ -264,7 +292,11 @@ if SPGEMV:
         print("Sparse matrix-vector multiplication -- PyViennaCL")
         print("Sparsity: %f" % SPARSITY)
         stmt = "(A*x).execute()"
-        do_benchmark(setup_sparse_pyvcl, stmt, SPGEMV_SIZES, sparsity=SPARSITY)
+        for platform in cl.get_platforms():
+            for device in platform.get_devices():
+                print("Using OpenCL device %s" % device)
+                do_benchmark(setup_sparse_pyvcl, stmt, SPGEMV_SIZES,
+                             sparsity=SPARSITY, cl_device=device.int_ptr)
         print("")
 
     if NUMPY_SCIPY:

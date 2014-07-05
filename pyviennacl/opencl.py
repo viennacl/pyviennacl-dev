@@ -70,7 +70,7 @@ def get_viennacl_object(ocl_object, context = None):
     if ocl_object.int_ptr in ocl_vcl_instance_mapping.keys():
         return ocl_vcl_instance_mapping[ocl_object.int_ptr]
 
-    if isinstance(ocl_object, ocl.CommandQueue):
+    if isinstance(ocl_object, cl.CommandQueue):
         new_vcl_instance = ocl_vcl_type_mapping[type(ocl_object)](
             get_viennacl_object(context), ocl_object.int_ptr)
     else:
