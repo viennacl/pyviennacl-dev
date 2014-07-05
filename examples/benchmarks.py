@@ -53,7 +53,7 @@ def do_benchmark(setup, stmt, sizes, num_iters=10,
             print(size, per_call)
         except Exception as e:
             print("Exception with size %d: %s" % (size, e))
-            raise
+            #raise
 
 setup_dense_pyvcl = """import numpy as np
 import pyviennacl as p
