@@ -57,7 +57,6 @@ def do_benchmark(setup, do_op, sizes, num_iters=5,
             print(size, current_time / N)
         except Exception as e:
             print("Exception with size %d: %s" % (size, e))
-            raise
 
 def setup_gemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
     import pyviennacl as p
