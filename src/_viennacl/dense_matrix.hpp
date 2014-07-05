@@ -78,19 +78,23 @@ matrix_init_ndarray_default_context(const np::ndarray& array)
 }
 
 template<class SCALARTYPE>
-bp::tuple get_strides(const vcl::matrix_base<SCALARTYPE>& m) {
-  if(m.row_major())
-    return bp::make_tuple((m.stride1()*m.internal_size2())*sizeof(SCALARTYPE), m.stride2()*sizeof(SCALARTYPE));
-  else
-    return bp::make_tuple(m.stride1()*sizeof(SCALARTYPE), m.stride2()*m.internal_size1()*sizeof(SCALARTYPE));
+bp::tuple get_strides(const vcl::matrix_base<SCALARTYPE, vcl::row_major>& m) {
+  return bp::make_tuple((m.stride1()*m.internal_size2())*sizeof(SCALARTYPE), m.stride2()*sizeof(SCALARTYPE));
 }
 
 template<class SCALARTYPE>
-std::size_t get_offset(const vcl::matrix_base<SCALARTYPE>& m) {
-  if(m.row_major())
-    return m.start1()*m.internal_size2() + m.start2();
-  else
-    return m.start1() + m.start2()*m.internal_size1();
+bp::tuple get_strides(const vcl::matrix_base<SCALARTYPE, vcl::column_major>& m) {
+  return bp::make_tuple(m.stride1()*sizeof(SCALARTYPE), m.stride2()*m.internal_size1()*sizeof(SCALARTYPE));
+}
+
+template<class SCALARTYPE>
+std::size_t get_offset(const vcl::matrix_base<SCALARTYPE, vcl::row_major>& m) {
+  return m.start1()*m.internal_size2() + m.start2();
+}
+
+template<class SCALARTYPE>
+std::size_t get_offset(const vcl::matrix_base<SCALARTYPE, vcl::column_major>& m) {
+  return m.start1() + m.start2()*m.internal_size1();
 }
 
 template<class MATRIXTYPE, class SCALARTYPE>
@@ -117,50 +121,48 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   return array;
 }
 
-#define EXPORT_DENSE_MATRIX_BASE_CLASS(TYPE)                            \
-  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::matrix_base<TYPE>,               \
-                                  vcl::matrix_base<TYPE>::handle_type&, \
-                                  handle, get_matrix_##TYPE##_handle,   \
+// TODO: cl_mem ctr
+#define EXPORT_DENSE_MATRIX_CLASS(TYPE, LAYOUT, F, CPU_F)               \
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::matrix_base<TYPE COMMA F>,       \
+                                  vcl::matrix_base<TYPE COMMA F>::handle_type&, \
+                                  handle,                               \
+                                  get_matrix_##TYPE##_##LAYOUT##_handle, \
                                   ());                                  \
-  bp::class_<vcl::matrix_base<TYPE>,                                    \
-	     vcl::tools::shared_ptr<vcl::matrix_base<TYPE> > >          \
+  bp::class_<vcl::matrix_base<TYPE, F>,                            \
+	     vcl::tools::shared_ptr<vcl::matrix_base<TYPE, F> > >  \
   ("matrix_base",                                                       \
    bp::init<vcl::backend::mem_handle&,                                  \
    vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \
-   vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \
-   bool>())                                                             \
-  .def("get_entry", &get_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE> >) \
-  .def("set_entry", &set_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE> >) \
+   vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t>()) \
+  .def("get_entry", &get_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE, F> >) \
+  .def("set_entry", &set_vcl_matrix_entry<TYPE, vcl::matrix_base<TYPE, F> >) \
   .def("as_ndarray",                                                    \
-       &vcl_matrix_to_ndarray<vcl::matrix_base<TYPE>, TYPE>)            \
-  .add_property("memory_domain", &vcl::matrix_base<TYPE>::memory_domain) \
+       &vcl_matrix_to_ndarray<vcl::matrix_base<TYPE, F>, TYPE>)    \
+  .add_property("memory_domain", &vcl::matrix_base<TYPE, F>::memory_domain) \
   .add_property("handle", bp::make_function                             \
-                (get_matrix_##TYPE##_handle,                            \
+                (get_matrix_##TYPE##_##LAYOUT##_handle,                 \
                  bp::return_internal_reference<>()))                    \
-  .add_property("row_major", &vcl::matrix_base<TYPE>::row_major)        \
-  .add_property("size1", &vcl::matrix_base<TYPE>::size1)                \
+  /*.add_property("row_major", &vcl::matrix_base<TYPE, F>::row_major) */ \
+  .add_property("size1", &vcl::matrix_base<TYPE, F>::size1)        \
   .add_property("internal_size1",                                       \
-                &vcl::matrix_base<TYPE>::internal_size1)                \
-  .add_property("size2", &vcl::matrix_base<TYPE>::size2)                \
+                &vcl::matrix_base<TYPE, F>::internal_size1)        \
+  .add_property("size2", &vcl::matrix_base<TYPE, F>::size2)        \
   .add_property("internal_size2",                                       \
-               &vcl::matrix_base<TYPE>::internal_size2)                 \
+                &vcl::matrix_base<TYPE, F>::internal_size2)        \
    ;                                                                    \
-  bp::class_<vcl::matrix_range<vcl::matrix_base<TYPE> >,                \
-             vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix_base<TYPE> > >, \
-             bp::bases<vcl::matrix_base<TYPE> > >                       \
+  bp::class_<vcl::matrix_range<vcl::matrix_base<TYPE, F> >,        \
+             vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix_base<TYPE, F> > >, \
+             bp::bases<vcl::matrix_base<TYPE, F> > >               \
   ("matrix_range", bp::no_init);                                        \
   ;                                                                     \
-  bp::class_<vcl::matrix_slice<vcl::matrix_base<TYPE> >,                \
-             vcl::tools::shared_ptr<vcl::matrix_slice<vcl::matrix_base<TYPE> > >, \
-             bp::bases<vcl::matrix_base<TYPE> > >                       \
+  bp::class_<vcl::matrix_slice<vcl::matrix_base<TYPE, F> >,        \
+             vcl::tools::shared_ptr<vcl::matrix_slice<vcl::matrix_base<TYPE, F> > >, \
+             bp::bases<vcl::matrix_base<TYPE, F> > >               \
   ("matrix_slice", bp::no_init)                                         \
-  ;
-
-// TODO: cl_mem ctr
-#define EXPORT_DENSE_MATRIX_CLASS(TYPE, LAYOUT, F, CPU_F)               \
+  ;                                                                     \
   bp::class_<vcl::matrix<TYPE, F>,                                      \
              vcl::tools::shared_ptr<vcl::matrix<TYPE, F> >,             \
-             bp::bases<vcl::matrix_base<TYPE> > >                       \
+             bp::bases<vcl::matrix_base<TYPE, F> > >                       \
   ( "matrix_" #LAYOUT "_" #TYPE )                                       \
   .def(bp::init<vcl::matrix<TYPE, F> >())                               \
   .def(bp::init<vcl::vcl_size_t, vcl::vcl_size_t>())                    \
@@ -173,12 +175,12 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   ;                                                                     \
   bp::class_<vcl::matrix_range<vcl::matrix<TYPE, F> >,                  \
              vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix<TYPE, F> > >, \
-             bp::bases<vcl::matrix_base<TYPE> > >                       \
+             bp::bases<vcl::matrix_base<TYPE, F> > >                    \
   ("matrix_range", bp::no_init);                                        \
   ;                                                                     \
   bp::class_<vcl::matrix_slice<vcl::matrix<TYPE, F> >,                  \
              vcl::tools::shared_ptr<vcl::matrix_slice<vcl::matrix<TYPE, F> > >, \
-             bp::bases<vcl::matrix_base<TYPE> > >                       \
+             bp::bases<vcl::matrix_base<TYPE, F> > >                    \
   ("matrix_slice", bp::no_init)                                         \
   ;                                                                     \
   DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::matrix_range<                 \
