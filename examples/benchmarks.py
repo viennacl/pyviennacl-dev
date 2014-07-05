@@ -10,23 +10,17 @@ PYVIENNACL = True  # PyViennaCL benchmarks
 NUMPY_SCIPY = True # NumPy / SciPy benchmarks
 CUDA = True        # Only if gnumpy is installed
 
-# Operations
-
-ADD = True     # Dense matrix elementwise addition
-GEMM = True    # GEMM
-GEMV = True    # Dense GEMV
-SPGEMV = True  # Sparse GEMV
-
 # Matrix structure parameters
 
-ADD_SIZES = [2**x for x in range(3,15)]
-GEMM_SIZES = [2**x for x in range(3,13)]
-GEMV_SIZES = [2**x for x in range(3,13)]
+ADD_SIZES = [2**x for x in range(5,14)]
+GEMM_SIZES = [2**x for x in range(5,14)]
+GEMV_SIZES = [2**x for x in range(5,14)]
 SPGEMV_SIZES = [10**n for n in range(2,9)]
 SPARSITY = 0.02
 
 ################################################################################
 
+import sys
 from timeit import timeit
 try: import gnumpy
 except ImportError: CUDA = False
@@ -198,113 +192,124 @@ for i in range(3):
     %s
 """
 
-#
-# Dense matrix elementwise addition
-#
+def main(arg):
 
-if ADD:
+    #
+    # Dense matrix elementwise addition
+    #
 
-    if PYVIENNACL:
-        print("Dense matrix elementwise addition -- PyViennaCL")
-        stmt = "(A+B).execute()"
-        for platform in cl.get_platforms():
-            for device in platform.get_devices():
-                print("Using OpenCL device %s" % device)
-                do_benchmark(setup_dense_pyvcl, stmt, ADD_SIZES,
-                             cl_device=device.int_ptr)
-        print("")
+    if arg == "add":
 
-    if NUMPY_SCIPY:
-        print("Dense matrix elementwise addition -- NumPy")
-        stmt = "C=A+B"
-        do_benchmark(setup_dense_numpy, stmt, ADD_SIZES)
-        print("")
+        if PYVIENNACL:
+            print("Dense matrix elementwise addition -- PyViennaCL")
+            stmt = "(A+B).execute()"
+            for platform in cl.get_platforms():
+                for device in platform.get_devices():
+                    print("Using OpenCL device %s" % device)
+                    do_benchmark(setup_dense_pyvcl, stmt, ADD_SIZES,
+                                 cl_device=device.int_ptr)
+            print("")
+                
+        if NUMPY_SCIPY:
+            print("Dense matrix elementwise addition -- NumPy")
+            stmt = "C=A+B"
+            do_benchmark(setup_dense_numpy, stmt, ADD_SIZES)
+            print("")
 
-    if CUDA:
-        print("Dense matrix elementwise addition -- gnumpy (CUDA)")
-        do_benchmark(setup_dense_gnumpy, stmt, ADD_SIZES)
-        print("")
+        if CUDA:
+            print("Dense matrix elementwise addition -- gnumpy (CUDA)")
+            do_benchmark(setup_dense_gnumpy, stmt, ADD_SIZES)
+            print("")
 
-#
-# Dense matrix multiplication
-#
-
-if GEMM:
-
-    if PYVIENNACL:
-        print("Dense matrix multiplication -- PyViennaCL")
-        stmt = "(A*B).execute()"
-        for platform in cl.get_platforms():
-            for device in platform.get_devices():
-                print("Using OpenCL device %s" % device)
-                do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES,
-                             cl_device=device.int_ptr)
-        print("")
-
-    if NUMPY_SCIPY:
-        print("Dense matrix multiplication -- NumPy")
-        stmt = "A.dot(B)"
-        do_benchmark(setup_dense_numpy, stmt, GEMM_SIZES)
-        print("")
+    #
+    # Dense matrix multiplication
+    #
     
-    if CUDA:
-        print("Dense matrix multiplication -- gnumpy (CUDA)")
-        do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
-        print("")
+    elif arg == "gemm":
 
+        if PYVIENNACL:
+            print("Dense matrix multiplication -- PyViennaCL")
+            stmt = "(A*B).execute()"
+            for platform in cl.get_platforms():
+                for device in platform.get_devices():
+                    print("Using OpenCL device %s" % device)
+                    do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES,
+                                 cl_device=device.int_ptr)
+            print("")
 
-#
-# Dense matrix-vector multiplication
-
-if GEMV:
-
-    if PYVIENNACL:
-        print("Dense matrix-vector multiplication -- PyViennaCL")
-        stmt = "(A*x).execute()"
-        for platform in cl.get_platforms():
-            for device in platform.get_devices():
-                print("Using OpenCL device %s" % device)
-                do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES,
-                             cl_device=device.int_ptr)
-        print("")
-
-    if NUMPY_SCIPY:
-        print("Dense matrix-vector multiplication -- NumPy")
-        stmt = "A.dot(x)"
-        do_benchmark(setup_dense_numpy, stmt, GEMM_SIZES)
-        print("")
+        if NUMPY_SCIPY:
+            print("Dense matrix multiplication -- NumPy")
+            stmt = "A.dot(B)"
+            do_benchmark(setup_dense_numpy, stmt, GEMM_SIZES)
+            print("")
     
-    if CUDA:
-        print("Dense matrix-vector multiplication -- gnumpy (CUDA)")
-        do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
-        print("")
-
-#
+        if CUDA:
+            print("Dense matrix multiplication -- gnumpy (CUDA)")
+            do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
+            print("")
 
 
-#
-# Sparse matrix-vector multiplication
-#
+    #
+    # Dense matrix-vector multiplication
+    #
 
-if SPGEMV:
+    elif arg == "gemv":
 
-    if PYVIENNACL:
-        print("Sparse matrix-vector multiplication -- PyViennaCL")
-        print("Sparsity: %f" % SPARSITY)
-        stmt = "(A*x).execute()"
-        for platform in cl.get_platforms():
-            for device in platform.get_devices():
-                print("Using OpenCL device %s" % device)
-                do_benchmark(setup_sparse_pyvcl, stmt, SPGEMV_SIZES,
-                             sparsity=SPARSITY, cl_device=device.int_ptr)
-        print("")
+        if PYVIENNACL:
+            print("Dense matrix-vector multiplication -- PyViennaCL")
+            stmt = "(A*x).execute()"
+            for platform in cl.get_platforms():
+                for device in platform.get_devices():
+                    print("Using OpenCL device %s" % device)
+                    do_benchmark(setup_dense_pyvcl, stmt, GEMM_SIZES,
+                                 cl_device=device.int_ptr)
+            print("")
 
-    if NUMPY_SCIPY:
-        print("Sparse matrix-vector multiplication -- SciPy")
-        print("Sparsity: %f" % SPARSITY)
-        stmt = "A.dot(x)"
-        do_benchmark(setup_sparse_scipy, stmt, SPGEMV_SIZES, sparsity=SPARSITY)
-        print("")
+        if NUMPY_SCIPY:
+            print("Dense matrix-vector multiplication -- NumPy")
+            stmt = "A.dot(x)"
+            do_benchmark(setup_dense_numpy, stmt, GEMM_SIZES)
+            print("")
+    
+        if CUDA:
+            print("Dense matrix-vector multiplication -- gnumpy (CUDA)")
+            do_benchmark(setup_dense_gnumpy, stmt, GEMM_SIZES)
+            print("")
 
-    # TODO: sparse-vec mult (theano)
+    #
+    # Sparse matrix-vector multiplication
+    #
 
+    elif arg == "spgemv":
+
+        if PYVIENNACL:
+            print("Sparse matrix-vector multiplication -- PyViennaCL")
+            print("Sparsity: %f" % SPARSITY)
+            stmt = "(A*x).execute()"
+            for platform in cl.get_platforms():
+                for device in platform.get_devices():
+                    print("Using OpenCL device %s" % device)
+                    do_benchmark(setup_sparse_pyvcl, stmt, SPGEMV_SIZES,
+                                 sparsity=SPARSITY, cl_device=device.int_ptr)
+            print("")
+
+        if NUMPY_SCIPY:
+            print("Sparse matrix-vector multiplication -- SciPy")
+            print("Sparsity: %f" % SPARSITY)
+            stmt = "A.dot(x)"
+            do_benchmark(setup_sparse_scipy, stmt, SPGEMV_SIZES, sparsity=SPARSITY)
+            print("")
+
+
+    else:
+
+        print("Choose a benchmark: add, gemm, gemv, or spgemv")
+
+        # TODO: sparse-vec mult (theano)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2:
+        main(sys.argv[1])
+    else:
+        main("")
