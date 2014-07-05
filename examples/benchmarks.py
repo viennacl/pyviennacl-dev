@@ -118,8 +118,7 @@ data.append(values)
 del values
 data = tuple(data)
 
-# TODO: CompressedMatrix
-A = p.CoordinateMatrix(data, shape=(size, size, nnz),
+A = p.CompressedMatrix(data, shape=(size, size, nnz),
                        dtype=dtype, context=ctx)
 A.flush()
 
