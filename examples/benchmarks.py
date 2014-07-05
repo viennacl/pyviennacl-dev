@@ -82,7 +82,6 @@ dtype = np.float32
 
 size = %d
 sparsity = %f
-print(sparsity, math.ceil((size*size)*sparsity))
 nnz = int(max(1, math.ceil((size*size)*sparsity)))
 mod = nnz
 

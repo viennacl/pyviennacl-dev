@@ -1234,10 +1234,7 @@ class Vector(Leaf):
                     a = args[0]
                 self.dtype = np_result_type(args[0])
                 def get_leaf(vcl_t):
-                    vcl_context = self._context.vcl_context
-                    print("!!!!!!!!!!!!!!!! HERE")
-                    print(self._context.queues)
-                    return vcl_t(a, vcl_context)
+                    return vcl_t(a, self._context.vcl_context)
             elif isinstance(args[0], _v.vector_base):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
@@ -3034,9 +3031,6 @@ class Statement:
                 if isinstance(operand, Leaf) or isinstance(operand, CustomNode):
                     if (operand.context != self.result.context
                         and not isinstance(operand, HostScalar)):
-                        print(operand.context, self.result.context)
-                        print(self.result.express())
-                        print(self.result.context == operand.context)
                         raise TypeError(
                             "All objects in statement must have same context: %s"
                             % (operand.express()))
