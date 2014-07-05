@@ -1465,13 +1465,19 @@ class SparseMatrixBase(Leaf):
             if isinstance(args[0], tuple):
                 # Then we construct from given data
                 if 'shape' in kwargs.keys():
+                    shape = list(shape)
+                    if len(shape) < 3:
+                        shape.append(len(args[0][0]))
+                    shape[0] = max(max(args[0][0])+1, shape[0])
+                    shape[1] = max(max(args[0][1])+1, shape[1])
+                    shape[2] = max(len(args[0][2])+1, shape[2])
                     def get_cpu_leaf(cpu_t):
                         return cpu_t(*shape)
                 else:
                     # args[0] is (rows, cols, values), so ...
                     def get_cpu_leaf(cpu_t):
-                        return cpu_t(max(args[0][0]), max(args[0][1]),
-                                     len(args[0][2]))
+                        return cpu_t(max(args[0][0])+1, max(args[0][1])+1,
+                                     len(args[0][0])+1)
                 CONSTRUCT_FROM_DATA = True
                 data = args[0]
             elif isinstance(args[0], Matrix):

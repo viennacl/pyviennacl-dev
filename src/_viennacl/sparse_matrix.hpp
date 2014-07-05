@@ -133,7 +133,7 @@ public:
       for (vcl::vcl_size_t j = 0; j < m; ++j) {
 	ScalarType val = bp::extract<ScalarType>(array[i][j]);
 	if (val != 0)
-          set_entry(i, j, val);
+          insert_entry(i, j, val);
       }
     }
   }
