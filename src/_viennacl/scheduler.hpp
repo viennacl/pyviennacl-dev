@@ -88,14 +88,12 @@ public:
   SET_OPERAND(vcl::implicit_vector_base<double>*, implicit_vector_double)
 
   // NB: need to add remaining matrix types as they become available
-  SET_OPERAND(CONCAT(vcl::matrix_base<float, vcl::row_major>*), matrix_row_float)
-  SET_OPERAND(CONCAT(vcl::matrix_base<double, vcl::row_major>*), matrix_row_double)
-  SET_OPERAND(CONCAT(vcl::matrix_base<float, vcl::column_major>*), matrix_col_float)
-  SET_OPERAND(CONCAT(vcl::matrix_base<double, vcl::column_major>*), matrix_col_double)
+  SET_OPERAND(CONCAT(vcl::matrix_base<float>*), matrix_float)
+  SET_OPERAND(CONCAT(vcl::matrix_base<double>*), matrix_double)
   
 
-  //SET_OPERAND(vcl::implicit_matrix_base<float>*, implicit_matrix_float)
-  //SET_OPERAND(vcl::implicit_matrix_base<double>*, implicit_matrix_double)
+  SET_OPERAND(vcl::implicit_matrix_base<float>*, implicit_matrix_float)
+  SET_OPERAND(vcl::implicit_matrix_base<double>*, implicit_matrix_double)
 
   SET_OPERAND(vcl::compressed_matrix<float>*, compressed_matrix_float)
   SET_OPERAND(vcl::compressed_matrix<double>*, compressed_matrix_double)
