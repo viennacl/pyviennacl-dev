@@ -3113,8 +3113,8 @@ class TemplateBase(object):
         try:
             vcl_template = self.make_vcl_template();
             vcl_statement = st.vcl_statement;
-            vcl_context = context(st).vcl_context;
-            self.dispatch(st.vcl_statement)(vcl_template, vcl_statement, vcl_context, force_compilation);
+            vcl_context = st.result.context.vcl_sub_context;
+            self.dispatch(st.vcl_statement)(vcl_template, vcl_context, force_compilation);
         except:
             log.error("EXCEPTION GENERATING+EXECUTING: %s" %(st.statement[0].express()))
             raise
@@ -3126,16 +3126,16 @@ class TemplateBase(object):
 
 
 class VectorAxpyTemplate(TemplateBase):
-    def __init__(self, scalartype, simd_width, local_size_0, num_groups_0, decomposition):
+    def __init__(self, scalartype, simd_width, local_size_0, num_groups, decomposition):
         super(VectorAxpyTemplate, self).__init__(scalartype, simd_width, (local_size_0,));
-        self.num_groups_0 = num_groups_0;
+        self.num_groups = num_groups;
         self.decomposition = decomposition;
     
     def dispatch(self, vcl_statement):
-        return vcl_statement.generate_execute_vector_axpy();
+        return vcl_statement.generate_execute_vector_axpy;
         
     def make_vcl_template(self):
-        return _v.vector_axpy_template(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
+        return _v.vector_axpy_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
 
 class MatrixAxpyTemplate(TemplateBase):
     def __init__(self, scalartype, simd_width, local_size_0, local_size_1, num_groups_0, num_groups_1, decomposition):
@@ -3147,7 +3147,7 @@ class MatrixAxpyTemplate(TemplateBase):
         return vcl_statement.generate_execute_matrix_axpy();
         
     def make_vcl_template(self):
-        return _v.matrix_axpy_template(self.scalartype, self.simd_width, self.local_sizes[0], self.local_sizes[1],
+        return _v.matrix_axpy_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.local_sizes[1],
                                         self.num_groups[0], self.num_groups[1], self.decomposition);
         
 class ReductionTemplate(TemplateBase):
@@ -3160,7 +3160,7 @@ class ReductionTemplate(TemplateBase):
         return vcl_statement.generate_execute_reduction();
         
     def make_vcl_template(self):
-        return _v.reduction_template(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
+        return _v.reduction_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
                                 
 class RowWiseReductionTemplate(TemplateBase):
     def __init__(self, scalartype, A_trans, simd_width, local_size_0, local_size_1, num_groups_0):
@@ -3172,7 +3172,7 @@ class RowWiseReductionTemplate(TemplateBase):
         return vcl_statement.generate_execute_row_wise_reduction();
         
     def make_vcl_template(self):
-        return _v.row_wise_reduction_template(self.scalartype, self.A_trans, self.simd_width, self.local_sizes[0], self.local_sizes[1],
+        return _v.row_wise_reduction_parameters(self.scalartype, self.A_trans, self.simd_width, self.local_sizes[0], self.local_sizes[1],
                                         self.num_groups[0]);
                                         
 class MatrixProductTemplate(TemplateBase):
@@ -3193,7 +3193,7 @@ class MatrixProductTemplate(TemplateBase):
         return vcl_statement.generate_execute_matrix_product();
         
     def make_vcl_template(self):
-        return _v.matrix_product_template(self.scalartype, self.A_trans, self.B_trans, self.simd_width,
+        return _v.matrix_product_parameters(self.scalartype, self.A_trans, self.B_trans, self.simd_width,
                                               self.local_sizes[0], self.kL, self.local_sizes[1],
                                               self.mS, self.kS, self.nS,
                                               self.use_A_local, self.use_B_local,
