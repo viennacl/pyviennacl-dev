@@ -170,7 +170,7 @@ scalar case, simple numerical equality is used.
 """
 
 from __future__ import division
-import itertools, logging, math
+import itertools, logging, math, abc
 from pyviennacl import (_viennacl as _v,
                         backend, util)
 from numpy import (ndarray, array, zeros,
@@ -3093,5 +3093,110 @@ class Statement:
             raise
         return self.result
 
+
+class TemplateBase(object):
+    __metaclass__ = abc.ABCMeta;
+    
+    @abc.abstractmethod
+    def make_vcl_template(self):
+        return;
+        
+    def __init__(self, scalartype, simd_width, local_sizes):
+        self.scalartype = scalartype;
+        self.simd_width = simd_width;
+        self.local_sizes = local_sizes;
+    
+    def is_invalid(self):
+        return self.make_vcl_template().is_invalid();
+        
+    def execute(self,st, force_compilation=False):
+        try:
+            vcl_template = self.make_vcl_template();
+            vcl_statement = st.vcl_statement;
+            vcl_context = context(st).vcl_context;
+            self.dispatch(st.vcl_statement)(vcl_template, vcl_statement, vcl_context, force_compilation);
+        except:
+            log.error("EXCEPTION GENERATING+EXECUTING: %s" %(st.statement[0].express()))
+            raise
+        return st.result;
+        
+        
+    def __str__(self):
+        return ','.join("{0}".format(x[1]) if type(x[1])!=tuple else ','.join(map(str,x[1])) for x in vars(self).items());
+
+
+class VectorAxpyTemplate(TemplateBase):
+    def __init__(self, scalartype, simd_width, local_size_0, num_groups_0, decomposition):
+        super(VectorAxpyTemplate, self).__init__(scalartype, simd_width, (local_size_0,));
+        self.num_groups_0 = num_groups_0;
+        self.decomposition = decomposition;
+    
+    def dispatch(self, vcl_statement):
+        return vcl_statement.generate_execute_vector_axpy();
+        
+    def make_vcl_template(self):
+        return _v.vector_axpy_template(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
+
+class MatrixAxpyTemplate(TemplateBase):
+    def __init__(self, scalartype, simd_width, local_size_0, local_size_1, num_groups_0, num_groups_1, decomposition):
+        super(MatrixAxpyTemplate, self).__init__(scalartype, simd_width, (local_size_0, local_size_1));
+        self.num_groups = (num_groups_0, num_groups_1);
+        self.decomposition = decomposition;
+        
+    def dispatch(self, vcl_statement):
+        return vcl_statement.generate_execute_matrix_axpy();
+        
+    def make_vcl_template(self):
+        return _v.matrix_axpy_template(self.scalartype, self.simd_width, self.local_sizes[0], self.local_sizes[1],
+                                        self.num_groups[0], self.num_groups[1], self.decomposition);
+        
+class ReductionTemplate(TemplateBase):
+    def __init__(self, scalartype, simd_width, local_size_0, num_groups_0, decomposition):
+        super(ReductionTemplate, self).__init__(scalartype, simd_width, (local_size_0,));
+        self.num_groups_0 = num_groups_0;
+        self.decomposition = decomposition;
+        
+    def dispatch(self, vcl_statement):
+        return vcl_statement.generate_execute_reduction();
+        
+    def make_vcl_template(self):
+        return _v.reduction_template(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
+                                
+class RowWiseReductionTemplate(TemplateBase):
+    def __init__(self, scalartype, A_trans, simd_width, local_size_0, local_size_1, num_groups_0):
+        super(RowWiseReductionTemplate, self).__init__(scalartype, simd_width, (local_size_0, local_size_1));
+        self.num_groups = (num_groups_0,);
+        self.A_trans = A_trans;
+
+    def dispatch(self, vcl_statement):
+        return vcl_statement.generate_execute_row_wise_reduction();
+        
+    def make_vcl_template(self):
+        return _v.row_wise_reduction_template(self.scalartype, self.A_trans, self.simd_width, self.local_sizes[0], self.local_sizes[1],
+                                        self.num_groups[0]);
+                                        
+class MatrixProductTemplate(TemplateBase):
+    def __init__(self, scalartype, A_trans, B_trans, simd_width, local_size_0, kL, local_size_1, mS, kS, nS, use_A_local, use_B_local, local_fetch_0, local_fetch_1):
+        super(MatrixProductTemplate, self).__init__(scalartype, simd_width, (local_size_0, local_size_1));
+        self.A_trans = A_trans;
+        self.B_trans = B_trans;
+        self.kL = kL;
+        self.mS = mS;
+        self.kS = kS;
+        self.nS = nS;
+        self.use_A_local = use_A_local;
+        self.use_B_local = use_B_local;
+        self.local_fetch = (local_fetch_0, local_fetch_1);
+        
+
+    def dispatch(self, vcl_statement):
+        return vcl_statement.generate_execute_matrix_product();
+        
+    def make_vcl_template(self):
+        return _v.matrix_product_template(self.scalartype, self.A_trans, self.B_trans, self.simd_width,
+                                              self.local_sizes[0], self.kL, self.local_sizes[1],
+                                              self.mS, self.kS, self.nS,
+                                              self.use_A_local, self.use_B_local,
+                                              self.local_fetch[0], self.local_fetch[1]);
 
 # TODO: __all__

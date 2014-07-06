@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 
+#include <viennacl/device_specific/execute.hpp>
 #include <viennacl/scheduler/execute.hpp>
 
 class statement_node_wrapper {
@@ -129,6 +130,13 @@ public:
     vcl::scheduler::execute(tmp_statement);
   }
 
+  template<typename TemplateT>
+  void generate_execute(typename TemplateT::parameters const & parameters, viennacl::ocl::context & ctx, bool force_compilation)
+  {
+    vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
+    vcl::device_specific::execute<TemplateT>(parameters, tmp_statement, ctx, force_compilation);
+  }
+    
   std::size_t size() const {
     return vcl_expression_nodes.size();
   }

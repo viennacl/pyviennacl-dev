@@ -1,4 +1,5 @@
 #include "scheduler.hpp"
+#include "device_specific.hpp"
 
 PYVCL_SUBMODULE(scheduler)
 {
@@ -174,6 +175,12 @@ DISAMBIGUATE_CLASS_FUNCTION_PTR(statement_node_wrapper,         // class
 
   bp::class_<statement_wrapper>("statement")
     .add_property("size", &statement_wrapper::size)
+    .def("generate_execute_vector_axpy", &statement_wrapper::generate_execute<ds::vector_axpy_template>)
+    .def("generate_execute_matrix_axpy", &statement_wrapper::generate_execute<ds::matrix_axpy_template>)
+    .def("generate_execute_reduction", &statement_wrapper::generate_execute<ds::reduction_template>)
+    .def("generate_execute_row_wise_reduction", &statement_wrapper::generate_execute<ds::row_wise_reduction_template>)
+    .def("generate_execute_matrix_product", &statement_wrapper::generate_execute<ds::matrix_product_template>)
+
     .def("execute", &statement_wrapper::execute)
     .def("clear", &statement_wrapper::clear)
     .def("erase_node", &statement_wrapper::erase_node)
