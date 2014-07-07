@@ -69,10 +69,10 @@ PYVCL_SUBMODULE(extra_functions);
 PYVCL_SUBMODULE(eig);
 PYVCL_SUBMODULE(bandwidth_reduction);
 
+PYVCL_SUBMODULE(device_specific);
 PYVCL_SUBMODULE(scheduler);
 PYVCL_SUBMODULE(platform_support);
 PYVCL_SUBMODULE(opencl_support);
-
 /*******************************
   Python module initialisation
  *******************************/
@@ -129,6 +129,7 @@ BOOST_PYTHON_MODULE(_viennacl)
   export_eig();
   //export_bandwidth_reduction();
 
+  export_device_specific();
   export_scheduler();
   export_platform_support();
   export_opencl_support();

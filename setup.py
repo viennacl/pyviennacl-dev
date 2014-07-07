@@ -183,7 +183,7 @@ def main():
 
         "extra_functions", "eig", #"bandwidth_reduction",
 
-        "scheduler", "platform_support", "opencl_support"]
+        "device_specific", "scheduler", "platform_support", "opencl_support"]
 
     from glob import glob
 
