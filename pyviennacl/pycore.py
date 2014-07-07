@@ -2096,9 +2096,9 @@ class Node(MagicMethods):
                 self.operands[0].statement_node_numeric_type,  # lhs
                 self.operation_node_type_family,               # op
                 self.operation_node_type,                      # op
-                self.operands[0].statement_node_type_family,   # rhs
-                self.operands[0].statement_node_subtype,       # rhs
-                self.operands[0].statement_node_numeric_type)  # rhs
+                _v.statement_node_type_family.INVALID_TYPE_FAMILY,    # rhs
+                _v.statement_node_subtype.INVALID_SUBTYPE,            # rhs
+                _v.statement_node_numeric_type.INVALID_NUMERIC_TYPE)  # rhs
 
     def _test_init(self):
         layout_test = self.layout # NB QUIRK

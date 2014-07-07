@@ -51,6 +51,7 @@ PYVCL_SUBMODULE(scheduler)
 
   bp::enum_<vcl::scheduler::statement_node_type_family>
     ("statement_node_type_family")
+    ENUM_VALUE(vcl::scheduler, INVALID_TYPE_FAMILY)
     ENUM_VALUE(vcl::scheduler, COMPOSITE_OPERATION_FAMILY)
     ENUM_VALUE(vcl::scheduler, SCALAR_TYPE_FAMILY)
     ENUM_VALUE(vcl::scheduler, VECTOR_TYPE_FAMILY)
