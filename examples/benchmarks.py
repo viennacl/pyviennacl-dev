@@ -259,11 +259,18 @@ def add_pyvcl(A, B):
 def mul_pyvcl(A, B):
     return (A*B).execute()
 
+def gemm_pyvcl(A, B):
+    return (A*(B.T)).execute()
+
 def add_numpy(A, B):
     return A+B
 
 def mul_numpy(A, B):
     return A.dot(B)
+
+def gemm_numpy(A, B):
+    return A.dot(B.T)
+
 
 def main(arg):
 
@@ -279,20 +286,30 @@ def main(arg):
                 for device in platform.get_devices():
                     print("")
                     print("Using OpenCL device %s" % device)
-                    do_benchmark(setup_gemm_pyvcl, add_pyvcl, ADD_SIZES,
-                                 cl_device=device)
+                    try:
+                        do_benchmark(setup_gemm_pyvcl, add_pyvcl, ADD_SIZES,
+                                     cl_device=device)
+                    except KeyboardInterrupt:
+                        print(" !!! Interrupted, so moving on...")
+                        continue
             print("")
                 
         if NUMPY_SCIPY:
             print("**** Dense matrix elementwise addition -- NumPy ****")
             print("")
-            do_benchmark(setup_gemm_numpy, add_numpy, ADD_SIZES)
+            try:
+                do_benchmark(setup_gemm_numpy, add_numpy, ADD_SIZES)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
 
         if CUDA:
             print("**** Dense matrix elementwise addition -- gnumpy (CUDA) ****")
             print("")
-            do_benchmark(setup_gemm_gnumpy, add_numpy, ADD_SIZES)
+            try:
+                do_benchmark(setup_gemm_gnumpy, add_numpy, ADD_SIZES)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
 
     #
@@ -307,20 +324,30 @@ def main(arg):
                 for device in platform.get_devices():
                     print("")
                     print("Using OpenCL device %s" % device)
-                    do_benchmark(setup_gemm_pyvcl, mul_pyvcl, GEMM_SIZES,
-                                 cl_device=device)
+                    try:
+                        do_benchmark(setup_gemm_pyvcl, gemm_pyvcl, GEMM_SIZES,
+                                     cl_device=device)
+                    except KeyboardInterrupt:
+                        print(" !!! Interrupted, so moving on...")
+                        continue
             print("")
 
         if NUMPY_SCIPY:
             print("**** Dense matrix multiplication -- NumPy ****")
             print("")
-            do_benchmark(setup_gemm_numpy, mul_numpy, GEMM_SIZES)
+            try:
+                do_benchmark(setup_gemm_numpy, gemm_numpy, GEMM_SIZES)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
     
         if CUDA:
             print("**** Dense matrix multiplication -- gnumpy (CUDA) ****")
             print("")
-            do_benchmark(setup_gemm_gnumpy, mul_numpy, GEMM_SIZES)
+            try:
+                do_benchmark(setup_gemm_gnumpy, gemm_numpy, GEMM_SIZES)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
 
 
@@ -336,20 +363,30 @@ def main(arg):
                 for device in platform.get_devices():
                     print("")
                     print("Using OpenCL device %s" % device)
-                    do_benchmark(setup_gemv_pyvcl, mul_pyvcl, GEMV_SIZES,
-                                 cl_device=device)
+                    try:
+                        do_benchmark(setup_gemv_pyvcl, mul_pyvcl, GEMV_SIZES,
+                                     cl_device=device)
+                    except KeyboardInterrupt:
+                        print(" !!! Interrupted, so moving on...")
+                        continue
             print("")
 
         if NUMPY_SCIPY:
             print("**** Dense matrix-vector multiplication -- NumPy ****")
             print("")
-            do_benchmark(setup_gemv_numpy, mul_numpy, GEMV_SIZES)
+            try:
+                do_benchmark(setup_gemv_numpy, mul_numpy, GEMV_SIZES)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
     
         if CUDA:
             print("**** Dense matrix-vector multiplication -- gnumpy (CUDA) ****")
             print("")
-            do_benchmark(setup_gemv_gnumpy, mul_numpy, GEMV_SIZES)
+            try:
+                do_benchmark(setup_gemv_gnumpy, mul_numpy, GEMV_SIZES)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
 
 
@@ -366,8 +403,12 @@ def main(arg):
                 for device in platform.get_devices():
                     print("")
                     print("Using OpenCL device %s" % device)
-                    do_benchmark(setup_spgemm_pyvcl, mul_pyvcl, SPGEMM_SIZES,
-                                 sparsity=SPARSITY, cl_device=device)
+                    try:
+                        do_benchmark(setup_spgemm_pyvcl, mul_pyvcl, SPGEMM_SIZES,
+                                     sparsity=SPARSITY, cl_device=device)
+                    except KeyboardInterrupt:
+                        print(" !!! Interrupted, so moving on...")
+                        continue
             print("")
 
         if NUMPY_SCIPY:
@@ -391,15 +432,23 @@ def main(arg):
                 for device in platform.get_devices():
                     print("")
                     print("Using OpenCL device %s" % device)
-                    do_benchmark(setup_spgemv_pyvcl, mul_pyvcl, SPGEMV_SIZES,
-                                 sparsity=SPARSITY, cl_device=device)
+                    try:
+                        do_benchmark(setup_spgemv_pyvcl, mul_pyvcl, SPGEMV_SIZES,
+                                     sparsity=SPARSITY, cl_device=device)
+                    except KeyboardInterrupt:
+                        print(" !!! Interrupted, so moving on...")
+                        continue
             print("")
 
         if NUMPY_SCIPY:
             print("**** Sparse matrix-vector multiplication -- SciPy ****")
             print("Sparsity: %f" % SPARSITY)
             print("")
-            do_benchmark(setup_spgemv_scipy, mul_numpy, SPGEMV_SIZES, sparsity=SPARSITY)
+            try:
+                do_benchmark(setup_spgemv_scipy, mul_numpy, SPGEMV_SIZES,
+                             sparsity=SPARSITY)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
 
     else:
