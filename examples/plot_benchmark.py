@@ -69,7 +69,11 @@ for platform in platforms.keys():
             label=platform)
 
 handles, labels = ax.get_legend_handles_labels()
-leg = ax.legend(handles, labels, fancybox=True, loc=2, prop={'size':6})
+import operator
+hl = sorted(zip(handles, labels),
+            key=operator.itemgetter(1))
+handles2, labels2 = zip(*hl)
+leg = ax.legend(handles2, labels2, fancybox=True, loc=2, prop={'size':11})
 leg.get_frame().set_alpha(0.5)
 
 save_as = time.strftime("%Y%m%d-%H%M") + " - " + title + ".svg"

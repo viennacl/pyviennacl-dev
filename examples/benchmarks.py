@@ -318,7 +318,7 @@ def main(arg):
         if PYVIENNACL:
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("PLATFORM: %s (ViennaCL)" % device.name)
+                    print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
                         do_benchmark(setup_vector_pyvcl, add_pyvcl, ADD_SIZES,
                                      cl_device=device)
@@ -354,7 +354,7 @@ def main(arg):
         if PYVIENNACL:
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("PLATFORM: %s (ViennaCL)" % device.name)
+                    print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
                         do_benchmark(setup_gemm_pyvcl, gemm_pyvcl, GEMM_SIZES,
                                      cl_device=device)
@@ -391,7 +391,7 @@ def main(arg):
         if PYVIENNACL:
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("PLATFORM: %s (ViennaCL)" % device.name)
+                    print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
                         do_benchmark(setup_gemv_pyvcl, mul_pyvcl, GEMV_SIZES,
                                      cl_device=device)
@@ -428,7 +428,7 @@ def main(arg):
         if PYVIENNACL:
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("PLATFORM: %s (ViennaCL)" % device.name)
+                    print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
                         do_benchmark(setup_spgemm_pyvcl, mul_pyvcl, SPGEMM_SIZES,
                                      sparsity=SPARSITY, cl_device=device)
@@ -457,7 +457,7 @@ def main(arg):
         if PYVIENNACL:
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("PLATFORM: %s (ViennaCL)" % device.name)
+                    print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
                         do_benchmark(setup_spgemv_pyvcl, mul_pyvcl, SPGEMV_SIZES,
                                      sparsity=SPARSITY, cl_device=device)
