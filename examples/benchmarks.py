@@ -293,7 +293,7 @@ def mul_pyvcl(A, B):
     return (A*B).execute()
 
 def gemm_pyvcl(A, B):
-    return (A*(B.T)).execute()
+    return (A.T*B).execute()
 
 def add_numpy(A, B):
     return A+B
@@ -302,7 +302,7 @@ def mul_numpy(A, B):
     return A.dot(B)
 
 def gemm_numpy(A, B):
-    return A.dot(B.T)
+    return A.T.dot(B)
 
 
 def main(arg):
@@ -349,7 +349,7 @@ def main(arg):
     
     elif arg == "gemm":
 
-        print("OPERATION: Dense matrix elementwise addition")
+        print("OPERATION: Dense Matrix-Matrix Product")
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
@@ -386,7 +386,7 @@ def main(arg):
 
     elif arg == "gemv":
 
-        print("OPERATION: Dense matrix-vector multiplication")
+        print("OPERATION: Dense Matrix-Vector Product")
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
@@ -423,7 +423,7 @@ def main(arg):
 
     elif arg == "spgemm":
 
-        print("OPERATION: Sparse (%f) matrix-matrix multiplication" % SPARSITY)
+        print("OPERATION: Sparse (%f) Matrix-Matrix Product" % SPARSITY)
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
@@ -452,7 +452,7 @@ def main(arg):
 
     elif arg == "spgemv":
 
-        print("OPERATION: Sparse (%f) matrix-vector multiplication" % SPARSITY)
+        print("OPERATION: Sparse (%f) Matrix-Vector Product" % SPARSITY)
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
