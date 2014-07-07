@@ -3144,7 +3144,7 @@ class MatrixAxpyTemplate(TemplateBase):
         self.decomposition = decomposition;
         
     def dispatch(self, vcl_statement):
-        return vcl_statement.generate_execute_matrix_axpy();
+        return vcl_statement.generate_execute_matrix_axpy;
         
     def make_vcl_template(self):
         return _v.matrix_axpy_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.local_sizes[1],
@@ -3157,7 +3157,7 @@ class ReductionTemplate(TemplateBase):
         self.decomposition = decomposition;
         
     def dispatch(self, vcl_statement):
-        return vcl_statement.generate_execute_reduction();
+        return vcl_statement.generate_execute_reduction;
         
     def make_vcl_template(self):
         return _v.reduction_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
@@ -3169,7 +3169,7 @@ class RowWiseReductionTemplate(TemplateBase):
         self.A_trans = A_trans;
 
     def dispatch(self, vcl_statement):
-        return vcl_statement.generate_execute_row_wise_reduction();
+        return vcl_statement.generate_execute_row_wise_reduction;
         
     def make_vcl_template(self):
         return _v.row_wise_reduction_parameters(self.scalartype, self.A_trans, self.simd_width, self.local_sizes[0], self.local_sizes[1],
@@ -3190,7 +3190,7 @@ class MatrixProductTemplate(TemplateBase):
         
 
     def dispatch(self, vcl_statement):
-        return vcl_statement.generate_execute_matrix_product();
+        return vcl_statement.generate_execute_matrix_product;
         
     def make_vcl_template(self):
         return _v.matrix_product_parameters(self.scalartype, self.A_trans, self.B_trans, self.simd_width,
