@@ -12,5 +12,5 @@ __pycache__
 doc/viennacl.pdf
 *.egg-info
 dist
-siteconf.py
+siteconf*
 Makefile
