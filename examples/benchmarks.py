@@ -33,6 +33,7 @@ SPARSITY = 0.02
 
 import sys, time
 import numpy as np
+from pyviennacl.backend import Context
 from timeit import timeit
 try: import gnumpy
 except ImportError: CUDA = False
@@ -41,17 +42,24 @@ except ImportError: PYVIENNACL = False
 
 def do_benchmark(setup, do_op, sizes, num_iters=5,
                  sparsity=None, cl_device=None):
+    if cl_device is None:
+        ctx = None
+    else:
+        ctx = Context(cl.Context([cl_device]))
+
     for size in sizes:
         try:
-            A, B = setup(size, sparsity=sparsity, device=cl_device)
+            A, B = setup(size, sparsity=sparsity, context=ctx)
+            if ctx is not None: ctx.finish_all_queues()
             for i in range(3):
-                do_op(A, B)
+                do_op(A, B, ctx)
 
             N = 0
             current_time = 0
+            if ctx is not None: ctx.finish_all_queues() # Just to be sure
             while current_time < 1:
                 time_before = time.time()
-                do_op(A, B)
+                do_op(A, B, ctx)
                 current_time += time.time() - time_before
                 N += 1
             print(size, current_time / N)
@@ -59,64 +67,48 @@ def do_benchmark(setup, do_op, sizes, num_iters=5,
             print("Exception with size %d: %s" % (size, e))
             break
 
-def setup_vector_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
+def setup_vector_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
     import pyviennacl as p
-    import pyopencl as cl
-    from pyviennacl.backend import Context
-
-    ctx = Context(cl.Context([device]))
 
     x = np.ones(size).astype(dtype) * 0.3
     y = np.ones(size).astype(dtype) * 0.9
 
-    x = p.Vector(x, context=ctx)
-    y = p.Vector(y, context=ctx)
+    x = p.Vector(x, context=context)
+    y = p.Vector(y, context=context)
 
     return x, y
 
-def setup_gemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
+def setup_gemm_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
     import pyviennacl as p
-    import pyopencl as cl
-    from pyviennacl.backend import Context
-
-    ctx = Context(cl.Context([device]))
 
     A = np.ones((size,size)).astype(dtype) * 0.3
     B = np.ones((size,size)).astype(dtype) * 0.9
 
-    A = p.Matrix(A, context=ctx)
-    B = p.Matrix(B, context=ctx)
+    A = p.Matrix(A, context=context)
+    B = p.Matrix(B, context=context)
 
     return A, B
 
-def setup_gemv_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
+def setup_gemv_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
     import pyviennacl as p
-    import pyopencl as cl
-    from pyviennacl.backend import Context
-
-    ctx = Context(cl.Context([device]))
 
     A = np.ones((size,size)).astype(dtype) * 0.5
-    A = p.Matrix(A, context=ctx)
+    A = p.Matrix(A, context=context)
 
     x = np.ones((size,)).astype(dtype) * 2.0
-    x = p.Vector(x, context=ctx)
+    x = p.Vector(x, context=context)
 
     return A, x
 
-def setup_spgemv_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
+def setup_spgemv_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
     import pyviennacl as p
-    import pyopencl as cl
     import math
-    from pyviennacl.backend import Context
-
-    ctx = Context(cl.Context([device]))
 
     nnz = int(max(1, math.ceil((size*size)*sparsity)))
     mod = nnz
 
     x = np.ones((size,)).astype(dtype) * 1.1
-    x = p.Vector(x, context=ctx)
+    x = p.Vector(x, context=context)
 
     values = np.array([], dtype=dtype)
     max_size = 10**6
@@ -139,18 +131,14 @@ def setup_spgemv_pyvcl(size, sparsity = None, device = None, dtype = np.float32)
     data = tuple(data)
 
     A = p.CompressedMatrix(data, shape=(size, size, nnz),
-                           dtype=dtype, context=ctx)
+                           dtype=dtype, context=context)
     A.flush()
 
     return A, x
 
 def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
     import pyviennacl as p
-    import pyopencl as cl
     import math
-    from pyviennacl.backend import Context
-
-    ctx = Context(cl.Context([device]))
 
     nnz = int(max(1, math.ceil((size*size)*sparsity)))
     mod = nnz
@@ -176,16 +164,16 @@ def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32)
     data = tuple(data)
 
     A = p.CompressedMatrix(data, shape=(size, size, nnz),
-                           dtype=dtype, context=ctx)
+                           dtype=dtype, context=context)
     A.flush()
 
     B = p.CompressedMatrix(data, shape=(size, size, nnz),
-                           dtype=dtype, context=ctx)
+                           dtype=dtype, context=context)
     B.flush()
 
     return A, B
 
-def setup_vector_numpy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_vector_numpy(size, sparsity = None, context = None, dtype = np.float32):
     import gnumpy as gnp
 
     x = np.ones(size).astype(dtype) * 0.3
@@ -196,7 +184,7 @@ def setup_vector_numpy(size, sparsity = None, device = None, dtype = np.float32)
 
     return x, y
 
-def setup_gemm_gnumpy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_gemm_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
     import gnumpy as gnp
 
     A = np.ones((size,size)).astype(dtype) * 0.7
@@ -207,7 +195,7 @@ def setup_gemm_gnumpy(size, sparsity = None, device = None, dtype = np.float32):
 
     return A, B
 
-def setup_gemv_gnumpy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_gemv_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
     import gnumpy as gnp
 
     A = np.ones((size,size)).astype(dtype) * 0.3
@@ -218,25 +206,25 @@ def setup_gemv_gnumpy(size, sparsity = None, device = None, dtype = np.float32):
 
     return A, B
 
-def setup_vector_numpy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_vector_numpy(size, sparsity = None, context = None, dtype = np.float32):
     x = np.ones(size).astype(dtype) * 0.3
     y = np.ones(size).astype(dtype) * 0.9
 
     return x, y
 
-def setup_gemv_numpy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_gemv_numpy(size, sparsity = None, context = None, dtype = np.float32):
     A = np.ones((size,size)).astype(dtype) * 0.8
     x = np.ones((size,)).astype(dtype) * 0.9
 
     return A, x
 
-def setup_gemm_numpy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_gemm_numpy(size, sparsity = None, context = None, dtype = np.float32):
     A = np.ones((size,size)).astype(dtype) * 0.6
     B = np.ones((size,size)).astype(dtype) * 0.3
 
     return A, B
 
-def setup_spgemv_scipy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_spgemv_scipy(size, sparsity = None, context = None, dtype = np.float32):
     import scipy.sparse as sp
     import math
 
@@ -262,7 +250,7 @@ def setup_spgemv_scipy(size, sparsity = None, device = None, dtype = np.float32)
     return A, x
 
 
-def setup_spgemm_scipy(size, sparsity = None, device = None, dtype = np.float32):
+def setup_spgemm_scipy(size, sparsity = None, context = None, dtype = np.float32):
     import scipy.sparse as sp
     import math
 
@@ -286,22 +274,25 @@ def setup_spgemm_scipy(size, sparsity = None, device = None, dtype = np.float32)
 
     return A, B
 
-def add_pyvcl(A, B):
-    return (A+B).execute()
+def add_pyvcl(A, B, ctx = None):
+    res = (A+B).execute()
+    ctx.finish_all_queues()
 
-def mul_pyvcl(A, B):
-    return (A*B).execute()
+def mul_pyvcl(A, B, ctx = None):
+    res = (A*B).execute()
+    ctx.finish_all_queues()
 
-def gemm_pyvcl(A, B):
-    return (A.T*B).execute()
+def gemm_pyvcl(A, B, ctx = None):
+    res = (A.T*B).execute()
+    ctx.finish_all_queues()
 
-def add_numpy(A, B):
+def add_numpy(A, B, ctx = None):
     return A+B
 
-def mul_numpy(A, B):
+def mul_numpy(A, B, ctx = None):
     return A.dot(B)
 
-def gemm_numpy(A, B):
+def gemm_numpy(A, B, ctx = None):
     return A.T.dot(B)
 
 
