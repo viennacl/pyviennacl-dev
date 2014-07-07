@@ -3121,6 +3121,8 @@ class TemplateBase(object):
             raise
         return st.result;
         
+    def str_format(self):
+        return ','.join(vars(self).keys());
         
     def __str__(self):
         return ','.join("{0}".format(x[1]) if type(x[1])!=tuple else ','.join(map(str,x[1])) for x in vars(self).items());
