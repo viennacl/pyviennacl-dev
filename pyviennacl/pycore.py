@@ -2089,7 +2089,8 @@ class Node(MagicMethods):
                 self.operands[1].statement_node_subtype,       # rhs
                 self.operands[1].statement_node_numeric_type)  # rhs
         else:
-            # Set up the ViennaCL statement_node with one operand, twice..
+            # Set up the ViennaCL statement_node with one operand,
+            # and set rhs to INVALID
             self.vcl_node = _v.statement_node(
                 self.operands[0].statement_node_type_family,   # lhs
                 self.operands[0].statement_node_subtype,       # lhs

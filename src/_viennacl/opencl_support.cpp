@@ -160,6 +160,7 @@ PYVCL_SUBMODULE(opencl_support)
   bp::class_<vcl::ocl::command_queue>("command_queue", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_command_queue_from_int_ptr))
     .add_property("int_ptr", get_command_queue_ptr)
+    .def("finish", &vcl::ocl::command_queue::finish)
     ;
     
   bp::def("get_current_context", vcl::ocl::current_context,

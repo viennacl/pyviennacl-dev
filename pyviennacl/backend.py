@@ -201,6 +201,16 @@ class Context(object):
             raise TypeError("Only the OpenCL backend currently supports multiple devices")
         return vcl.get_pyopencl_object(self.vcl_sub_context.current_queue)
 
+    def finish_all_queues(self):
+        """
+        TODO docstring
+        """
+        if self.domain is not OpenCLMemory:
+            raise TypeError("This only makes sense on OpenCL")
+        for device in self.queues.keys():
+            for queue in self.queues[device]:
+                queue.finish()
+
 
 def backend_finish():
     """
