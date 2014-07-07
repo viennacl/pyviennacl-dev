@@ -22,11 +22,11 @@ CUDA = True        # Only if gnumpy is installed
 
 # Matrix structure parameters
 
-ADD_SIZES = [int(2**(x/2)) for x in range(10,31)]
-GEMV_SIZES = [int(2**(x/2)) for x in range(10,31)]
-GEMM_SIZES = [int(2**(x/2)) for x in range(10,31)]
-SPGEMM_SIZES = [int(2**(x/2)) for n in range(10,31)]
-SPGEMV_SIZES = [int(2**(x/2)) for n in range(10,31)]
+ADD_SIZES = [int(10**(x/3)) for x in range(12,24)]
+GEMV_SIZES = [int(10**(x/4)) for x in range(8,16)]
+GEMM_SIZES = [int(10**(x/4)) for x in range(8,16)]
+SPGEMM_SIZES = [int(10**(x/4)) for x in range(8,16)]
+SPGEMV_SIZES = [int(10**(x/4)) for x in range(8,16)]
 SPARSITY = 0.02
 
 ################################################################################
@@ -57,6 +57,22 @@ def do_benchmark(setup, do_op, sizes, num_iters=5,
             print(size, current_time / N)
         except Exception as e:
             print("Exception with size %d: %s" % (size, e))
+            break
+
+def setup_vector_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
+    import pyviennacl as p
+    import pyopencl as cl
+    from pyviennacl.backend import Context
+
+    ctx = Context(cl.Context([device]))
+
+    x = np.ones(size).astype(dtype) * 0.3
+    y = np.ones(size).astype(dtype) * 0.9
+
+    x = p.Vector(x, context=ctx)
+    y = p.Vector(y, context=ctx)
+
+    return x, y
 
 def setup_gemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
     import pyviennacl as p
@@ -169,6 +185,17 @@ def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32)
 
     return A, B
 
+def setup_vector_numpy(size, sparsity = None, device = None, dtype = np.float32):
+    import gnumpy as gnp
+
+    x = np.ones(size).astype(dtype) * 0.3
+    y = np.ones(size).astype(dtype) * 0.9
+
+    x = gnp.garray(x)
+    y = gnp.garray(y)
+
+    return x, y
+
 def setup_gemm_gnumpy(size, sparsity = None, device = None, dtype = np.float32):
     import gnumpy as gnp
 
@@ -190,6 +217,12 @@ def setup_gemv_gnumpy(size, sparsity = None, device = None, dtype = np.float32):
     x = gnp.garray(x)
 
     return A, B
+
+def setup_vector_numpy(size, sparsity = None, device = None, dtype = np.float32):
+    x = np.ones(size).astype(dtype) * 0.3
+    y = np.ones(size).astype(dtype) * 0.9
+
+    return x, y
 
 def setup_gemv_numpy(size, sparsity = None, device = None, dtype = np.float32):
     A = np.ones((size,size)).astype(dtype) * 0.8
@@ -275,39 +308,37 @@ def gemm_numpy(A, B):
 def main(arg):
 
     #
-    # Dense matrix elementwise addition
+    # Vector addition
     #
 
     if arg == "add":
 
+        print("OPERATION: Vector Addition")
+
         if PYVIENNACL:
-            print("**** Dense matrix elementwise addition -- PyViennaCL ****")
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("")
-                    print("Using OpenCL device %s" % device)
+                    print("PLATFORM: %s (ViennaCL)" % device.name)
                     try:
-                        do_benchmark(setup_gemm_pyvcl, add_pyvcl, ADD_SIZES,
+                        do_benchmark(setup_vector_pyvcl, add_pyvcl, ADD_SIZES,
                                      cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
                         continue
-            print("")
+                    print("")
                 
         if NUMPY_SCIPY:
-            print("**** Dense matrix elementwise addition -- NumPy ****")
-            print("")
+            print("PLATFORM: NumPy")
             try:
-                do_benchmark(setup_gemm_numpy, add_numpy, ADD_SIZES)
+                do_benchmark(setup_vector_numpy, add_numpy, ADD_SIZES)
             except KeyboardInterrupt:
                 print(" !!! Interrupted, so moving on...")
             print("")
 
         if CUDA:
-            print("**** Dense matrix elementwise addition -- gnumpy (CUDA) ****")
-            print("")
+            print("PLATFORM: gnumpy")
             try:
-                do_benchmark(setup_gemm_gnumpy, add_numpy, ADD_SIZES)
+                do_benchmark(setup_vector_gnumpy, add_numpy, ADD_SIZES)
             except KeyboardInterrupt:
                 print(" !!! Interrupted, so moving on...")
             print("")
@@ -318,23 +349,22 @@ def main(arg):
     
     elif arg == "gemm":
 
+        print("OPERATION: Dense matrix elementwise addition")
+
         if PYVIENNACL:
-            print("**** Dense matrix multiplication -- PyViennaCL ****")
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("")
-                    print("Using OpenCL device %s" % device)
+                    print("PLATFORM: %s (ViennaCL)" % device.name)
                     try:
                         do_benchmark(setup_gemm_pyvcl, gemm_pyvcl, GEMM_SIZES,
                                      cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
                         continue
-            print("")
+                    print("")
 
         if NUMPY_SCIPY:
-            print("**** Dense matrix multiplication -- NumPy ****")
-            print("")
+            print("PLATFORM: NumPy")
             try:
                 do_benchmark(setup_gemm_numpy, gemm_numpy, GEMM_SIZES)
             except KeyboardInterrupt:
@@ -342,8 +372,7 @@ def main(arg):
             print("")
     
         if CUDA:
-            print("**** Dense matrix multiplication -- gnumpy (CUDA) ****")
-            print("")
+            print("PLATFORM: gnumpy")
             try:
                 do_benchmark(setup_gemm_gnumpy, gemm_numpy, GEMM_SIZES)
             except KeyboardInterrupt:
@@ -357,23 +386,22 @@ def main(arg):
 
     elif arg == "gemv":
 
+        print("OPERATION: Dense matrix-vector multiplication")
+
         if PYVIENNACL:
-            print("**** Dense matrix-vector multiplication -- PyViennaCL ****")
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("")
-                    print("Using OpenCL device %s" % device)
+                    print("PLATFORM: %s (ViennaCL)" % device.name)
                     try:
                         do_benchmark(setup_gemv_pyvcl, mul_pyvcl, GEMV_SIZES,
                                      cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
                         continue
-            print("")
+                    print("")
 
         if NUMPY_SCIPY:
-            print("**** Dense matrix-vector multiplication -- NumPy ****")
-            print("")
+            print("PLATFORM: NumPy")
             try:
                 do_benchmark(setup_gemv_numpy, mul_numpy, GEMV_SIZES)
             except KeyboardInterrupt:
@@ -381,8 +409,7 @@ def main(arg):
             print("")
     
         if CUDA:
-            print("**** Dense matrix-vector multiplication -- gnumpy (CUDA) ****")
-            print("")
+            print("PLATFORM: gnumpy")
             try:
                 do_benchmark(setup_gemv_gnumpy, mul_numpy, GEMV_SIZES)
             except KeyboardInterrupt:
@@ -396,27 +423,27 @@ def main(arg):
 
     elif arg == "spgemm":
 
+        print("OPERATION: Sparse (%f) matrix-matrix multiplication" % SPARSITY)
+
         if PYVIENNACL:
-            print("**** Sparse matrix-matrix multiplication -- PyViennaCL ****")
-            print("Sparsity: %f" % SPARSITY)
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("")
-                    print("Using OpenCL device %s" % device)
+                    print("PLATFORM: %s (ViennaCL)" % device.name)
                     try:
                         do_benchmark(setup_spgemm_pyvcl, mul_pyvcl, SPGEMM_SIZES,
                                      sparsity=SPARSITY, cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
                         continue
-            print("")
+                    print("")
 
         if NUMPY_SCIPY:
-            print("**** Sparse matrix-matrix multiplication -- SciPy ****")
-            print("Sparsity: %f" % SPARSITY)
-            print("")
-            do_benchmark(setup_spgemm_scipy, mul_numpy, SPGEMM_SIZES,
-                         sparsity=SPARSITY)
+            print("PLATFORM: SciPy")
+            try:
+                do_benchmark(setup_spgemm_scipy, mul_numpy, SPGEMM_SIZES,
+                             sparsity=SPARSITY)
+            except KeyboardInterrupt:
+                print(" !!! Interrupted, so moving on...")
             print("")
 
     #
@@ -425,25 +452,22 @@ def main(arg):
 
     elif arg == "spgemv":
 
+        print("OPERATION: Sparse (%f) matrix-vector multiplication" % SPARSITY)
+
         if PYVIENNACL:
-            print("**** Sparse matrix-vector multiplication -- PyViennaCL ****")
-            print("Sparsity: %f" % SPARSITY)
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
-                    print("")
-                    print("Using OpenCL device %s" % device)
+                    print("PLATFORM: %s (ViennaCL)" % device.name)
                     try:
                         do_benchmark(setup_spgemv_pyvcl, mul_pyvcl, SPGEMV_SIZES,
                                      sparsity=SPARSITY, cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
                         continue
-            print("")
+                    print("")
 
         if NUMPY_SCIPY:
-            print("**** Sparse matrix-vector multiplication -- SciPy ****")
-            print("Sparsity: %f" % SPARSITY)
-            print("")
+            print("PLATFORM: NumPy")
             try:
                 do_benchmark(setup_spgemv_scipy, mul_numpy, SPGEMV_SIZES,
                              sparsity=SPARSITY)
@@ -462,15 +486,16 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         main(sys.argv[1])
     else:
-        print("--------------------------------------------------------------")
-        if ADD: main("add")
-        print("--------------------------------------------------------------")
-        if GEMV: main("gemv")
-        print("--------------------------------------------------------------")
-        if GEMM: main("gemm")
-        print("--------------------------------------------------------------")
-        if SPGEMV: main("spgemv")
-        print("--------------------------------------------------------------")
-        if SPGEMM: main("spgemm")
-        print("--------------------------------------------------------------")
+        #print("-------------------------------------------------------------")
+        #if ADD: main("add")
+        #print("-------------------------------------------------------------")
+        #if GEMV: main("gemv")
+        #print("-------------------------------------------------------------")
+        #if GEMM: main("gemm")
+        #print("-------------------------------------------------------------")
+        #if SPGEMV: main("spgemv")
+        #print("-------------------------------------------------------------")
+        #if SPGEMM: main("spgemm")
+        #print("-------------------------------------------------------------")
+        main("") # Because Python leaks memory otherwise ...
 
