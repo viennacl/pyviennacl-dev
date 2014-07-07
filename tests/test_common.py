@@ -9,6 +9,8 @@ import random
 import logging
 logger = logging.getLogger('pyviennacl')
 
+ctx = p.backend.Context()
+
 def noop(*args, **kwargs):
     return os.EX_OK
 
@@ -90,32 +92,32 @@ def test_vector_slice(test_func,
         B[i] = random.random()
 
     # Construct appropriate ViennaCL objects
-    vcl_A = p.Vector(A)
+    vcl_A = p.Vector(A, context=ctx)
 
-    vcl_big_range_A = p.Vector(big_A)
+    vcl_big_range_A = p.Vector(big_A, context=ctx)
     vcl_big_range_A[size:2*size] = vcl_A
     vcl_range_A = vcl_big_range_A[size:2*size]
 
-    vcl_big_slice_A = p.Vector(big_A)
+    vcl_big_slice_A = p.Vector(big_A, context=ctx)
     vcl_big_slice_A[size:-size:2] = vcl_A
     vcl_slice_A = vcl_big_slice_A[size:-size:2]
 
-    vcl_B = p.Vector(B)
+    vcl_B = p.Vector(B, context=ctx)
 
-    vcl_big_range_B = p.Vector(big_B)
+    vcl_big_range_B = p.Vector(big_B, context=ctx)
     vcl_big_range_B[size:2*size] = vcl_B
     vcl_range_B = vcl_big_range_B[size:2*size]
 
-    vcl_big_slice_B = p.Vector(big_B)
+    vcl_big_slice_B = p.Vector(big_B, context=ctx)
     vcl_big_slice_B[size:-size:2] = vcl_B
     vcl_slice_B = vcl_big_slice_B[size:-size:2]
 
-    vcl_C = p.Vector(C)
+    vcl_C = p.Vector(C, context=ctx)
 
-    vcl_big_range_C = p.Vector(big_C)
+    vcl_big_range_C = p.Vector(big_C, context=ctx)
     vcl_range_C = vcl_big_range_C[(size - 1):(2*size - 1)]
 
-    vcl_big_slice_C = p.Vector(big_C)
+    vcl_big_slice_C = p.Vector(big_C, context=ctx)
     vcl_slice_C = vcl_big_slice_C[(size - 1):(4*size - 1):3]
 
     # A=vector, B=vector, C=vector
@@ -516,52 +518,52 @@ def test_matrix_slice(test_func,
     big_C_trans = big_C.T
 
     # Construct appropriate ViennaCL objects
-    vcl_A = p.Matrix(A, layout = A_layout)
+    vcl_A = p.Matrix(A, layout = A_layout, context=ctx)
 
-    vcl_big_range_A = p.Matrix(big_A, layout = A_layout)
+    vcl_big_range_A = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_range_A[size1:2*size1, size2:2*size2] = vcl_A
     vcl_range_A = vcl_big_range_A[size1:2*size1, size2:2*size2]
 
-    vcl_big_slice_A = p.Matrix(big_A, layout = A_layout)
+    vcl_big_slice_A = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_slice_A[size1:-size1:2, size2::3] = vcl_A
     vcl_slice_A = vcl_big_slice_A[size1:-size1:2, size2::3]
 
-    vcl_A_trans = p.Matrix(A_trans, layout = A_layout)
+    vcl_A_trans = p.Matrix(A_trans, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_trans = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_range_A_trans = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_range_A_trans[size2:2*size2, size1:2*size1] = vcl_A_trans
     vcl_range_A_trans = vcl_big_range_A_trans[size2:2*size2, size1:2*size1]
 
-    vcl_big_slice_A_trans = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_slice_A_trans = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_slice_A_trans[size2:-size2:2, size1::3] = vcl_A_trans
     vcl_slice_A_trans = vcl_big_slice_A_trans[size2:-size2:2, size1::3]
 
-    vcl_B = p.Matrix(B, layout = B_layout)
+    vcl_B = p.Matrix(B, layout = B_layout, context=ctx)
 
-    vcl_big_range_B = p.Matrix(big_B, layout = B_layout)
+    vcl_big_range_B = p.Matrix(big_B, layout = B_layout, context=ctx)
     vcl_big_range_B[size2:2*size2, size3:2*size3] = vcl_B
     vcl_range_B = vcl_big_range_B[size2:2*size2, size3:2*size3]
 
-    vcl_big_slice_B = p.Matrix(big_B, layout = B_layout)
+    vcl_big_slice_B = p.Matrix(big_B, layout = B_layout, context=ctx)
     vcl_big_slice_B[size2:-size2:2, size3::3] = vcl_B
     vcl_slice_B = vcl_big_slice_B[size2:-size2:2, size3::3]
 
-    vcl_B_trans = p.Matrix(B_trans, layout = B_layout)
+    vcl_B_trans = p.Matrix(B_trans, layout = B_layout, context=ctx)
 
-    vcl_big_range_B_trans = p.Matrix(big_B_trans, layout = B_layout)
+    vcl_big_range_B_trans = p.Matrix(big_B_trans, layout = B_layout, context=ctx)
     vcl_big_range_B_trans[size3:2*size3, size2:2*size2] = vcl_B_trans
     vcl_range_B_trans = vcl_big_range_B_trans[size3:2*size3, size2:2*size2]
 
-    vcl_big_slice_B_trans = p.Matrix(big_B_trans, layout = B_layout)
+    vcl_big_slice_B_trans = p.Matrix(big_B_trans, layout = B_layout, context=ctx)
     vcl_big_slice_B_trans[size3:-size3:2, size2::3] = vcl_B_trans
     vcl_slice_B_trans = vcl_big_slice_B_trans[size3:-size3:2, size2::3]
 
-    vcl_C = p.Matrix(C, layout = C_layout)
+    vcl_C = p.Matrix(C, layout = C_layout, context=ctx)
 
-    vcl_big_range_C = p.Matrix(big_C, layout = C_layout)
+    vcl_big_range_C = p.Matrix(big_C, layout = C_layout, context=ctx)
     vcl_range_C = vcl_big_range_C[(size1 - 1):(2*size1 - 1), (size3 - 1):(2*size3 - 1)]
 
-    vcl_big_slice_C = p.Matrix(big_C, layout = C_layout)
+    vcl_big_slice_C = p.Matrix(big_C, layout = C_layout, context=ctx)
     vcl_slice_C = vcl_big_slice_C[(size1 - 1):(4*size1 - 1):3, (size3 - 1):(4*size3 - 1):3]
 
     # A=matrix, B=matrix, C=matrix
@@ -1040,107 +1042,107 @@ def test_matrix_solvers(test_func,
     # Construct appropriate ViennaCL objects
 
     #  -- A_upper
-    vcl_A_upper = p.Matrix(A_upper, layout = A_layout)
+    vcl_A_upper = p.Matrix(A_upper, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_upper = p.Matrix(big_A, layout = A_layout)
+    vcl_big_range_A_upper = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_range_A_upper[size1:2*size1, size2:2*size2] = vcl_A_upper
     vcl_range_A_upper = vcl_big_range_A_upper[size1:2*size1, size2:2*size2]
 
-    vcl_big_slice_A_upper = p.Matrix(big_A, layout = A_layout)
+    vcl_big_slice_A_upper = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_slice_A_upper[size1:-size1:2, size2::3] = vcl_A_upper
     vcl_slice_A_upper = vcl_big_slice_A_upper[size1:-size1:2, size2::3]
 
-    vcl_A_trans_upper = p.Matrix(A_trans_upper, layout = A_layout)
+    vcl_A_trans_upper = p.Matrix(A_trans_upper, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_trans_upper = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_range_A_trans_upper = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_range_A_trans_upper[size2:2*size2, size1:2*size1] = vcl_A_trans_upper
     vcl_range_A_trans_upper = vcl_big_range_A_trans_upper[size2:2*size2, size1:2*size1]
 
-    vcl_big_slice_A_trans_upper = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_slice_A_trans_upper = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_slice_A_trans_upper[size2:-size2:2, size1::3] = vcl_A_trans_upper
     vcl_slice_A_trans_upper = vcl_big_slice_A_trans_upper[size2:-size2:2, size1::3]
 
     #  -- A_unit_upper
-    vcl_A_unit_upper = p.Matrix(A_unit_upper, layout = A_layout)
+    vcl_A_unit_upper = p.Matrix(A_unit_upper, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_unit_upper = p.Matrix(big_A, layout = A_layout)
+    vcl_big_range_A_unit_upper = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_range_A_unit_upper[size1:2*size1, size2:2*size2] = vcl_A_unit_upper
     vcl_range_A_unit_upper = vcl_big_range_A_unit_upper[size1:2*size1, size2:2*size2]
 
-    vcl_big_slice_A_unit_upper = p.Matrix(big_A, layout = A_layout)
+    vcl_big_slice_A_unit_upper = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_slice_A_unit_upper[size1:-size1:2, size2::3] = vcl_A_unit_upper
     vcl_slice_A_unit_upper = vcl_big_slice_A_unit_upper[size1:-size1:2, size2::3]
 
-    vcl_A_trans_unit_upper = p.Matrix(A_trans_unit_upper, layout = A_layout)
+    vcl_A_trans_unit_upper = p.Matrix(A_trans_unit_upper, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_trans_unit_upper = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_range_A_trans_unit_upper = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_range_A_trans_unit_upper[size2:2*size2, size1:2*size1] = vcl_A_trans_unit_upper
     vcl_range_A_trans_unit_upper = vcl_big_range_A_trans_unit_upper[size2:2*size2, size1:2*size1]
 
-    vcl_big_slice_A_trans_unit_upper = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_slice_A_trans_unit_upper = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_slice_A_trans_unit_upper[size2:-size2:2, size1::3] = vcl_A_trans_unit_upper
     vcl_slice_A_trans_unit_upper = vcl_big_slice_A_trans_unit_upper[size2:-size2:2, size1::3]
 
     #  -- A_lower
-    vcl_A_lower = p.Matrix(A_lower, layout = A_layout)
+    vcl_A_lower = p.Matrix(A_lower, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_lower = p.Matrix(big_A, layout = A_layout)
+    vcl_big_range_A_lower = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_range_A_lower[size1:2*size1, size2:2*size2] = vcl_A_lower
     vcl_range_A_lower = vcl_big_range_A_lower[size1:2*size1, size2:2*size2]
 
-    vcl_big_slice_A_lower = p.Matrix(big_A, layout = A_layout)
+    vcl_big_slice_A_lower = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_slice_A_lower[size1:-size1:2, size2::3] = vcl_A_lower
     vcl_slice_A_lower = vcl_big_slice_A_lower[size1:-size1:2, size2::3]
 
-    vcl_A_trans_lower = p.Matrix(A_trans_lower, layout = A_layout)
+    vcl_A_trans_lower = p.Matrix(A_trans_lower, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_trans_lower = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_range_A_trans_lower = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_range_A_trans_lower[size2:2*size2, size1:2*size1] = vcl_A_trans_lower
     vcl_range_A_trans_lower = vcl_big_range_A_trans_lower[size2:2*size2, size1:2*size1]
 
-    vcl_big_slice_A_trans_lower = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_slice_A_trans_lower = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_slice_A_trans_lower[size2:-size2:2, size1::3] = vcl_A_trans_lower
     vcl_slice_A_trans_lower = vcl_big_slice_A_trans_lower[size2:-size2:2, size1::3]
 
     #  -- A_unit_lower
-    vcl_A_unit_lower = p.Matrix(A_unit_lower, layout = A_layout)
+    vcl_A_unit_lower = p.Matrix(A_unit_lower, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_unit_lower = p.Matrix(big_A, layout = A_layout)
+    vcl_big_range_A_unit_lower = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_range_A_unit_lower[size1:2*size1, size2:2*size2] = vcl_A_unit_lower
     vcl_range_A_unit_lower = vcl_big_range_A_unit_lower[size1:2*size1, size2:2*size2]
 
-    vcl_big_slice_A_unit_lower = p.Matrix(big_A, layout = A_layout)
+    vcl_big_slice_A_unit_lower = p.Matrix(big_A, layout = A_layout, context=ctx)
     vcl_big_slice_A_unit_lower[size1:-size1:2, size2::3] = vcl_A_unit_lower
     vcl_slice_A_unit_lower = vcl_big_slice_A_unit_lower[size1:-size1:2, size2::3]
 
-    vcl_A_trans_unit_lower = p.Matrix(A_trans_unit_lower, layout = A_layout)
+    vcl_A_trans_unit_lower = p.Matrix(A_trans_unit_lower, layout = A_layout, context=ctx)
 
-    vcl_big_range_A_trans_unit_lower = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_range_A_trans_unit_lower = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_range_A_trans_unit_lower[size2:2*size2, size1:2*size1] = vcl_A_trans_unit_lower
     vcl_range_A_trans_unit_lower = vcl_big_range_A_trans_unit_lower[size2:2*size2, size1:2*size1]
 
-    vcl_big_slice_A_trans_unit_lower = p.Matrix(big_A_trans, layout = A_layout)
+    vcl_big_slice_A_trans_unit_lower = p.Matrix(big_A_trans, layout = A_layout, context=ctx)
     vcl_big_slice_A_trans_unit_lower[size2:-size2:2, size1::3] = vcl_A_trans_unit_lower
     vcl_slice_A_trans_unit_lower = vcl_big_slice_A_trans_unit_lower[size2:-size2:2, size1::3]
 
     #  -- B
-    vcl_B = p.Matrix(B, layout = B_layout)
+    vcl_B = p.Matrix(B, layout = B_layout, context=ctx)
 
-    vcl_big_range_B = p.Matrix(big_B, layout = B_layout)
+    vcl_big_range_B = p.Matrix(big_B, layout = B_layout, context=ctx)
     vcl_big_range_B[size2:2*size2, size3:2*size3] = vcl_B
     vcl_range_B = vcl_big_range_B[size2:2*size2, size3:2*size3]
 
-    vcl_big_slice_B = p.Matrix(big_B, layout = B_layout)
+    vcl_big_slice_B = p.Matrix(big_B, layout = B_layout, context=ctx)
     vcl_big_slice_B[size2:-size2:2, size3::3] = vcl_B
     vcl_slice_B = vcl_big_slice_B[size2:-size2:2, size3::3]
 
-    vcl_B_trans = p.Matrix(B_trans, layout = B_layout)
+    vcl_B_trans = p.Matrix(B_trans, layout = B_layout, context=ctx)
 
-    vcl_big_range_B_trans = p.Matrix(big_B_trans, layout = B_layout)
+    vcl_big_range_B_trans = p.Matrix(big_B_trans, layout = B_layout, context=ctx)
     vcl_big_range_B_trans[size3:2*size3, size2:2*size2] = vcl_B_trans
     vcl_range_B_trans = vcl_big_range_B_trans[size3:2*size3, size2:2*size2]
 
-    vcl_big_slice_B_trans = p.Matrix(big_B_trans, layout = B_layout)
+    vcl_big_slice_B_trans = p.Matrix(big_B_trans, layout = B_layout, context=ctx)
     vcl_big_slice_B_trans[size3:-size3:2, size2::3] = vcl_B_trans
     vcl_slice_B_trans = vcl_big_slice_B_trans[size3:-size3:2, size2::3]
 
