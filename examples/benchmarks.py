@@ -58,9 +58,7 @@ def do_benchmark(setup, do_op, sizes, num_iters=5,
             current_time = 0
             if ctx is not None: ctx.finish_all_queues() # Just to be sure
             while current_time < 1:
-                time_before = time.time()
-                do_op(A, B, ctx)
-                current_time += time.time() - time_before
+                current_time += do_op(A, B, ctx)
                 N += 1
             print(size, current_time / N)
         except Exception as e:
@@ -275,25 +273,69 @@ def setup_spgemm_scipy(size, sparsity = None, context = None, dtype = np.float32
     return A, B
 
 def add_pyvcl(A, B, ctx = None):
+    time_before = time.time()
     res = (A+B).execute()
     ctx.finish_all_queues()
+    time_now = time.time() - time_before
+    return time_now
 
-def mul_pyvcl(A, B, ctx = None):
-    res = (A*B).execute()
+def gemv_pyvcl(A, x, ctx = None):
+    time_before = time.time()
+    res = (A.T*x).execute()
     ctx.finish_all_queues()
+    time_now = time.time() - time_before
+    return time_now
 
 def gemm_pyvcl(A, B, ctx = None):
+    time_before = time.time()
     res = (A.T*B).execute()
     ctx.finish_all_queues()
+    time_now = time.time() - time_before
+    return time_now
+
+def spgemv_pyvcl(A, x, ctx = None):
+    time_before = time.time()
+    res = (A*x).execute()
+    ctx.finish_all_queues()
+    time_now = time.time() - time_before
+    return time_now
+
+def spgemm_pyvcl(A, B, ctx = None):
+    time_before = time.time()
+    res = (A*B).execute()
+    ctx.finish_all_queues()
+    time_now = time.time() - time_before
+    return time_now
 
 def add_numpy(A, B, ctx = None):
-    return A+B
+    time_before = time.time()
+    res = A+B
+    time_now = time.time() - time_before
+    return time_now
 
-def mul_numpy(A, B, ctx = None):
-    return A.dot(B)
+def gemv_numpy(A, B, ctx = None):
+    time_before = time.time()
+    res = A.T.dot(B)
+    time_now = time.time() - time_before
+    return time_now
 
 def gemm_numpy(A, B, ctx = None):
-    return A.T.dot(B)
+    time_before = time.time()
+    res = A.T.dot(B)
+    time_now = time.time() - time_before
+    return time_now
+
+def spgemv_numpy(A, B, ctx = None):
+    time_before = time.time()
+    res = A.dot(B)
+    time_now = time.time() - time_before
+    return time_now
+
+def spgemm_numpy(A, B, ctx = None):
+    time_before = time.time()
+    res = A.dot(B)
+    time_now = time.time() - time_before
+    return time_now
 
 
 def main(arg):
@@ -304,7 +346,7 @@ def main(arg):
 
     if arg == "add":
 
-        print("OPERATION: Vector Addition")
+        print("OPERATION: Vector Addition x = y + z")
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
@@ -340,7 +382,7 @@ def main(arg):
     
     elif arg == "gemm":
 
-        print("OPERATION: Dense Matrix-Matrix Product")
+        print("OPERATION: Dense Matrix-Matrix Product A.T * B")
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
@@ -377,14 +419,14 @@ def main(arg):
 
     elif arg == "gemv":
 
-        print("OPERATION: Dense Matrix-Vector Product")
+        print("OPERATION: Dense Matrix-Vector Product A.T * x")
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
                 for device in platform.get_devices():
                     print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
-                        do_benchmark(setup_gemv_pyvcl, mul_pyvcl, GEMV_SIZES,
+                        do_benchmark(setup_gemv_pyvcl, gemv_pyvcl, GEMV_SIZES,
                                      cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
@@ -394,7 +436,7 @@ def main(arg):
         if NUMPY_SCIPY:
             print("PLATFORM: NumPy")
             try:
-                do_benchmark(setup_gemv_numpy, mul_numpy, GEMV_SIZES)
+                do_benchmark(setup_gemv_numpy, gemv_numpy, GEMV_SIZES)
             except KeyboardInterrupt:
                 print(" !!! Interrupted, so moving on...")
             print("")
@@ -402,7 +444,7 @@ def main(arg):
         if CUDA:
             print("PLATFORM: gnumpy")
             try:
-                do_benchmark(setup_gemv_gnumpy, mul_numpy, GEMV_SIZES)
+                do_benchmark(setup_gemv_gnumpy, gemv_numpy, GEMV_SIZES)
             except KeyboardInterrupt:
                 print(" !!! Interrupted, so moving on...")
             print("")
@@ -421,7 +463,7 @@ def main(arg):
                 for device in platform.get_devices():
                     print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
-                        do_benchmark(setup_spgemm_pyvcl, mul_pyvcl, SPGEMM_SIZES,
+                        do_benchmark(setup_spgemm_pyvcl, spgemm_pyvcl, SPGEMM_SIZES,
                                      sparsity=SPARSITY, cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
@@ -431,7 +473,7 @@ def main(arg):
         if NUMPY_SCIPY:
             print("PLATFORM: SciPy")
             try:
-                do_benchmark(setup_spgemm_scipy, mul_numpy, SPGEMM_SIZES,
+                do_benchmark(setup_spgemm_scipy, spgemm_numpy, SPGEMM_SIZES,
                              sparsity=SPARSITY)
             except KeyboardInterrupt:
                 print(" !!! Interrupted, so moving on...")
@@ -450,7 +492,7 @@ def main(arg):
                 for device in platform.get_devices():
                     print("PLATFORM: PyViennaCL: %s" % device.name)
                     try:
-                        do_benchmark(setup_spgemv_pyvcl, mul_pyvcl, SPGEMV_SIZES,
+                        do_benchmark(setup_spgemv_pyvcl, spgemm_pyvcl, SPGEMV_SIZES,
                                      sparsity=SPARSITY, cl_device=device)
                     except KeyboardInterrupt:
                         print(" !!! Interrupted, so moving on...")
@@ -460,7 +502,7 @@ def main(arg):
         if NUMPY_SCIPY:
             print("PLATFORM: NumPy")
             try:
-                do_benchmark(setup_spgemv_scipy, mul_numpy, SPGEMV_SIZES,
+                do_benchmark(setup_spgemv_scipy, spgemv_numpy, SPGEMV_SIZES,
                              sparsity=SPARSITY)
             except KeyboardInterrupt:
                 print(" !!! Interrupted, so moving on...")
