@@ -3115,7 +3115,10 @@ class TemplateBase(object):
     def __init__(self, scalartype, simd_width, local_sizes):
         self.scalartype = scalartype;
         self.simd_width = simd_width;
-        self.local_sizes = local_sizes;
+        if len(local_sizes) >=1:
+			self.local_size_0 = local_sizes[0]
+        if len(local_sizes) >=2:
+			self.local_size_1 = local_sizes[1]
     
     def is_invalid(self):
         return self.make_vcl_template().is_invalid();
@@ -3130,12 +3133,12 @@ class TemplateBase(object):
             log.error("EXCEPTION GENERATING+EXECUTING: %s" %(st.statement[0].express()))
             raise
         return st.result;
-        
-    def str_format(self):
-        return ','.join(vars(self).keys());
+    
+    def vcl_arguments_order(self):
+		return;
         
     def __str__(self):
-        return ','.join("{0}".format(x[1]) if type(x[1])!=tuple else ','.join(map(str,x[1])) for x in vars(self).items());
+        return ','.join(["{0}".format(self.__dict__[k]) for k in self.vcl_arguments_order()]);
 
 
 class VectorAxpyTemplate(TemplateBase):
@@ -3144,49 +3147,62 @@ class VectorAxpyTemplate(TemplateBase):
         self.num_groups = num_groups;
         self.decomposition = decomposition;
     
+    def vcl_arguments_order(self):
+		return ['scalartype', 'simd_width',  'local_size_0', 'num_groups', 'decomposition'];
+		
     def dispatch(self, vcl_statement):
         return vcl_statement.generate_execute_vector_axpy;
         
     def make_vcl_template(self):
-        return _v.vector_axpy_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
+        return _v.vector_axpy_parameters(self.scalartype, self.simd_width, self.local_size_0, self.num_groups, self.decomposition);
 
 class MatrixAxpyTemplate(TemplateBase):
     def __init__(self, scalartype, simd_width, local_size_0, local_size_1, num_groups_0, num_groups_1, decomposition):
         super(MatrixAxpyTemplate, self).__init__(scalartype, simd_width, (local_size_0, local_size_1));
-        self.num_groups = (num_groups_0, num_groups_1);
+        self.num_groups_0 = num_groups_0;
+        self.num_groups_1 = num_groups_1;
         self.decomposition = decomposition;
-        
+     
+    def vcl_arguments_order(self):
+		return ['scalartype', 'simd_width',  'local_size_0', 'local_size_1', 'num_groups_0', 'num_groups_1', 'decomposition'];   
+		
     def dispatch(self, vcl_statement):
         return vcl_statement.generate_execute_matrix_axpy;
         
     def make_vcl_template(self):
-        return _v.matrix_axpy_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.local_sizes[1],
-                                        self.num_groups[0], self.num_groups[1], self.decomposition);
+        return _v.matrix_axpy_parameters(self.scalartype, self.simd_width, self.local_size_0, self.local_size_1,
+                                        self.num_groups_0, self.num_groups_1, self.decomposition);
         
 class ReductionTemplate(TemplateBase):
     def __init__(self, scalartype, simd_width, local_size_0, num_groups_0, decomposition):
         super(ReductionTemplate, self).__init__(scalartype, simd_width, (local_size_0,));
         self.num_groups_0 = num_groups_0;
         self.decomposition = decomposition;
-        
+     
+    def vcl_arguments_order(self):
+		return ['scalartype', 'simd_width',  'local_size_0', 'num_groups', 'decomposition'];
+		
     def dispatch(self, vcl_statement):
         return vcl_statement.generate_execute_reduction;
         
     def make_vcl_template(self):
-        return _v.reduction_parameters(self.scalartype, self.simd_width, self.local_sizes[0], self.num_groups, self.decomposition);
+        return _v.reduction_parameters(self.scalartype, self.simd_width, self.local_size_0, self.num_groups, self.decomposition);
                                 
 class RowWiseReductionTemplate(TemplateBase):
     def __init__(self, scalartype, A_trans, simd_width, local_size_0, local_size_1, num_groups_0):
         super(RowWiseReductionTemplate, self).__init__(scalartype, simd_width, (local_size_0, local_size_1));
-        self.num_groups = (num_groups_0,);
+        self.num_groups_0 = num_groups_0;
         self.A_trans = A_trans;
 
+    def vcl_arguments_order(self):
+		return ['scalartype', 'A_trans', 'simd_width',  'local_size_0', 'local_size_1', 'num_groups_0'];   
+		
     def dispatch(self, vcl_statement):
         return vcl_statement.generate_execute_row_wise_reduction;
         
     def make_vcl_template(self):
-        return _v.row_wise_reduction_parameters(self.scalartype, self.A_trans, self.simd_width, self.local_sizes[0], self.local_sizes[1],
-                                        self.num_groups[0]);
+        return _v.row_wise_reduction_parameters(self.scalartype, self.A_trans, self.simd_width, self.local_size_0, self.local_size_1,
+                                        self.num_groups_0);
                                         
 class MatrixProductTemplate(TemplateBase):
     def __init__(self, scalartype, A_trans, B_trans, simd_width, local_size_0, kL, local_size_1, mS, kS, nS, use_A_local, use_B_local, local_fetch_0, local_fetch_1):
@@ -3199,17 +3215,20 @@ class MatrixProductTemplate(TemplateBase):
         self.nS = nS;
         self.use_A_local = use_A_local;
         self.use_B_local = use_B_local;
-        self.local_fetch = (local_fetch_0, local_fetch_1);
+        self.local_fetch_0 = local_fetch_0;
+        self.local_fetch_1 = local_fetch_1;
         
-
+    def vcl_arguments_order(self):
+		return ['scalartype', 'A_trans', 'B_trans', 'simd_width',  'local_size_0', 'kL', 'local_size_1', 'mS', 'kS', 'nS',  'use_A_local', 'use_B_local', 'local_fetch_0', 'local_fetch_1'];
+		
     def dispatch(self, vcl_statement):
         return vcl_statement.generate_execute_matrix_product;
         
     def make_vcl_template(self):
         return _v.matrix_product_parameters(self.scalartype, self.A_trans, self.B_trans, self.simd_width,
-                                              self.local_sizes[0], self.kL, self.local_sizes[1],
+                                              self.local_size_0, self.kL, self.local_size_1,
                                               self.mS, self.kS, self.nS,
                                               self.use_A_local, self.use_B_local,
-                                              self.local_fetch[0], self.local_fetch[1]);
+                                              self.local_fetch_0, self.local_fetch_1);
 
 # TODO: __all__
