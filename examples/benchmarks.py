@@ -204,7 +204,7 @@ def setup_gemv_gnumpy(size, sparsity = None, context = None, dtype = np.float32)
     x = np.ones((size,)).astype(dtype) * 0.7
     x = gnp.garray(x)
 
-    return A, B
+    return A, x
 
 def setup_vector_numpy(size, sparsity = None, context = None, dtype = np.float32):
     x = np.ones(size).astype(dtype) * 0.3
