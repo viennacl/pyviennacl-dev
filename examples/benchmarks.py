@@ -173,7 +173,7 @@ def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32)
 
     return A, B
 
-def setup_vector_numpy(size, sparsity = None, context = None, dtype = np.float32):
+def setup_vector_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
     import gnumpy as gnp
 
     x = np.ones(size).astype(dtype) * 0.3
