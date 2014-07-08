@@ -1346,9 +1346,7 @@ class Vector(Leaf):
         Returns an expression representing the inner product of ``self`` and
         ``rhs``: ``Dot(self, rhs)``.
         """
-        #return Dot(self, rhs) NOT WORKING WITH SCHEDULER
-        return Scalar(_v.inner_prod(self.vcl_leaf, rhs.vcl_leaf),
-                      dtype = self.dtype)
+        return Dot(self, rhs)
     inner = dot
 
     def as_column(self):
@@ -1689,6 +1687,12 @@ class SparseMatrixBase(Leaf):
         return "".join(out)
     __repr__ = __str__
 
+    def dot(self, rhs):
+        """
+        TODO docstring
+        """
+        return self * rhs
+
 
 class CompressedMatrix(SparseMatrixBase):
     """
@@ -2019,6 +2023,12 @@ class Matrix(Leaf):
         """
         return Trans(self)
     trans = T
+
+    def dot(self, rhs):
+        """
+        TODO docstring
+        """
+        return self * rhs
 
 
 class Node(MagicMethods):
