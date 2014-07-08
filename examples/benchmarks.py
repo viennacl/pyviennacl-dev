@@ -23,10 +23,10 @@ CUDA = True        # Only if gnumpy is installed
 # Matrix structure parameters
 
 ADD_SIZES = [int(10**(x/3)) for x in range(12,27)]
-GEMV_SIZES = [int(10**(x/4)) for x in range(8,27)]
-GEMM_SIZES = [int(10**(x/4)) for x in range(8,27)]
-SPGEMM_SIZES = [int(10**(x/4)) for x in range(8,27)]
-SPGEMV_SIZES = [int(10**(x/4)) for x in range(8,27)]
+GEMV_SIZES = [int(10**(x/4)) for x in range(8,17)]
+GEMM_SIZES = [int(10**(x/4)) for x in range(8,17)]
+SPGEMV_SIZES = [int(10**(x/4)) for x in range(8,17)]
+SPGEMM_SIZES = [int(10**(x/4)) for x in range(8,17)]
 SPARSITY = 0.02
 
 ################################################################################
@@ -173,7 +173,7 @@ def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32)
 
     return A, B
 
-def setup_vector_numpy(size, sparsity = None, context = None, dtype = np.float32):
+def setup_vector_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
     import gnumpy as gnp
 
     x = np.ones(size).astype(dtype) * 0.3
@@ -204,7 +204,7 @@ def setup_gemv_gnumpy(size, sparsity = None, context = None, dtype = np.float32)
     x = np.ones((size,)).astype(dtype) * 0.7
     x = gnp.garray(x)
 
-    return A, B
+    return A, x
 
 def setup_vector_numpy(size, sparsity = None, context = None, dtype = np.float32):
     x = np.ones(size).astype(dtype) * 0.3
