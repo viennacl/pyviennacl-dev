@@ -23,10 +23,10 @@ CUDA = True        # Only if gnumpy is installed
 # Matrix structure parameters
 
 ADD_SIZES = [int(10**(x/3)) for x in range(12,27)]
-GEMV_SIZES = [int(10**(x/4)) for x in range(8,17)]
-GEMM_SIZES = [int(10**(x/4)) for x in range(8,17)]
-SPGEMV_SIZES = [int(10**(x/4)) for x in range(8,17)]
-SPGEMM_SIZES = [int(10**(x/4)) for x in range(8,17)]
+GEMV_SIZES = [int(10**(x/5)) for x in range(8,22)]
+GEMM_SIZES = [int(10**(x/5)) for x in range(8,21)]
+SPGEMV_SIZES = [int(10**(x/5)) for x in range(8,22)]
+SPGEMM_SIZES = [int(10**(x/5)) for x in range(8,21)]
 SPARSITY = 0.02
 
 ################################################################################
