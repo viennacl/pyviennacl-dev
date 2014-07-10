@@ -134,10 +134,11 @@ def main():
 
     platform_cflags["msvc"] = ["/EHsc"]
     platform_libs["msvc"] = []
-    platform_cflags["mingw32"] = ["-Wno-unused-function"]
-    platform_libs["mingw32"] = []
-    platform_cflags["unix"] = ["-Wno-unused-function"]
+    platform_cflags["unix"] = ["-Wno-unused-function",
+                               "-Wno-unused-local-typedefs"]
     platform_libs["unix"] = []
+    platform_cflags["mingw32"] = platform_cflags["unix"]
+    platform_libs["mingw32"] = []
 
     if conf["USE_OPENCL"]:
         EXTRA_DEFINES["VIENNACL_WITH_OPENCL"] = None
@@ -164,11 +165,6 @@ def main():
 
     if not sys.platform.startswith("darwin"):
         platform_libs['unix'] += ['rt']
-
-    if EXTRA_OBJECTS:
-        platform_cflags['mingw32'] += ["-Wno-unused-local-typedefs"]
-        if not sys.platform.startswith("darwin"):
-            platform_cflags['unix'] += ["-Wno-unused-local-typedefs"]
 
     source_files = [
         "core", "scalars",
