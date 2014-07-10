@@ -45,7 +45,6 @@ def get_config_schema():
                 ]
 
         default_cl_libs = []
-        default_omp_libs = ["gomp"]
         default_cxxflags = ['-arch', 'i386', '-arch', 'x86_64']
 
         from os.path import isdir
@@ -58,7 +57,6 @@ def get_config_schema():
 
     else:
         default_cl_libs = ["OpenCL"]
-        default_omp_libs = ["gomp"]
         default_cxxflags = []
         default_ldflags = []
 
@@ -83,9 +81,6 @@ def get_config_schema():
             Libraries("CL", default_cl_libs),
 
             Switch("USE_OPENMP", True, "Use OpenMP"),
-            IncludeDir("OpenMP", []),
-            LibraryDir("OpenMP", []),
-            Libraries("OpenMP", default_omp_libs),
 
             IncludeDir("VIENNACL", []),
 
@@ -138,15 +133,25 @@ def main():
     # }}}
 
     platform_cflags["msvc"] = ["/EHsc"]
+    platform_libs["msvc"] = []
     platform_cflags["mingw32"] = ["-Wno-unused-function"]
+    platform_libs["mingw32"] = []
     platform_cflags["unix"] = ["-Wno-unused-function"]
+    platform_libs["unix"] = []
 
     if conf["USE_OPENCL"]:
         EXTRA_DEFINES["VIENNACL_WITH_OPENCL"] = None
 
     if conf["USE_OPENMP"]:
         EXTRA_DEFINES["VIENNACL_WITH_OPENMP"] = None
-        platform_cflags["unix"] += ["-fopenmp"]
+        platform_libs["msvc"] += ["/openmp"]
+        if sys.platform.startswith("darwin"):
+            print("-----------------------------------------------------------")
+            print("NB: OpenMP not currently supported with the clang compiler!")
+            print("-----------------------------------------------------------")
+        else:
+            platform_cflags["unix"] += ["-fopenmp"]
+            platform_libs["unix"] += ["gomp"]
 
     EXTRA_DEFINES["VIENNACL_WITH_UBLAS"] = None
 
@@ -158,7 +163,7 @@ def main():
          platform_cflags["unix"] += ["-O0","-ggdb"]
 
     if not sys.platform.startswith("darwin"):
-        platform_libs['unix'] = ['rt']
+        platform_libs['unix'] += ['rt']
 
     if EXTRA_OBJECTS:
         platform_cflags['mingw32'] += ["-Wno-unused-local-typedefs"]
