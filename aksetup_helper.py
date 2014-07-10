@@ -342,9 +342,9 @@ class ConfigSchema:
                     result[key] = value
                 elif key == "__builtins__":
                     pass
-                else:
-                    raise KeyError("invalid config key in %s: %s" % (
-                            cfile, key))
+                #else:
+                #    raise KeyError("invalid config key in %s: %s" % (
+                #            cfile, key))
 
         return result
 
@@ -599,7 +599,7 @@ def set_up_shipped_boost_if_requested(project_name, conf, source_path=None,
 
 def make_boost_base_options():
     return [
-        IncludeDir("BOOST", []),
+        InudeDir("BOOST", []),
         LibraryDir("BOOST", []),
         Option("BOOST_COMPILER", default="gcc43",
             help="The compiler with which Boost C++ was compiled, e.g. gcc43"),
