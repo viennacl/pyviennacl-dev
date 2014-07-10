@@ -281,7 +281,7 @@ def add_pyvcl(A, B, ctx = None):
 
 def gemv_pyvcl(A, x, ctx = None):
     time_before = time.time()
-    res = (A.T*x).execute()
+    res = (A*x).execute()
     ctx.finish_all_queues()
     time_now = time.time() - time_before
     return time_now
@@ -313,9 +313,9 @@ def add_numpy(A, B, ctx = None):
     time_now = time.time() - time_before
     return time_now
 
-def gemv_numpy(A, B, ctx = None):
+def gemv_numpy(A, x, ctx = None):
     time_before = time.time()
-    res = A.T.dot(B)
+    res = A.dot(x)
     time_now = time.time() - time_before
     return time_now
 
@@ -325,9 +325,9 @@ def gemm_numpy(A, B, ctx = None):
     time_now = time.time() - time_before
     return time_now
 
-def spgemv_numpy(A, B, ctx = None):
+def spgemv_numpy(A, x, ctx = None):
     time_before = time.time()
-    res = A.dot(B)
+    res = A.dot(x)
     time_now = time.time() - time_before
     return time_now
 
@@ -419,7 +419,7 @@ def main(arg):
 
     elif arg == "gemv":
 
-        print("OPERATION: Dense Matrix-Vector Product A.T * x")
+        print("OPERATION: Dense Matrix-Vector Product A * x")
 
         if PYVIENNACL:
             for platform in cl.get_platforms():
