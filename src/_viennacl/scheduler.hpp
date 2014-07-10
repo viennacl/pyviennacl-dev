@@ -130,11 +130,10 @@ public:
     vcl::scheduler::execute(tmp_statement);
   }
 
-  template<typename TemplateT>
-  void generate_execute(typename TemplateT::parameters const & parameters, vcl::ocl::context & ctx, bool force_compilation)
+  void generate_execute(vcl::device_specific::template_base & tplt, vcl::ocl::context & ctx, bool force_compilation)
   {
     vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
-    vcl::device_specific::execute<TemplateT>(parameters, tmp_statement, ctx, force_compilation);
+    vcl::device_specific::execute(tplt, tmp_statement, ctx, force_compilation);
   }
     
   std::size_t size() const {

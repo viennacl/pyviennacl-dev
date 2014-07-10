@@ -5,27 +5,23 @@ PYVCL_SUBMODULE(device_specific)
 {
   
   //Base
-  bp::class_<ds::template_base::parameters>("parameters_base", bp::no_init)
-      .def("is_invalid",&ds::template_base::parameters::is_invalid);
-
-  bp::class_<ds::vector_axpy_template::parameters
-            ,bp::bases<ds::template_base::parameters> >("vector_axpy_parameters", bp::init<const char *, uint, uint, uint, uint>());
-
-  bp::class_<ds::matrix_axpy_template::parameters
-          ,bp::bases<ds::template_base::parameters> >("matrix_axpy_parameters", bp::init<const char *, uint, uint, uint, uint, uint, uint>());
-    
-  bp::class_<ds::reduction_template::parameters
-          ,bp::bases<ds::template_base::parameters> >("reduction_parameters", bp::init<const char *, uint, uint, uint, uint>());
-    
-  bp::class_<ds::row_wise_reduction_template::parameters
-        ,bp::bases<ds::template_base::parameters> >("row_wise_reduction_parameters", bp::init<const char *, char, uint, uint, uint, uint>());
-        
-  bp::class_<ds::matrix_product_template::parameters
-        ,bp::bases<ds::template_base::parameters> >("matrix_product_parameters", bp::init<const char *, char, char,
-                                                                            uint, uint, uint, uint, uint, uint, uint,
-                                                                            bool, bool, uint, uint>());
-            
-                                                                            
+  {
+    bp::scope outer = bp::class_<ds::template_base, boost::noncopyable>("template_base", bp::no_init);
+    bp::class_<ds::template_base::parameters>("parameters", bp::no_init);
+  }
+  
+  #define ARGS_LIST(...) __VA_ARGS__
+  #define WRAP_TEMPLATE(name, parameter_arguments, ...) \
+  { \
+    bp::scope outer = bp::class_<ds::name, bp::bases<ds::template_base> >(#name, bp::init<ds::name::parameters, ## __VA_ARGS__, std::string const &>());\
+    bp::class_<ds::name::parameters, bp::bases<ds::template_base::parameters> >("parameters", bp::init< parameter_arguments >());\
+  }
+  
+  WRAP_TEMPLATE(vector_axpy_template,ARGS_LIST(uint,uint,uint,uint))
+  WRAP_TEMPLATE(matrix_axpy_template,ARGS_LIST(uint,uint,uint,uint,uint,uint))
+  WRAP_TEMPLATE(reduction_template,ARGS_LIST(uint,uint,uint,uint))
+  WRAP_TEMPLATE(row_wise_reduction_template,ARGS_LIST(uint,uint,uint,uint), char)
+  WRAP_TEMPLATE(matrix_product_template,ARGS_LIST(uint,uint,uint,uint,uint,uint,uint,bool,bool,uint,uint), char, char)                                                               
 }
                                                                             
 
