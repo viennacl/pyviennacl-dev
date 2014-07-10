@@ -247,8 +247,8 @@ def main():
             undef_macros=UNDEF_MACROS,
 
             include_dirs=INCLUDE_DIRS,
-            library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"] + conf["OpenMP_LIB_DIR"],
-            libraries=LIBRARIES + conf["CL_LIBNAME"] + conf["OpenMP_LIBNAME"],
+            library_dirs=LIBRARY_DIRS + conf["CL_LIB_DIR"],
+            libraries=LIBRARIES + conf["CL_LIBNAME"],
         )],
         cmdclass={'build_ext': build_ext_subclass}
     )

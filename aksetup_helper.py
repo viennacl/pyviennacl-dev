@@ -599,7 +599,7 @@ def set_up_shipped_boost_if_requested(project_name, conf, source_path=None,
 
 def make_boost_base_options():
     return [
-        InudeDir("BOOST", []),
+        IncludeDir("BOOST", []),
         LibraryDir("BOOST", []),
         Option("BOOST_COMPILER", default="gcc43",
             help="The compiler with which Boost C++ was compiled, e.g. gcc43"),
