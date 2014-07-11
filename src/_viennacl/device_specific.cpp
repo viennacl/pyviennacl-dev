@@ -6,7 +6,8 @@ PYVCL_SUBMODULE(device_specific)
   
   //Base
   {
-    bp::scope outer = bp::class_<ds::template_base, boost::noncopyable>("template_base", bp::no_init);
+    bp::scope outer = bp::class_<ds::template_base, boost::noncopyable>("template_base", bp::no_init)
+                                                                .def("check_statements", &ds::template_base::check_statements);
     bp::class_<ds::template_base::parameters>("parameters", bp::no_init);
   }
   

@@ -130,7 +130,13 @@ public:
     vcl::scheduler::execute(tmp_statement);
   }
 
-  void generate_execute(vcl::device_specific::template_base & tplt, vcl::ocl::context & ctx, bool force_compilation)
+  void check_template(vcl::device_specific::template_base const & tplt, viennacl::ocl::context const & context)
+  {
+    vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
+    tplt.check_statements(tmp_statement, context.current_device());
+  }
+  
+  void execute_template(vcl::device_specific::template_base & tplt, vcl::ocl::context & ctx, bool force_compilation)
   {
     vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
     vcl::device_specific::execute(tplt, tmp_statement, ctx, force_compilation);
