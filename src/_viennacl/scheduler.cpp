@@ -176,7 +176,8 @@ DISAMBIGUATE_CLASS_FUNCTION_PTR(statement_node_wrapper,         // class
 
   bp::class_<statement_wrapper>("statement")
     .add_property("size", &statement_wrapper::size)
-    .def("generate_execute", &statement_wrapper::generate_execute)
+    .def("check_template", &statement_wrapper::check_template)
+    .def("execute_template", &statement_wrapper::execute_template)
     .def("execute", &statement_wrapper::execute)
     .def("clear", &statement_wrapper::clear)
     .def("erase_node", &statement_wrapper::erase_node)
