@@ -5,8 +5,8 @@ TODO:
 * Construct data types with associated context
 * Get associated context from data types
 """
+import pyviennacl as p
 from . import _viennacl as _v
-
 import logging
 log = logging.getLogger(__name__)
 
@@ -90,7 +90,7 @@ class Context(object):
     domain = UninitializedMemory
     vcl_context = None
     sub_context = None
-    vcl_sub_context = None
+    _programs = None
 
     def __init__(self, domain_or_context = DefaultMemory):
         try:
@@ -98,7 +98,6 @@ class Context(object):
                 self.domain = domain_or_context
                 self.vcl_context = _v.context(self.domain.vcl_memory_type)
                 if domain_or_context is OpenCLMemory:
-                    self.vcl_sub_context = self.vcl_context.opencl_context
                     self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)
                     vcl.set_active_context(self)
                 return
@@ -108,17 +107,21 @@ class Context(object):
             self.domain = domain_or_context.domain
             self.vcl_context = domain_or_context.vcl_context
             self.sub_context = domain_or_context.sub_context
-            self.vcl_sub_context = domain_or_context.vcl_sub_context
+            if self.domain is OpenCLMemory:
+                vcl.set_active_context(self)
             return
 
         if WITH_OPENCL:
+            self.domain = OpenCLMemory
             if isinstance(domain_or_context, cl.Context):
-                self.domain = OpenCLMemory
                 self.sub_context = domain_or_context
-                self.vcl_sub_context = vcl.get_viennacl_object(domain_or_context)
-                self.vcl_context = _v.context(self.vcl_sub_context)
+                self.vcl_context = _v.context(vcl.get_viennacl_object(domain_or_context))
                 vcl.set_active_context(self)
                 return
+
+            self.vcl_context = _v.context(_v.opencl_support.backend().current_context)
+            self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)
+            vcl.set_active_context(self)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
@@ -131,6 +134,13 @@ class Context(object):
 
     def __ne__(self, other):
         return not self == other
+
+    @property
+    def vcl_sub_context(self):
+        if self.domain is OpenCLMemory:
+            return self.vcl_context.opencl_context
+        else:
+            raise TypeError("Only OpenCL sub-context supported currently")
 
     @property
     def opencl_context(self):
@@ -210,6 +220,23 @@ class Context(object):
         for device in self.queues.keys():
             for queue in self.queues[device]:
                 queue.finish()
+
+    @property
+    def programs(self):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("This only makes sense on OpenCL")
+        if not isinstance(self._programs, vcl.ContextPrograms):
+            self._programs = vcl.ContextPrograms(self)
+        return self._programs
+
+    @property
+    def default_dtype(self):
+        if self.domain is not OpenCLMemory:
+            return p.dtype(p.float64)
+        if self.current_device.double_fp_config:
+            return p.dtype(p.float64)
+        else:
+            return p.dtype(p.float32)
 
 
 def backend_finish():

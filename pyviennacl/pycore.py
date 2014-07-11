@@ -874,14 +874,13 @@ class Leaf(MagicMethods):
             if REMOVE_ARG:
                 args.remove(arg)
 
-        if 'dtype' in kwargs.keys():    
-            dt = dtype(kwargs['dtype']) 
-            self.dtype = dt
-            
         if 'context' in kwargs.keys():
             self._context = backend.Context(kwargs['context'])
         elif self._context is None:
             self._context = backend.Context()
+
+        if 'dtype' in kwargs.keys():    
+            self.dtype = dtype(kwargs['dtype']) 
 
         if 'view_of' in kwargs.keys():
             self.view_of = kwargs['view_of']
@@ -1039,9 +1038,6 @@ class ScalarBase(Leaf):
                 self._value = args[0]
         else:
             self._value = 0
-
-        if self.dtype is None:
-            self.dtype = np_result_type(self._value)
 
         try:
             self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
@@ -1246,18 +1242,13 @@ class Vector(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(args[0], self._context.vcl_context)
         elif len(args) == 2:
-            if self.dtype is None:
-                try:
-                    self.dtype = dtype(args[1])
-                except TypeError:
-                    self.dtype = np_result_type(args[1])
             def get_leaf(vcl_t):
                 return vcl_t(args[0], args[1], self._context.vcl_context)
         else:
             raise TypeError("Vector cannot be constructed in this way")
 
         if self.dtype is None: # ie, still None, even after checks -- so guess
-            self.dtype = dtype(float64)
+            self.dtype = self._context.default_dtype
 
         self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
 
@@ -1535,7 +1526,7 @@ class SparseMatrixBase(Leaf):
             raise TypeError("Sparse matrix cannot be constructed thus")
 
         if self.dtype is None:
-            self.dtype = dtype(float64)            
+            self.dtype = self._context.default_dtype            
         self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
 
         try:
@@ -1878,8 +1869,6 @@ class Matrix(Leaf):
                     return args[0]
         elif len(args) == 2:
             if isinstance(args[0], tuple) or isinstance(args[0], list):
-                if self.dtype is None:
-                    self.dtype = np_result_type(args[1])
                 def get_leaf(vcl_t):
                     return vcl_t(args[0][0], args[0][1], args[1],
                                  self._context.vcl_context)
@@ -1887,8 +1876,6 @@ class Matrix(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(args[0], args[1], self._context.vcl_context)
         elif len(args) == 3:
-            if self.dtype is None:
-                self.dtype = np_result_type(args[2])
             def get_leaf(vcl_t):
                 return vcl_t(args[0], args[1], args[2],
                              self._context.vcl_context)
@@ -1896,7 +1883,7 @@ class Matrix(Leaf):
             raise TypeError("Matrix cannot be constructed in this way")
 
         if self.dtype is None: # ie, still None, even after checks -- so guess
-            self.dtype = dtype(float64)
+            self.dtype = self._context.default_dtype
 
         self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
 

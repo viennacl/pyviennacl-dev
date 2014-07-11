@@ -3,10 +3,11 @@
 #include "vector.hpp"
 
 #include <viennacl/ocl/backend.hpp>
-#include <viennacl/ocl/platform.hpp>
-#include <viennacl/ocl/device.hpp>
-#include <viennacl/ocl/context.hpp>
 #include <viennacl/ocl/command_queue.hpp>
+#include <viennacl/ocl/context.hpp>
+#include <viennacl/ocl/device.hpp>
+#include <viennacl/ocl/platform.hpp>
+#include <viennacl/ocl/program.hpp>
 
 template<class VCLType, class PtrType>
 vcl::tools::shared_ptr<VCLType>
@@ -29,20 +30,22 @@ vcl_command_queue_from_int_ptr(const vcl::ocl::context& ctx, vcl::vcl_size_t int
   return vcl::tools::shared_ptr<vcl::ocl::command_queue>(q);
 }
 
-vcl::vcl_size_t get_platform_ptr(vcl::ocl::platform& p) {
-  return (vcl::vcl_size_t) p.id();
+vcl::tools::shared_ptr<vcl::ocl::program>
+vcl_program_from_int_ptr(const vcl::ocl::context ctx,
+                         vcl::vcl_size_t int_ptr, std::string const& name)
+{
+  vcl::ocl::program *p = new vcl::ocl::program((cl_program)int_ptr, ctx, name);
+  return vcl::tools::shared_ptr<vcl::ocl::program>(p);
 }
 
-vcl::vcl_size_t get_device_ptr(vcl::ocl::device& d) {
-  return (vcl::vcl_size_t) d.id();
+template <class oclT>
+vcl::vcl_size_t get_ocl_id(oclT& o) {
+  return (vcl::vcl_size_t) o.id();
 }
 
-vcl::vcl_size_t get_context_ptr(vcl::ocl::context& c) {
-  return (vcl::vcl_size_t) c.handle().get();
-}
-
-vcl::vcl_size_t get_command_queue_ptr(vcl::ocl::command_queue& q) {
-  return (vcl::vcl_size_t) q.handle().get();
+template <class oclT>
+vcl::vcl_size_t get_ocl_ptr(oclT& o) {
+  return (vcl::vcl_size_t) o.handle().get();
 }
 
 std::vector<vcl::ocl::device>
@@ -73,6 +76,35 @@ void ctx_add_existing_queue(vcl::ocl::context& ctx,
   ctx.add_queue((cl_device_id)device, (cl_command_queue)queue);
 }
 
+void ctx_add_program(vcl::ocl::context& ctx,
+                     vcl::vcl_size_t program,
+                     std::string const& name)
+{
+  ctx.add_program((cl_program)program, name);
+}
+
+bp::list ctx_get_programs(vcl::ocl::context& ctx)
+{
+  return std_vector_to_list<vcl::ocl::program>
+    (ctx.get_programs());
+}
+
+void backend_add_context(vcl::ocl::backend<> b, long id,
+                         vcl::ocl::context& ctx)
+{
+  b.add_context(id, ctx);
+}
+
+void backend_switch_context(vcl::ocl::backend<> b, long id)
+{
+  b.switch_context(id);
+}
+
+vcl::ocl::context& backend_current_context(vcl::ocl::backend<> b)
+{
+  return b.current_context();
+}
+
 #endif
 
 PYVCL_SUBMODULE(opencl_support)
@@ -82,8 +114,11 @@ PYVCL_SUBMODULE(opencl_support)
   PYTHON_SCOPE_SUBMODULE(opencl_support);
 
   bp::class_<vcl::ocl::backend<> >("backend")
-    //.def("add_context", &vcl::ocl::backend<>::add_context)
-    .def("switch_context", &vcl::ocl::backend<>::switch_context)
+    .def("add_context", backend_add_context)
+    .def("switch_context", backend_switch_context)
+    .add_property("current_context",
+                  bp::make_function(backend_current_context,
+                                    bp::return_value_policy<bp::copy_non_const_reference>()))
     ;
 
   bp::class_<vcl::ocl::platform, vcl::tools::shared_ptr<vcl::ocl::platform> >
@@ -91,7 +126,7 @@ PYVCL_SUBMODULE(opencl_support)
     .def("__init__", bp::make_constructor(vcl_object_from_int_ptr<vcl::ocl::platform, cl_platform_id>))
     .add_property("info", &vcl::ocl::platform::info)
     .add_property("devices", get_platform_devices)
-    .add_property("int_ptr", get_platform_ptr)
+    .add_property("int_ptr", get_ocl_id<vcl::ocl::platform>)
     ;
 
   bp::to_python_converter<std::vector<vcl::ocl::platform>,
@@ -100,7 +135,7 @@ PYVCL_SUBMODULE(opencl_support)
   bp::def("get_platforms", vcl::ocl::get_platforms);
 
   bp::class_<vcl::ocl::device, vcl::tools::shared_ptr<vcl::ocl::device> >
-    ("device")
+    ("device", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_object_from_int_ptr<vcl::ocl::device, cl_device_id>))
     .add_property("name", &vcl::ocl::device::name)
     .add_property("vendor", &vcl::ocl::device::vendor)
@@ -110,7 +145,7 @@ PYVCL_SUBMODULE(opencl_support)
     .add_property("full_info", get_device_full_info)
     .add_property("extensions", &vcl::ocl::device::extensions)
     .add_property("double_support", &vcl::ocl::device::double_support)
-    .add_property("int_ptr", get_device_ptr)
+    .add_property("int_ptr", get_ocl_id<vcl::ocl::device>)
     ;
 
   bp::to_python_converter<std::vector<vcl::ocl::device>,
@@ -134,7 +169,17 @@ PYVCL_SUBMODULE(opencl_support)
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::ocl::context, void,
                                   switch_queue, ctx_switch_queue,
                                   (const vcl::ocl::command_queue&));
-  bp::class_<vcl::ocl::context>("context")
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::ocl::context,
+                                  vcl::ocl::program&,
+                                  get_program,
+                                  ctx_get_program_from_string,
+                                  (const std::string&));
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::ocl::context,
+                                  vcl::ocl::program&,
+                                  get_program,
+                                  ctx_get_program_from_int,
+                                  (vcl::vcl_size_t));
+  bp::class_<vcl::ocl::context>("context", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_context_from_int_ptr))
     .def(bp::self == vcl::ocl::context())
     .def("init_new_context", init_new_context)
@@ -153,13 +198,22 @@ PYVCL_SUBMODULE(opencl_support)
     .def("add_new_queue", ctx_add_new_queue)
     .def("add_existing_queue", ctx_add_existing_queue)
     .def("switch_queue", ctx_switch_queue)
+    .def("add_program", ctx_add_program)
+    .def("has_program", &vcl::ocl::context::has_program)
+    .def("get_program_from_string", ctx_get_program_from_string,
+         bp::return_value_policy<bp::copy_non_const_reference>())
+    .def("get_program_from_int", ctx_get_program_from_int,
+         bp::return_value_policy<bp::copy_non_const_reference>())
+    .def("get_programs", ctx_get_programs)
+    .add_property("program_num", &vcl::ocl::context::program_num)
+    .def("delete_program", &vcl::ocl::context::delete_program)
     .add_property("platform_index", context_get_platform_index, context_set_platform_index)
-    .add_property("int_ptr", get_context_ptr)
+    .add_property("int_ptr", get_ocl_ptr<vcl::ocl::context>)
     ;
 
   bp::class_<vcl::ocl::command_queue>("command_queue", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_command_queue_from_int_ptr))
-    .add_property("int_ptr", get_command_queue_ptr)
+    .add_property("int_ptr", get_ocl_ptr<vcl::ocl::command_queue>)
     .def("finish", &vcl::ocl::command_queue::finish)
     ;
     
@@ -177,4 +231,13 @@ PYVCL_SUBMODULE(opencl_support)
   bp::def("switch_context", vcl::ocl::switch_context);
 #endif
 
+ bp::class_<vcl::ocl::program, vcl::tools::shared_ptr<vcl::ocl::program> >
+   ("program", bp::no_init)
+   .def("__init__", bp::make_constructor(vcl_program_from_int_ptr))
+   .add_property("int_ptr", get_ocl_ptr<vcl::ocl::program>)
+   .add_property("name",
+                 bp::make_function(&vcl::ocl::program::name,
+                                   bp::return_value_policy<bp::copy_const_reference>()))
+   ;
+ 
 }

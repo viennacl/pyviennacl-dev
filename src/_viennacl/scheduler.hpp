@@ -125,15 +125,17 @@ public:
     vcl_expression_nodes = nodes_container_t(0);
   }
 
+  vcl::scheduler::statement get_vcl_statement() const {
+    return vcl::scheduler::statement(vcl_expression_nodes);
+  }
+
   void execute() {
-    vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
-    vcl::scheduler::execute(tmp_statement);
+    vcl::scheduler::execute(get_vcl_statement());
   }
 
   void generate_execute(vcl::device_specific::template_base & tplt, vcl::ocl::context & ctx, bool force_compilation)
   {
-    vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
-    vcl::device_specific::execute(tplt, tmp_statement, ctx, force_compilation);
+    vcl::device_specific::execute(tplt, get_vcl_statement(), ctx, force_compilation);
   }
     
   std::size_t size() const {
