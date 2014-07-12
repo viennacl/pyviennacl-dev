@@ -1,5 +1,33 @@
-import abc;
-import _viennacl as _v;
+import abc, logging
+import _viennacl as _v
+from pycore import Node, Statement
+
+log = logging.getLogger(__name__)
+
+class OrderType(object):
+    def __init__(*args):
+        raise TypeError("This class is not supposed to be instantiated")
+
+class SequentialOrder(OrderType):
+    vcl_order = _v.statements_tuple_order_type.SEQUENTIAL
+
+class IndependentOrder(OrderType):
+    vcl_order = _v.statements_tuple_order_type.INDEPENDENT
+
+
+class StatementsTuple(object):
+    vcl_statements_tuple = None
+
+    def __init__(self, statements, order):
+        def to_vcl_statement(s):
+            if isinstance(s, Node):
+                return Statement(s).vcl_statement
+            else:
+                return s.vcl_statement
+        vcl_statements = list(map(to_vcl_statement, statements))
+        self.order = order
+        self.vcl_tuple = _v.statements_tuple(vcl_statements, order.vcl_order)
+
 
 class TemplateBase(object):
     

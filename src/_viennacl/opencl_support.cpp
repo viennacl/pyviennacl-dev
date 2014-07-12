@@ -89,22 +89,6 @@ bp::list ctx_get_programs(vcl::ocl::context& ctx)
     (ctx.get_programs());
 }
 
-void backend_add_context(vcl::ocl::backend<> b, long id,
-                         vcl::ocl::context& ctx)
-{
-  b.add_context(id, ctx);
-}
-
-void backend_switch_context(vcl::ocl::backend<> b, long id)
-{
-  b.switch_context(id);
-}
-
-vcl::ocl::context& backend_current_context(vcl::ocl::backend<> b)
-{
-  return b.current_context();
-}
-
 #endif
 
 PYVCL_SUBMODULE(opencl_support)
@@ -112,14 +96,6 @@ PYVCL_SUBMODULE(opencl_support)
 
 #ifdef VIENNACL_WITH_OPENCL
   PYTHON_SCOPE_SUBMODULE(opencl_support);
-
-  bp::class_<vcl::ocl::backend<> >("backend")
-    .def("add_context", backend_add_context)
-    .def("switch_context", backend_switch_context)
-    .add_property("current_context",
-                  bp::make_function(backend_current_context,
-                                    bp::return_value_policy<bp::copy_non_const_reference>()))
-    ;
 
   bp::class_<vcl::ocl::platform, vcl::tools::shared_ptr<vcl::ocl::platform> >
     ("platform", bp::no_init)
@@ -217,11 +193,6 @@ PYVCL_SUBMODULE(opencl_support)
     .def("finish", &vcl::ocl::command_queue::finish)
     ;
     
-  bp::def("get_current_context", vcl::ocl::current_context,
-          bp::return_value_policy<bp::copy_non_const_reference>());
-  bp::def("get_current_device", vcl::ocl::current_device,
-          bp::return_value_policy<bp::copy_const_reference>());
-
   DISAMBIGUATE_FUNCTION_PTR(void,
                             vcl::ocl::setup_context,
                             setup_context_single,
@@ -229,7 +200,6 @@ PYVCL_SUBMODULE(opencl_support)
   bp::def("setup_context", setup_context_single);
 
   bp::def("switch_context", vcl::ocl::switch_context);
-#endif
 
  bp::class_<vcl::ocl::program, vcl::tools::shared_ptr<vcl::ocl::program> >
    ("program", bp::no_init)
@@ -240,4 +210,6 @@ PYVCL_SUBMODULE(opencl_support)
                                    bp::return_value_policy<bp::copy_const_reference>()))
    ;
  
+#endif
+
 }

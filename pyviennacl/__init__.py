@@ -50,6 +50,7 @@ from .linalg import *
 from .util import *
 from .vclmath import *
 
+from . import backend, device_specific
 from . import vclmath as math
 
 # TODO: __all__

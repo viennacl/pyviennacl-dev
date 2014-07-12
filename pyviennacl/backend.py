@@ -93,42 +93,39 @@ class Context(object):
     _programs = None
 
     def __init__(self, domain_or_context = DefaultMemory):
-        try:
-            if issubclass(domain_or_context, MemoryDomain):
-                self.domain = domain_or_context
-                self.vcl_context = _v.context(self.domain.vcl_memory_type)
-                if domain_or_context is OpenCLMemory:
-                    self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)
-                    vcl.set_active_context(self)
-                return
-        except TypeError: pass
-
         if isinstance(domain_or_context, Context):
             self.domain = domain_or_context.domain
             self.vcl_context = domain_or_context.vcl_context
             self.sub_context = domain_or_context.sub_context
-            if self.domain is OpenCLMemory:
-                vcl.set_active_context(self)
+            #if self.domain is OpenCLMemory:
+            #    vcl.set_active_context(self)
             return
 
-        if WITH_OPENCL:
-            self.domain = OpenCLMemory
-            if isinstance(domain_or_context, cl.Context):
-                self.sub_context = domain_or_context
-                self.vcl_context = _v.context(vcl.get_viennacl_object(domain_or_context))
-                vcl.set_active_context(self)
-                return
+        if isinstance(domain_or_context, cl.Context):
+            self.sub_context = domain_or_context
+            create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
 
-            self.vcl_context = _v.context(_v.opencl_support.backend().current_context)
-            self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)
-            vcl.set_active_context(self)
+        try:
+            if issubclass(domain_or_context, MemoryDomain):
+                self.domain = domain_or_context
+                if domain_or_context is OpenCLMemory:
+                    #self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)
+                    self.sub_context = vcl.default_context
+                    create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
+                else:
+                    create_vcl_context_from = self.domain.vcl_memory_type
+        except TypeError: pass
+
+        self.vcl_context = _v.context(create_vcl_context_from)
+        #if self.domain is OpenCLMemory:
+        #    vcl.set_active_context(self)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return False
         if self.domain != other.domain:
             return False
-        if self.vcl_sub_context != other.vcl_sub_context:
+        if not (self.vcl_sub_context == other.vcl_sub_context):
             return False
         return True
 

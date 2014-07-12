@@ -34,6 +34,8 @@ ocl_vcl_instance_mapping = {}
 context_ids = {}
 active_context = [None]
 
+#vcl_backend = vcl.backend()
+default_context = cl.Context()
 
 class ContextPrograms(MutableMapping):
     def __init__(self, context):
@@ -88,19 +90,20 @@ class ContextPrograms(MutableMapping):
 
 
 def set_active_context(ctx):
-    if active_context[0] == ctx.sub_context:
-        return
-    if ctx.sub_context in context_ids.keys():
-        vcl.backend.switch_context(context_ids[ctx.sub_context])
-    else:
-        if context_ids:
-            new_id = max(context_ids.values()) + 1
-        else:
-            new_id = 128
-        vcl.backend().add_context(new_id, ctx.vcl_sub_context)
-        vcl.backend().switch_context(new_id)
-        context_ids[ctx.sub_context] = new_id
-    active_context[0] = ctx.sub_context
+    pass
+#    if active_context[0] == ctx.sub_context:
+#        return
+#    if ctx.sub_context in context_ids.keys():
+#        vcl.backend.switch_context(context_ids[ctx.sub_context])
+#    else:
+#        if context_ids:
+#            new_id = max(context_ids.values()) + 1
+#        else:
+#            new_id = 128
+#        vcl.backend().add_context(new_id, ctx.vcl_sub_context)
+#        vcl.backend().switch_context(new_id)
+#        context_ids[ctx.sub_context] = new_id
+#    active_context[0] = ctx.sub_context
            
 def update_instance_mapping(vcl_object, ocl_object):
     vcl_ocl_instance_mapping[vcl_object.int_ptr] = ocl_object
