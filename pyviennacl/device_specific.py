@@ -2,8 +2,6 @@ import abc, logging
 import _viennacl as _v
 from pycore import Node, Statement
 
-log = logging.getLogger(__name__)
-
 class OrderType(object):
     def __init__(*args):
         raise TypeError("This class is not supposed to be instantiated")

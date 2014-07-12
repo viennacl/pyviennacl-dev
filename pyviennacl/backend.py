@@ -109,7 +109,6 @@ class Context(object):
             if issubclass(domain_or_context, MemoryDomain):
                 self.domain = domain_or_context
                 if domain_or_context is OpenCLMemory:
-                    #self.sub_context = vcl.get_pyopencl_object(self.vcl_sub_context)
                     self.sub_context = vcl.default_context
                     create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
                 else:
@@ -117,6 +116,9 @@ class Context(object):
         except TypeError: pass
 
         self.vcl_context = _v.context(create_vcl_context_from)
+        for device in self.devices:
+            if not self.queues[device]:
+                self.add_queue(device)
         #if self.domain is OpenCLMemory:
         #    vcl.set_active_context(self)
 

@@ -35,7 +35,7 @@ context_ids = {}
 active_context = [None]
 
 #vcl_backend = vcl.backend()
-default_context = cl.Context()
+default_context = cl.create_some_context(interactive=False)
 
 class ContextPrograms(MutableMapping):
     def __init__(self, context):

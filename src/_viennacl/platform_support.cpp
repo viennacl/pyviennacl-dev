@@ -62,7 +62,7 @@ PYVCL_SUBMODULE(platform_support)
     .def(bp::init<const vcl::ocl::context&>())
     .add_property("opencl_context",
                   bp::make_function(&vcl::context::opencl_context,
-                                    bp::return_value_policy<bp::copy_const_reference>()))
+                                    bp::return_value_policy<bp::reference_existing_object>()))
 #endif
     .add_property("memory_type", &vcl::context::memory_type)
     ;
