@@ -101,9 +101,11 @@ class Context(object):
             #    vcl.set_active_context(self)
             return
 
-        if isinstance(domain_or_context, cl.Context):
-            self.sub_context = domain_or_context
-            create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
+        if WITH_OPENCL:
+            if isinstance(domain_or_context, cl.Context):
+                self.domain = OpenCLMemory
+                self.sub_context = domain_or_context
+                create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
 
         try:
             if issubclass(domain_or_context, MemoryDomain):
