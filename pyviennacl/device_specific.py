@@ -38,12 +38,9 @@ class TemplateBase(object):
             if len(local_sizes) >=2:
                 self.local_size_1 = local_sizes[1]
         
-        def vcl_arguments_order(self):
+        def vcl_arguments_order():
             return
-        
-        def __str__(self):
-            return ','.join(["{0}".format(self.__dict__[k]) for k in self.vcl_arguments_order()])
-        
+
         def make_parameters(self):
             return [self.__dict__[k] for k in self.vcl_arguments_order()]
                 
@@ -73,13 +70,13 @@ class VectorAxpyTemplate(TemplateBase):
     
     class Parameters(TemplateBase.Parameters):
         
-        def __init__(self, simd_width, local_size_0, num_groups, decomposition):
+        def __init__(self, simd_width, local_size_0, num_groups_0, decomposition):
             super(VectorAxpyTemplate.Parameters, self).__init__(simd_width, (local_size_0,));
-            self.num_groups = num_groups;
+            self.num_groups_0 = num_groups_0;
             self.decomposition = decomposition;
     
-        def vcl_arguments_order(self):
-            return ['simd_width',  'local_size_0', 'num_groups', 'decomposition'];
+        def vcl_arguments_order():
+            return ['simd_width',  'local_size_0', 'num_groups_0', 'decomposition'];
         
     def __init__(self, parameters, kernel_prefix):
         super(VectorAxpyTemplate, self).__init__(parameters, kernel_prefix);
@@ -97,7 +94,7 @@ class MatrixAxpyTemplate(TemplateBase):
             self.num_groups_1 = num_groups_1;
             self.decomposition = decomposition;
     
-        def vcl_arguments_order(self):
+        def vcl_arguments_order():
             return ['simd_width',  'local_size_0', 'local_size_1', 'num_groups_0', 'num_groups_1', 'decomposition']; 
         
     def __init__(self, parameters, kernel_prefix):
@@ -113,11 +110,11 @@ class ReductionTemplate(TemplateBase):
         
         def __init__(self, simd_width, local_size_0, num_groups, decomposition):
             super(ReductionTemplate.Parameters, self).__init__(simd_width, (local_size_0,));
-            self.num_groups = num_groups;
+            self.num_groups_0 = num_groups_0;
             self.decomposition = decomposition;
     
-        def vcl_arguments_order(self):
-            return ['simd_width',  'local_size_0', 'num_groups', 'decomposition'];
+        def vcl_arguments_order():
+            return ['simd_width',  'local_size_0', 'num_groups_0', 'decomposition'];
         
     def __init__(self, parameters, kernel_prefix):
         super(ReductionTemplate, self).__init__(parameters, kernel_prefix);
