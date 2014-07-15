@@ -6,6 +6,7 @@
 #include <viennacl/ocl/command_queue.hpp>
 #include <viennacl/ocl/context.hpp>
 #include <viennacl/ocl/device.hpp>
+#include <viennacl/ocl/device_utils.hpp>
 #include <viennacl/ocl/platform.hpp>
 #include <viennacl/ocl/program.hpp>
 
@@ -97,6 +98,28 @@ PYVCL_SUBMODULE(opencl_support)
 #ifdef VIENNACL_WITH_OPENCL
   PYTHON_SCOPE_SUBMODULE(opencl_support);
 
+  bp::enum_<vcl::ocl::vendor_id>
+            ("vendor_id")
+            ENUM_VALUE(vcl::ocl, intel_id)
+            ENUM_VALUE(vcl::ocl, nvidia_id)
+            ENUM_VALUE(vcl::ocl, amd_id)
+            ENUM_VALUE(vcl::ocl, unknown_id)
+            ;
+
+  bp::enum_<vcl::ocl::device_architecture_family>
+            ("device_architecture_family")
+            ENUM_VALUE(vcl::ocl, tesla)
+            ENUM_VALUE(vcl::ocl, fermi)
+            ENUM_VALUE(vcl::ocl, kepler)
+            
+            ENUM_VALUE(vcl::ocl, evergreen)
+            ENUM_VALUE(vcl::ocl, northern_islands)
+            ENUM_VALUE(vcl::ocl, southern_islands)
+            ENUM_VALUE(vcl::ocl, volcanic_islands)
+            
+            ENUM_VALUE(vcl::ocl, unknown)
+            ;
+          
   bp::class_<vcl::ocl::platform, vcl::tools::shared_ptr<vcl::ocl::platform> >
     ("platform", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_object_from_int_ptr<vcl::ocl::platform, cl_platform_id>))
@@ -109,6 +132,7 @@ PYVCL_SUBMODULE(opencl_support)
                           vector_to_list_converter<vcl::ocl::platform> >();
 
   bp::def("get_platforms", vcl::ocl::get_platforms);
+  bp::def("get_architecture_family", vcl::ocl::get_architecture_family);
 
   bp::class_<vcl::ocl::device, vcl::tools::shared_ptr<vcl::ocl::device> >
     ("device", bp::no_init)
@@ -122,6 +146,7 @@ PYVCL_SUBMODULE(opencl_support)
     .add_property("extensions", &vcl::ocl::device::extensions)
     .add_property("double_support", &vcl::ocl::device::double_support)
     .add_property("int_ptr", get_ocl_id<vcl::ocl::device>)
+    .add_property("architecture_family", &vcl::ocl::device::architecture_family)
     ;
 
   bp::to_python_converter<std::vector<vcl::ocl::device>,

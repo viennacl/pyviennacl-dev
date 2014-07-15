@@ -18,6 +18,8 @@ from collections import MutableMapping
 import pyopencl as cl
 import pyopencl.array
 
+VendorId = _v.opencl_support.vendor_id;
+
 vcl_ocl_type_mapping = {
     vcl.platform: cl.Platform,
     vcl.device: cl.Device,
@@ -88,6 +90,8 @@ class ContextPrograms(MutableMapping):
     def __repr__(self):
         return dict(self).__repr__()
 
+def architecture_family(vendor_id, name):
+    return str(_v.opencl_support.get_architecture_family(vendor_id, name))
 
 def set_active_context(ctx):
     pass
