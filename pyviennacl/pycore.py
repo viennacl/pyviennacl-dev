@@ -1150,7 +1150,7 @@ class HostScalar(ScalarBase):
     def _init_scalar(self):
         self.vcl_leaf = self._value
         self._handle = None
-        self._context = backend.Context(backend.MainMemory)
+        self._context = None
 
 
 class Scalar(ScalarBase):

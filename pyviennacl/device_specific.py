@@ -75,7 +75,7 @@ class VectorAxpyTemplate(TemplateBase):
             self.num_groups_0 = num_groups_0;
             self.decomposition = decomposition;
     
-        def vcl_arguments_order():
+        def vcl_arguments_order(self):
             return ['simd_width',  'local_size_0', 'num_groups_0', 'decomposition'];
         
     def __init__(self, parameters, kernel_prefix):
@@ -94,7 +94,7 @@ class MatrixAxpyTemplate(TemplateBase):
             self.num_groups_1 = num_groups_1;
             self.decomposition = decomposition;
     
-        def vcl_arguments_order():
+        def vcl_arguments_order(self):
             return ['simd_width',  'local_size_0', 'local_size_1', 'num_groups_0', 'num_groups_1', 'decomposition']; 
         
     def __init__(self, parameters, kernel_prefix):
