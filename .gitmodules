@@ -3,7 +3,7 @@
 	url = https://github.com/tsmithe/Boost.NumPy.git
 [submodule "external/viennacl-dev"]
 	path = external/viennacl-dev
-	url = https://github.com/tsmithe/viennacl-dev.git
+	url = https://github.com/viennacl/viennacl-dev.git
 [submodule "external/boost-python-ublas-subset"]
 	path = external/boost-python-ublas-subset
 	url = https://github.com/tsmithe/boost-python-ublas-subset.git

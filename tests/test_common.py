@@ -49,7 +49,6 @@ def diff(a, b):
             temp = p.Matrix(b.shape, dtype = b.dtype, layout = a.layout)
             p.Assign(temp, b.result).execute()
             b = temp
-            log.warning("HERE")
         d = p.ElementFabs(a - b)
         cpu_d = d.as_ndarray()
         if len(d.shape) == 1:
