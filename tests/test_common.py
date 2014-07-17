@@ -15,7 +15,6 @@ def noop(*args, **kwargs):
     return os.EX_OK
 
 def diff(a, b):
-    p.util.backend_finish()
     ret = 0
 
     # Convert NumPy types to ViennaCL types (they're much more convenient!)
@@ -44,7 +43,7 @@ def diff(a, b):
     # The MagicMethods class guarantees that we have some useful facilities
     #   (and both Node and Leaf are derived from MagicMethods)
     if isinstance(a, p.MagicMethods) and isinstance(b, p.MagicMethods):
-        if a.layout != b.layout:
+        if a.result_container_type is p.Matrix and b.result_container_type is p.Matrix and a.layout != b.layout:
             # We want to make sure that a and b have the same layout
             # So construct a temporary matrix, and assign b to it
             temp = p.Matrix(b.shape, dtype = b.dtype, layout = a.layout)

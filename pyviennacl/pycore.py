@@ -849,6 +849,9 @@ class Leaf(MagicMethods):
                     if isinstance(item, MagicMethods):
                         arg[arg.index(item)] = item.value
 
+            #if isinstance(arg, number):
+            #    args[args.index(arg)] = asscalar(arg)
+
             ARG_IS_NUMBER = False
             try:
                 if issubclass(arg, number) or issubclass(arg, dtype):
@@ -1033,6 +1036,9 @@ class ScalarBase(Leaf):
         else:
             self._value = 0
 
+        if self.dtype is None: # ie, still None, even after checks -- so guess
+            self.dtype = np_result_type(self._value) #self._context.default_dtype
+
         try:
             self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
         except KeyError:
@@ -1166,6 +1172,8 @@ class Scalar(ScalarBase):
 
         if isinstance(self._value, vcl_type):
             self._value = self._value.to_host()
+        #if isinstance(self._value, number):
+        #    self._value = asscalar(self._value)
         self.vcl_leaf = vcl_type(self._value, self._context.vcl_context)
         self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
 
@@ -1234,8 +1242,13 @@ class Vector(Leaf):
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0], self._context.vcl_context)
+                    try:
+                        return vcl_t(args[0], self._context.vcl_context)
+                    except:
+                        return vcl_t(args[0])
         elif len(args) == 2:
+            if self.dtype is None:
+                self.dtype = np_result_type(args[1])
             def get_leaf(vcl_t):
                 return vcl_t(args[0], args[1], self._context.vcl_context)
         else:
@@ -1863,6 +1876,8 @@ class Matrix(Leaf):
                     return args[0]
         elif len(args) == 2:
             if isinstance(args[0], tuple) or isinstance(args[0], list):
+                if self.dtype is None:
+                    self.dtype = np_result_type(args[1])
                 def get_leaf(vcl_t):
                     return vcl_t(args[0][0], args[0][1], args[1],
                                  self._context.vcl_context)
@@ -1870,6 +1885,8 @@ class Matrix(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(args[0], args[1], self._context.vcl_context)
         elif len(args) == 3:
+            if self.dtype is None:
+                self.dtype = np_result_type(args[2])
             def get_leaf(vcl_t):
                 return vcl_t(args[0], args[1], args[2],
                              self._context.vcl_context)
@@ -2960,7 +2977,7 @@ class Dot(Node):
     Represents the computation of the inner (dot) product of two vectors.
     """
     result_types = {
-        ('Vector', 'Vector'): Scalar
+        ('Vector', 'Vector'): HostScalar
     }
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_INNER_PROD_TYPE
     shape = ()
@@ -3029,7 +3046,8 @@ class Statement(object):
                     next_node.append(operand)
                 if isinstance(operand, Leaf) or isinstance(operand, CustomNode):
                     if (operand.context != self.result.context
-                        and not isinstance(operand, HostScalar)):
+                        and not isinstance(operand, HostScalar)
+                        and not isinstance(self.result, HostScalar)):
                         raise TypeError(
                             "All objects in statement must have same context: %s"
                             % (operand.express()))

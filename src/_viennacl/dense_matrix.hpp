@@ -132,12 +132,12 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   bp::class_<vcl::matrix_range<vcl::matrix_base<TYPE> >,                \
              vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix_base<TYPE> > >, \
              bp::bases<vcl::matrix_base<TYPE> > >                       \
-  ("matrix_range", bp::no_init);                                        \
+  ("matrix_range_" #TYPE, bp::no_init);                                 \
   ;                                                                     \
   bp::class_<vcl::matrix_slice<vcl::matrix_base<TYPE> >,                \
              vcl::tools::shared_ptr<vcl::matrix_slice<vcl::matrix_base<TYPE> > >, \
              bp::bases<vcl::matrix_base<TYPE> > >                       \
-  ("matrix_slice", bp::no_init)                                         \
+  ("matrix_slice_" #TYPE, bp::no_init)                                  \
   ;
 
 // TODO: cl_mem ctr

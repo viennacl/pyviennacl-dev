@@ -224,13 +224,13 @@ CLOSE_OP_FUNC;
   bp::class_<vcl::vector_range<vcl::vector_base<TYPE> >,                \
              vcl::tools::shared_ptr<vcl::vector_range<vcl::vector_base<TYPE> > >, \
              bp::bases<vcl::vector_base<TYPE> > >                       \
-    ("vector_range", bp::no_init);                                      \
+  ("vector_range_" #TYPE, bp::no_init);                                 \
   bp::class_<vcl::vector_slice<vcl::vector_base<TYPE> >,                \
              vcl::tools::shared_ptr<vcl::vector_slice<vcl::vector_base<TYPE> > >, \
              bp::bases<vcl::vector_base<TYPE> > >                       \
-    ("vector_slice", bp::no_init);                                      \
+  ("vector_slice_" #TYPE, bp::no_init);                                 \
   bp::class_<vcl::vector<TYPE>,						\
-	     vcl::tools::shared_ptr<vcl::vector<TYPE> >,                     \
+	     vcl::tools::shared_ptr<vcl::vector<TYPE> >,                \
              bp::bases<vcl::vector_base<TYPE> > >                       \
     ( "vector_" #TYPE )                                                 \
     .def(bp::init<int>())						\
