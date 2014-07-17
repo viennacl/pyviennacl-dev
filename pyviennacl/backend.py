@@ -118,9 +118,10 @@ class Context(object):
         except TypeError: pass
 
         self.vcl_context = _v.context(create_vcl_context_from)
-        for device in self.devices:
-            if not self.queues[device]:
-                self.add_queue(device)
+        if self.domain is OpenCLMemory:
+            for device in self.devices:
+                if not self.queues[device]:
+                    self.add_queue(device)
         #if self.domain is OpenCLMemory:
         #    vcl.set_active_context(self)
 
@@ -129,8 +130,9 @@ class Context(object):
             return False
         if self.domain != other.domain:
             return False
-        if self.vcl_sub_context.int_ptr != other.vcl_sub_context.int_ptr:
-            return False
+        if self.domain is OpenCLMemory:
+            if self.vcl_sub_context.int_ptr != other.vcl_sub_context.int_ptr:
+                return False
         return True
 
     def __ne__(self, other):
