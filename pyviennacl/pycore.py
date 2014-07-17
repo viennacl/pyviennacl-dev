@@ -2058,16 +2058,16 @@ class Node(MagicMethods):
         else:
             raise TypeError("Only unary or binary nodes supported currently")
 
-        self.operands = list(map(util.fix_operand, args))
+        self._operands = map(util.fix_operand, args)
 
         if self.result_container_type is None:
             # Try swapping the operands, in case the operation supports
             # these operand types in one order but not the other; in this case
             # the mathematical intention is not ambiguous.
-            self.operands.reverse()
+            self._operands.reverse()
             if self.result_container_type is None:
                 # No use, so revert
-                self.operands.reverse()
+                self._operands.reverse()
 
         self._node_init()
 
@@ -2083,26 +2083,26 @@ class Node(MagicMethods):
     def _vcl_node_init(self):
         # At the moment, ViennaCL does not do dtype promotion, so check that
         # the operands all have the same dtype.
-        if len(self.operands) > 1:
-            if dtype(self.operands[0]) != dtype(self.operands[1]):
-                raise TypeError("dtypes on operands do not match: %s with %s and %s" % (self.express(), dtype(self.operands[0]), dtype(self.operands[1])))
+        if len(self._operands) > 1:
+            if dtype(self._operands[0]) != dtype(self._operands[1]):
+                raise TypeError("dtypes on operands do not match: %s with %s and %s" % (self.express(), dtype(self._operands[0]), dtype(self._operands[1])))
             # Set up the ViennaCL statement_node with two operands
             self.vcl_node = _v.statement_node(
-                self.operands[0].statement_node_type_family,   # lhs
-                self.operands[0].statement_node_subtype,       # lhs
-                self.operands[0].statement_node_numeric_type,  # lhs
+                self._operands[0].statement_node_type_family,   # lhs
+                self._operands[0].statement_node_subtype,       # lhs
+                self._operands[0].statement_node_numeric_type,  # lhs
                 self.operation_node_type_family,               # op
                 self.operation_node_type,                      # op
-                self.operands[1].statement_node_type_family,   # rhs
-                self.operands[1].statement_node_subtype,       # rhs
-                self.operands[1].statement_node_numeric_type)  # rhs
+                self._operands[1].statement_node_type_family,   # rhs
+                self._operands[1].statement_node_subtype,       # rhs
+                self._operands[1].statement_node_numeric_type)  # rhs
         else:
             # Set up the ViennaCL statement_node with one operand,
             # and set rhs to INVALID
             self.vcl_node = _v.statement_node(
-                self.operands[0].statement_node_type_family,   # lhs
-                self.operands[0].statement_node_subtype,       # lhs
-                self.operands[0].statement_node_numeric_type,  # lhs
+                self._operands[0].statement_node_type_family,   # lhs
+                self._operands[0].statement_node_subtype,       # lhs
+                self._operands[0].statement_node_numeric_type,  # lhs
                 self.operation_node_type_family,               # op
                 self.operation_node_type,                      # op
                 _v.statement_node_type_family.INVALID_TYPE_FAMILY,    # rhs
@@ -2143,7 +2143,7 @@ class Node(MagicMethods):
         instances in the expression tree.
         """
         complexity = 1
-        for op in self.operands:
+        for op in self._operands:
             complexity += op.complexity
         return complexity
 
@@ -2153,7 +2153,7 @@ class Node(MagicMethods):
         TODO docstring
         """
         types = []
-        for o in self.operands:
+        for o in self._operands:
             try:
                 t = o.result_container_type.__name__
             except AttributeError:
@@ -2182,7 +2182,7 @@ class Node(MagicMethods):
         operation encoded by this Node, according to the NumPy type promotion
         rules.
         """
-        dtypes = tuple(map(lambda x: x.dtype, self.operands))
+        dtypes = tuple(map(lambda x: x.dtype, self._operands))
         if len(dtypes) == 1:
             return np_result_type(dtypes[0])
         if len(dtypes) == 2:
@@ -2200,7 +2200,7 @@ class Node(MagicMethods):
         """
         layout = None
         if self.result_container_type == Matrix:
-            for opand in self.operands:
+            for opand in self._operands:
                 try:
                     next_layout = opand.layout
                 except:
@@ -2224,7 +2224,7 @@ class Node(MagicMethods):
         compute the correct size for the result container.
         """
         ndim = 0
-        for op in self.operands:
+        for op in self._operands:
             if isinstance(op, Node):
                 nd = op.result_ndim
                 if (nd > ndim):
@@ -2243,7 +2243,7 @@ class Node(MagicMethods):
         compute the correct size for the result container.
         """
         max_size = 1
-        for op in self.operands:
+        for op in self._operands:
             if isinstance(op, Node):
                 s = op.result_max_axis_size
                 if (s > max_size):
@@ -2292,7 +2292,7 @@ class Node(MagicMethods):
         constitutes the root node.
         """
         statement += type(self).__name__ + "("
-        for op in self.operands:
+        for op in self._operands:
             statement = op.express(statement) + ", "
         if self.result_container_type is None:
             result_expression = "None"
@@ -2317,13 +2317,26 @@ class Node(MagicMethods):
     def vcl_leaf(self):
         return self.result.vcl_leaf
 
-    def execute(self):
+    def execute(self, _s=None):
         """
         Execute the expression tree taking this instance as the root, and
         then cache and return the result.
         """
-        s = Statement(self)
-        self._result = s.execute()
+        if not _s:
+            s = Statement(self)
+        else:
+            s = _s
+        if self.context.domain is backend.OpenCLMemory:
+            vcl.set_active_context(self.context)
+        try:
+            s.vcl_statement.execute()
+        except RuntimeError:
+            log.error("EXCEPTION EXECUTING: %s" %(self.statement[0].express()))
+            raise
+        self._result = s.result
+        del s, _s
+        del self._operands
+        self._operands = None
         self.flushed = True
         return self._result
 
@@ -2349,7 +2362,7 @@ class Node(MagicMethods):
     @property
     def context(self):
         # NB: This assumes all operands have the same context (TODO: fix?)
-        return self.operands[0].context
+        return self._operands[0].context
 
     def as_ndarray(self):
         """
@@ -2376,11 +2389,11 @@ class CustomNode(Node):
         """
         TODO docstring
         """
-        self.operands = list(map(util.fix_operand, args))
+        self._operands = map(util.fix_operand, args)
         self.statement_node_type_family = self.result_container_type.statement_node_type_family
         self.statement_node_subtype = self.result_container_type.statement_node_subtype
         self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]
-        for op in self.operands:
+        for op in self._operands:
             if op.context != self.context and not isinstance(op, HostScalar):
                 raise TypeError("Operands must all have the same context")
         self._compile_kernels()
@@ -2419,7 +2432,7 @@ class CustomNode(Node):
             dtype = self.dtype,
             layout = self.layout,
             context = self.context)
-        operands = self.operands + [result]
+        operands = self._operands + [result]
         if self.context.domain is backend.OpenCLMemory:
             if isinstance(self._kernel, cl.Kernel):
                 self._execute_opencl_kernel(*operands)
@@ -2428,6 +2441,8 @@ class CustomNode(Node):
         else:
             self._kernel(*operands)
         self._result = result
+        del self._operands
+        self._operands = None
         self.flushed = True
 
     def _execute_opencl_kernel(self, *operands):
@@ -2478,7 +2493,7 @@ class ElementAbs(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_ABS_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementAcos(Node):
@@ -2493,7 +2508,7 @@ class ElementAcos(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_ACOS_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementAsin(Node):
@@ -2508,7 +2523,7 @@ class ElementAsin(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_ASIN_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementAtan(Node):
@@ -2523,7 +2538,7 @@ class ElementAtan(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_ATAN_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementCeil(Node):
@@ -2538,7 +2553,7 @@ class ElementCeil(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_CEIL_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementCos(Node):
@@ -2553,7 +2568,7 @@ class ElementCos(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_COS_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementCosh(Node):
@@ -2568,7 +2583,7 @@ class ElementCosh(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_COSH_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementExp(Node):
@@ -2583,7 +2598,7 @@ class ElementExp(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_EXP_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementFabs(Node):
@@ -2598,7 +2613,7 @@ class ElementFabs(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_FABS_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementFloor(Node):
@@ -2613,7 +2628,7 @@ class ElementFloor(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_FLOOR_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementLog(Node):
@@ -2628,7 +2643,7 @@ class ElementLog(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_LOG_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementLog10(Node):
@@ -2643,7 +2658,7 @@ class ElementLog10(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_LOG10_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementSin(Node):
@@ -2658,7 +2673,7 @@ class ElementSin(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_SIN_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementSinh(Node):
@@ -2673,7 +2688,7 @@ class ElementSinh(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_SINH_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementSqrt(Node):
@@ -2688,7 +2703,7 @@ class ElementSqrt(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_SQRT_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementTan(Node):
@@ -2703,7 +2718,7 @@ class ElementTan(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_TAN_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class ElementTanh(Node):
@@ -2718,7 +2733,7 @@ class ElementTanh(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_TANH_TYPE
 
     def _node_init(self):
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class Trans(Node):
@@ -2731,8 +2746,8 @@ class Trans(Node):
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_TRANS_TYPE
 
     def _node_init(self):
-        self.shape = (self.operands[0].shape[1],
-                      self.operands[0].shape[0])
+        self.shape = (self._operands[0].shape[1],
+                      self._operands[0].shape[0])
 
 
 class Assign(Node):
@@ -2762,13 +2777,13 @@ class InplaceAdd(Assign):
     operation_node_type  = _v.operation_node_type.OPERATION_BINARY_INPLACE_ADD_TYPE
 
     def _node_init(self):
-        if self.operands[0].shape != self.operands[1].shape:
+        if self._operands[0].shape != self._operands[1].shape:
             raise TypeError("Cannot add two differently shaped objects! %s" % self.express())
-        self.shape = self.operands[0].shape
-        #if self.operands[0].result_container_type == Scalar and self.operands[1].result_container_type == HostScalar:
-        #    self.operands[1] = Scalar(self.operands[1])
-        #if self.operands[1].result_container_type == Scalar and self.operands[0].result_container_type == HostScalar:
-        #    self.operands[0] = Scalar(self.operands[0])
+        self.shape = self._operands[0].shape
+        #if self._operands[0].result_container_type == Scalar and self._operands[1].result_container_type == HostScalar:
+        #    self._operands[1] = Scalar(self._operands[1])
+        #if self._operands[1].result_container_type == Scalar and self._operands[0].result_container_type == HostScalar:
+        #    self._operands[0] = Scalar(self._operands[0])
 
 
 class InplaceSub(Assign):
@@ -2788,9 +2803,9 @@ class InplaceSub(Assign):
     operation_node_type  = _v.operation_node_type.OPERATION_BINARY_INPLACE_SUB_TYPE
 
     def _node_init(self):
-        if self.operands[0].shape != self.operands[1].shape:
+        if self._operands[0].shape != self._operands[1].shape:
             raise TypeError("Cannot subtract two differently shaped objects! %s" % self.express())
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class Add(Node):
@@ -2806,9 +2821,9 @@ class Add(Node):
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_ADD_TYPE
 
     def _node_init(self):
-        if self.operands[0].shape != self.operands[1].shape:
+        if self._operands[0].shape != self._operands[1].shape:
             raise TypeError("Cannot Add two differently shaped objects! %s" % self.express())
-        self.shape = self.operands[0].shape
+        self.shape = self._operands[0].shape
 
 
 class Sub(Node):
@@ -2824,14 +2839,14 @@ class Sub(Node):
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_SUB_TYPE
 
     def _node_init(self):
-        if self.operands[0].shape != self.operands[1].shape:
+        if self._operands[0].shape != self._operands[1].shape:
             raise TypeError("Cannot Sub two differently shaped objects! %s" % self.express())
-        self.shape = self.operands[0].shape
-        if self.operands[0].result_container_type == Scalar and self.operands[1].result_container_type == HostScalar:
-            temp = self.operands[1].result
-            self.operands[1] = Scalar(temp)
-        if self.operands[1].result_container_type == Scalar and self.operands[0].result_container_type == HostScalar:
-            self.operands[0] = Scalar(self.operands[0].result)
+        self.shape = self._operands[0].shape
+        if self._operands[0].result_container_type == Scalar and self._operands[1].result_container_type == HostScalar:
+            temp = self._operands[1].result
+            self._operands[1] = Scalar(temp)
+        if self._operands[1].result_container_type == Scalar and self._operands[0].result_container_type == HostScalar:
+            self._operands[0] = Scalar(self._operands[0].result)
 
 
 class Mul(Node):
@@ -2881,54 +2896,54 @@ class Mul(Node):
     }
 
     def _node_init(self):
-        if (self.operands[0].result_container_type == Matrix or
-            issubclass(self.operands[0].result_container_type,
+        if (self._operands[0].result_container_type == Matrix or
+            issubclass(self._operands[0].result_container_type,
                        SparseMatrixBase)): # Matrix * ...
-            if (self.operands[1].result_container_type == Matrix or
-                issubclass(self.operands[1].result_container_type,
+            if (self._operands[1].result_container_type == Matrix or
+                issubclass(self._operands[1].result_container_type,
                            SparseMatrixBase)):
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MAT_MAT_PROD_TYPE
-                self.shape = (self.operands[0].shape[0],
-                                     self.operands[1].shape[1])
-            elif self.operands[1].result_container_type == Vector:
+                self.shape = (self._operands[0].shape[0],
+                                     self._operands[1].shape[1])
+            elif self._operands[1].result_container_type == Vector:
                 # Need to make sure that matrix and vector shapes are aligned
-                if self.operands[0].shape[1] != self.operands[1].shape[0]:
+                if self._operands[0].shape[1] != self._operands[1].shape[0]:
                     raise ValueError("Operand shapes not correctly aligned")
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MAT_VEC_PROD_TYPE
-                self.shape = (self.operands[0].shape[0],)
-            elif self.operands[1].result_container_type == Scalar:
+                self.shape = (self._operands[0].shape[0],)
+            elif self._operands[1].result_container_type == Scalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[0].shape
-            elif self.operands[1].result_container_type == HostScalar:
+                self.shape = self._operands[0].shape
+            elif self._operands[1].result_container_type == HostScalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[0].shape
+                self.shape = self._operands[0].shape
             else:
                 self.operation_node_type = None
-        elif self.operands[0].result_container_type == Vector: # Vector * ...
-            if self.operands[1].result_container_type == Scalar:
+        elif self._operands[0].result_container_type == Vector: # Vector * ...
+            if self._operands[1].result_container_type == Scalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[0].shape
-            elif self.operands[1].result_container_type == HostScalar:
+                self.shape = self._operands[0].shape
+            elif self._operands[1].result_container_type == HostScalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[0].shape
+                self.shape = self._operands[0].shape
             else:
                 self.operation_node_type = None
-        elif self.operands[0].result_container_type == Scalar: 
+        elif self._operands[0].result_container_type == Scalar: 
             #
             # TODO -- but why?..
             #
-            if self.operands[1].result_container_type == Matrix:
+            if self._operands[1].result_container_type == Matrix:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[1].shape
+                self.shape = self._operands[1].shape
             else:
                 self.operation_node_type = None
-        elif self.operands[0].result_container_type == HostScalar:
+        elif self._operands[0].result_container_type == HostScalar:
             #
             # TODO -- but why?..
             #
-            if self.operands[1].result_container_type == Matrix:
+            if self._operands[1].result_container_type == Matrix:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[1].shape
+                self.shape = self._operands[1].shape
             else:
                 self.operation_node_type = None
         else:
@@ -2992,6 +3007,7 @@ class Statement(object):
     """
     statement = []  # A list to hold the flattened expression tree
     vcl_statement = None # Will reference the ViennaCL statement object
+    result = None # Will reference result of the operations
 
     def __init__(self, root):
         """
@@ -3018,13 +3034,13 @@ class Statement(object):
         # If the root node is not an Assign instance, then construct a
         # temporary to hold the result.
         if isinstance(root, Assign):
-            self.result = root.operands[0]
+            self.result = root._operands[0]
         else:
             self.result = root.result_container_type(
                 shape = root.shape,
                 dtype = root.dtype,
                 layout = root.layout,
-                context = root.operands[0].context)
+                context = root._operands[0].context)
             top = Assign(self.result, root)
             next_node.append(top)
 
@@ -3033,7 +3049,7 @@ class Statement(object):
         # Flatten the tree
         for n in next_node:
             op_num = 0
-            for operand in n.operands:
+            for operand in n._operands:
                 # If operand is a CustomNode, then we treat it as a Leaf here,
                 # since CustomNode is not mapped to a ViennaCL statement node
                 if isinstance(operand, Node) and not isinstance(operand, CustomNode) and not operand.flushed:
@@ -3067,7 +3083,7 @@ class Statement(object):
         # statement, doing various type checks as we go.
         for n in self.statement:
             op_num = 0
-            for operand in n.operands:
+            for operand in n._operands:
                 if isinstance(operand, Leaf):
                     n.get_vcl_operand_setter(operand)(op_num, operand.vcl_leaf)
                 elif isinstance(operand, Node):
@@ -3089,18 +3105,19 @@ class Statement(object):
                 op_num += 1
             self.vcl_statement.insert_at_end(n.vcl_node)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        del self.statement
+        del self.vcl_statement
+        del self.result
+
     def execute(self):
         """
         Execute the statement -- don't do anything else -- then return the
         result (if any).
         """
-        if self.result.context.domain is backend.OpenCLMemory:
-            vcl.set_active_context(self.result.context)
-        try:
-            self.vcl_statement.execute()
-        except RuntimeError:
-            log.error("EXCEPTION EXECUTING: %s" %(self.statement[0].express()))
-            raise
-        return self.result
+        self.statement[0].execute(self)
         
 # TODO: __all__
