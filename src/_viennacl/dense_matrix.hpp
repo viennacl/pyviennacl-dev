@@ -63,20 +63,6 @@ matrix_init_ndarray(const np::ndarray& array, const vcl::context& ctx)
   return vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >(mat);
 }
 
-template <class SCALARTYPE, class F>
-vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >
-matrix_init_scalar_default_context(vcl::vcl_size_t n, vcl::vcl_size_t m, SCALARTYPE value)
-{
-  return matrix_init_scalar<SCALARTYPE, F>(n, m, value, vcl::context());
-}
-
-template <class SCALARTYPE, class F>
-vcl::tools::shared_ptr<vcl::matrix<SCALARTYPE, F> >
-matrix_init_ndarray_default_context(const np::ndarray& array)
-{
-  return matrix_init_ndarray<SCALARTYPE, F>(array, vcl::context());
-}
-
 template<class SCALARTYPE>
 bp::tuple get_strides(const vcl::matrix_base<SCALARTYPE>& m) {
   if(m.row_major())
@@ -100,8 +86,6 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   std::size_t size = m.internal_size1() * m.internal_size2() * sizeof(SCALARTYPE);
 
   SCALARTYPE* data = (SCALARTYPE*)malloc(size);
-
-  vcl::backend::finish();
 
   // Read the whole matrix
   vcl::backend::memory_read(m.handle(), 0, size, data);
@@ -168,8 +152,6 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   /*.def("__init__", bp::make_constructor(matrix_init_mem<TYPE, F>))  */ \
   .def("__init__", bp::make_constructor(matrix_init_ndarray<TYPE, F>))  \
   .def("__init__", bp::make_constructor(matrix_init_scalar<TYPE, F>))   \
-  .def("__init__", bp::make_constructor(matrix_init_ndarray_default_context<TYPE, F>)) \
-  .def("__init__", bp::make_constructor(matrix_init_scalar_default_context<TYPE, F>)) \
   ;                                                                     \
   bp::class_<vcl::matrix_range<vcl::matrix<TYPE, F> >,                  \
              vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix<TYPE, F> > >, \

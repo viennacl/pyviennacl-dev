@@ -108,7 +108,7 @@ class Context(object):
                 create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
 
         try:
-            if issubclass(domain_or_context, MemoryDomain):
+            if issubclass(domain_or_context, MemoryDomain): # cf default arg
                 self.domain = domain_or_context
                 if domain_or_context is OpenCLMemory:
                     self.sub_context = vcl.default_context
@@ -129,7 +129,7 @@ class Context(object):
             return False
         if self.domain != other.domain:
             return False
-        if not (self.vcl_sub_context == other.vcl_sub_context):
+        if self.vcl_sub_context.int_ptr != other.vcl_sub_context.int_ptr:
             return False
         return True
 
@@ -139,7 +139,7 @@ class Context(object):
     @property
     def vcl_sub_context(self):
         if self.domain is OpenCLMemory:
-            return self.vcl_context.opencl_context
+            return vcl.get_viennacl_object(self.sub_context, self)
         else:
             raise TypeError("Only OpenCL sub-context supported currently")
 

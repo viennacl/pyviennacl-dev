@@ -22,7 +22,7 @@
   .add_property("vcl_context",                                          \
                 bp::make_function(&cpu_compressed_matrix_wrapper<TYPE>  \
                                   ::get_vcl_context,                    \
-                                  bp::return_internal_reference<>()),   \
+                                  bp::return_value_policy<bp::reference_existing_object>()),     \
                 &cpu_compressed_matrix_wrapper<TYPE>::set_vcl_context)  \
   .def("resize", &cpu_compressed_matrix_wrapper<TYPE>::resize)          \
   .def("set_entry", &cpu_compressed_matrix_wrapper<TYPE>::set_entry)    \

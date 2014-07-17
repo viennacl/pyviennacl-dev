@@ -887,12 +887,6 @@ class Leaf(MagicMethods):
         if 'view' in kwargs.keys():
             self.view = kwargs['view']
 
-        if not self._context.queues[self._context.current_device]:
-            self._context.add_queue(self._context.current_device)
-
-        if self._context.domain is backend.OpenCLMemory:
-            vcl.set_active_context(self._context)
-
         self._init_leaf(args, kwargs)
 
     def __setitem__(self, key, value):
@@ -2972,7 +2966,7 @@ class Dot(Node):
     shape = ()
 
 
-class Statement:
+class Statement(object):
     """
     This class represents the ViennaCL `statement` corresponding to an
     expression graph. It employs type deduction information to calculate

@@ -182,20 +182,19 @@ PYVCL_SUBMODULE(opencl_support)
                                   (vcl::vcl_size_t));
   bp::class_<vcl::ocl::context>("context", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_context_from_int_ptr))
-    .def(bp::self == vcl::ocl::context())
     .def("init_new_context", init_new_context)
     .add_property("current_device",
                   bp::make_function(&vcl::ocl::context::current_device,
-                                    bp::return_value_policy<bp::copy_const_reference>()))
+                                    bp::return_value_policy<bp::reference_existing_object>()))
     .add_property("devices",
                   bp::make_function(&vcl::ocl::context::devices,
-                                    bp::return_value_policy<bp::copy_const_reference>()))
+                                    bp::return_value_policy<bp::reference_existing_object>()))
     .def("add_device", context_add_device)
     .def("switch_active_device", context_switch_device)
     .add_property("current_queue",
                   bp::make_function(&vcl::ocl::context::current_queue,
-                                    bp::return_value_policy<bp::copy_const_reference>()))
-    .def("get_queue", ctx_get_queue, bp::return_value_policy<bp::copy_const_reference>())
+                                    bp::return_value_policy<bp::reference_existing_object>()))
+    .def("get_queue", ctx_get_queue, bp::return_value_policy<bp::reference_existing_object>())
     .def("add_new_queue", ctx_add_new_queue)
     .def("add_existing_queue", ctx_add_existing_queue)
     .def("switch_queue", ctx_switch_queue)
@@ -232,7 +231,7 @@ PYVCL_SUBMODULE(opencl_support)
    .add_property("int_ptr", get_ocl_ptr<vcl::ocl::program>)
    .add_property("name",
                  bp::make_function(&vcl::ocl::program::name,
-                                   bp::return_value_policy<bp::copy_const_reference>()))
+                                   bp::return_value_policy<bp::reference_existing_object>()))
    ;
  
 #endif

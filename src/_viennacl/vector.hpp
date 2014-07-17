@@ -153,27 +153,6 @@ vcl_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value,
 }
 
 template <class SCALARTYPE>
-vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_ndarray_default_context(const np::ndarray& array)
-{
-  return vcl_vector_init_ndarray<SCALARTYPE>(array, vcl::context());
-}
-
-template <class SCALARTYPE>
-vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_list_default_context(const bp::list& l)
-{
-  return vcl_vector_init_list<SCALARTYPE>(l, vcl::context());
-}
-
-template <class SCALARTYPE>
-vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
-vcl_vector_init_scalar_default_context(vcl::vcl_size_t length, SCALARTYPE value)
-{
-  return vcl_vector_init_scalar<SCALARTYPE>(length, value, vcl::context());
-}
-
-template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector_base<SCALARTYPE> >
 vcl_range(vcl::vector_base<SCALARTYPE>& vec,
           std::size_t start, std::size_t end)
@@ -261,9 +240,6 @@ CLOSE_OP_FUNC;
     .def("__init__", bp::make_constructor(vcl_vector_init_ndarray<TYPE>)) \
     .def("__init__", bp::make_constructor(vcl_vector_init_list<TYPE>))	\
     .def("__init__", bp::make_constructor(vcl_vector_init_scalar<TYPE>))\
-    .def("__init__", bp::make_constructor(vcl_vector_init_ndarray_default_context<TYPE>)) \
-    .def("__init__", bp::make_constructor(vcl_vector_init_list_default_context<TYPE>))	\
-    .def("__init__", bp::make_constructor(vcl_vector_init_scalar_default_context<TYPE>))\
     ;                                                                   \
   bp::class_<std::vector<TYPE>,						\
 	     vcl::tools::shared_ptr<std::vector<TYPE> > >			\
