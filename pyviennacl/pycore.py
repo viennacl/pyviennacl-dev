@@ -988,7 +988,7 @@ class Leaf(MagicMethods):
         Construct a human-readable version of a ViennaCL expression tree
         statement from this leaf.
         """
-        statement += type(self).__name__
+        statement += type(self).__name__ + ":" + str(dtype(self))
         return statement
 
     def as_ndarray(self):
@@ -1150,7 +1150,7 @@ class HostScalar(ScalarBase):
     def _init_scalar(self):
         self.vcl_leaf = self._value
         self._handle = None
-        self._context = None
+        #self._context = None
 
 
 class Scalar(ScalarBase):
@@ -2044,6 +2044,7 @@ class Node(MagicMethods):
     statement_node_subtype = _v.statement_node_subtype.INVALID_SUBTYPE
     statement_node_numeric_type = _v.statement_node_numeric_type.INVALID_NUMERIC_TYPE
     operands = []
+    flushed = False
 
     def __init__(self, *args):
         """
@@ -2181,6 +2182,8 @@ class Node(MagicMethods):
         distinct result, then return NoResult. If the operation is not
         supported for the given operand types, then return None.
         """
+        if self.flushed:
+            return type(self._result)
         if len(self.result_types) < 1:
             return NoResult
         try: return self.result_types[self.operand_types_string]
@@ -2193,6 +2196,9 @@ class Node(MagicMethods):
         operation encoded by this Node, according to the NumPy type promotion
         rules.
         """
+        if self.flushed:
+            return np_result_type(self._result)
+
         dtypes = tuple(map(lambda x: x.dtype, self.operands))
         if len(dtypes) == 1:
             return np_result_type(dtypes[0])
@@ -2209,6 +2215,9 @@ class Node(MagicMethods):
         since this is a condition of all ViennaCL operations, except for
         the matrix-matrix product.
         """
+        if self.flushed:
+            return self._result.layout
+
         layout = None
         if self.result_container_type == Matrix:
             for opand in self.operands:
@@ -2234,6 +2243,9 @@ class Node(MagicMethods):
         This can be overridden by the particular Node subclass, in order to
         compute the correct size for the result container.
         """
+        if self.flushed:
+            return self._result.ndim
+
         ndim = 0
         for op in self.operands:
             if isinstance(op, Node):
@@ -2253,6 +2265,9 @@ class Node(MagicMethods):
         This can be overridden by the particular Node subclass, in order to
         compute the correct size for the result container.
         """
+        if self.flushed:
+            return max(self._result.shape)
+
         max_size = 1
         for op in self.operands:
             if isinstance(op, Node):
@@ -2278,6 +2293,9 @@ class Node(MagicMethods):
         If the shape is set manually, then this routine is overridden, and
         the manually set value is returned.
         """
+        if self.flushed:
+            return self._result.shape
+
         try:
             if isinstance(self._shape, tuple):
                 return self._shape
@@ -2302,14 +2320,19 @@ class Node(MagicMethods):
         including all nodes and leaves connected to this one, which
         constitutes the root node.
         """
-        statement += type(self).__name__ + "("
-        for op in self.operands:
-            statement = op.express(statement) + ", "
         if self.result_container_type is None:
             result_expression = "None"
         else:
             result_expression = self.result_container_type.__name__
-        statement = statement[:-2] + ")=>" + result_expression
+        result_expression += ":" + str(dtype(self))
+
+        statement += type(self).__name__ + "("
+        if self.flushed:
+            statement += "[flushed])=>" + result_expression
+        else:
+            for op in self.operands:
+                statement = op.express(statement) + ", "
+            statement = statement[:-2] + ")=>" + result_expression
         return statement
 
     @property
@@ -2360,6 +2383,9 @@ class Node(MagicMethods):
 
     @property
     def context(self):
+        if self.flushed:
+            return self._result.context
+
         # NB: This assumes all operands have the same context (TODO: fix?)
         return self.operands[0].context
 
@@ -2989,7 +3015,7 @@ class Dot(Node):
     Represents the computation of the inner (dot) product of two vectors.
     """
     result_types = {
-        ('Vector', 'Vector'): HostScalar
+        ('Vector', 'Vector'): Scalar
     }
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_INNER_PROD_TYPE
     shape = ()
