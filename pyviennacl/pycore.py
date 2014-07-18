@@ -2336,6 +2336,7 @@ class Node(MagicMethods):
         s = Statement(self)
         self._result = s.execute()
         self.flushed = True
+        self._delete_operands()
         return self._result
 
     @property
