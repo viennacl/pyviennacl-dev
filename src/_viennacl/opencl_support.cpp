@@ -100,6 +100,7 @@ PYVCL_SUBMODULE(opencl_support)
 
   bp::enum_<vcl::ocl::vendor_id>
             ("vendor_id")
+            ENUM_VALUE(vcl::ocl, beignet_id)
             ENUM_VALUE(vcl::ocl, intel_id)
             ENUM_VALUE(vcl::ocl, nvidia_id)
             ENUM_VALUE(vcl::ocl, amd_id)
