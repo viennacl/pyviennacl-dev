@@ -1,6 +1,6 @@
 import abc, logging
-import _viennacl as _v
-from pycore import Node, Statement
+from . import _viennacl as _v
+from .pycore import Node, Statement
 
 class OrderType(object):
     def __init__(*args):
