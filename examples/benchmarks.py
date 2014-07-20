@@ -3,7 +3,7 @@
 from __future__ import division
 
 #
-# Configuration options for benchmarks
+# Default configuration options
 #
 
 # Default benchmarks
@@ -27,12 +27,20 @@ GEMV_SIZES = [int(10**(x/5)) for x in range(8,22)]
 GEMM_SIZES = [int(10**(x/5)) for x in range(8,21)]
 SPGEMV_SIZES = [int(10**(x/5)) for x in range(8,22)]
 SPGEMM_SIZES = [int(10**(x/5)) for x in range(8,21)]
+
+QUICK_ADD_SIZES = [int(10**(x/3)) for x in range(20,22)]
+QUICK_GEMV_SIZES = [int(10**(x/5)) for x in range(18,21)]
+QUICK_GEMM_SIZES = [int(10**(x/5)) for x in range(18,21)]
+QUICK_SPGEMV_SIZES = [int(10**(x/5)) for x in range(18,21)]
+QUICK_SPGEMM_SIZES = [int(10**(x/5)) for x in range(18,21)]
+
 SPARSITY = 0.02
 
 ################################################################################
 
-import sys, time
+import argparse, sys, time
 import numpy as np
+from pyviennacl import Statement
 from pyviennacl.backend import Context
 from timeit import timeit
 try: import gnumpy
@@ -40,61 +48,30 @@ except ImportError: CUDA = False
 try: import pyopencl as cl
 except ImportError: PYVIENNACL = False
 
-def do_benchmark(setup, do_op, sizes, num_iters=5,
-                 sparsity=None, cl_device=None):
-    if cl_device is None:
-        ctx = None
-    else:
-        ctx = Context(cl.Context([cl_device]))
+def get_cl_devices():
+    return [x for platform in cl.get_platforms() for x in platform.get_devices()]
 
-    for size in sizes:
-        try:
-            A, B = setup(size, sparsity=sparsity, context=ctx)
-            if ctx is not None: ctx.finish_all_queues()
-            for i in range(3):
-                do_op(A, B, ctx)
-
-            N = 0
-            current_time = 0
-            if ctx is not None: ctx.finish_all_queues() # Just to be sure
-            while current_time < 1:
-                current_time += do_op(A, B, ctx)
-                N += 1
-            print(size, current_time / N)
-        except Exception as e:
-            print("Exception with size %d: %s" % (size, e))
-            break
-
-def setup_vector_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
+def setup_add_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
     import pyviennacl as p
 
-    x = np.ones(size).astype(dtype) * 0.3
-    y = np.ones(size).astype(dtype) * 0.9
-
-    x = p.Vector(x, context=context)
-    y = p.Vector(y, context=context)
+    x = p.Vector(size, 1.0, dtype=dtype, context=context)
+    y = p.Vector(size, 1.0, dtype=dtype, context=context)
 
     return x, y
 
 def setup_gemm_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
     import pyviennacl as p
 
-    A = np.ones((size,size)).astype(dtype) * 0.3
-    B = np.ones((size,size)).astype(dtype) * 0.9
-
-    A = p.Matrix(A, context=context)
-    B = p.Matrix(B, context=context)
+    A = p.Matrix(size, size, 1.0, dtype=dtype, context=context)
+    B = p.Matrix(size, size, 1.0, dtype=dtype, context=context)
 
     return A, B
 
 def setup_gemv_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
     import pyviennacl as p
 
-    A = np.ones((size,size)).astype(dtype) * 0.5
-    A = p.Matrix(A, context=context)
-
-    x = np.ones((size,)).astype(dtype) * 2.0
-    x = p.Vector(x, context=context)
+    A = p.Matrix(size, size, 1.0, dtype=dtype, context=context)
+    x = p.Vector(size, 1.0, dtype=dtype, context=context)
 
     return A, x
 
@@ -171,7 +148,7 @@ def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32)
 
     return A, B
 
-def setup_vector_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
+def setup_add_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
     import gnumpy as gnp
 
     x = np.ones(size).astype(dtype) * 0.3
@@ -204,7 +181,7 @@ def setup_gemv_gnumpy(size, sparsity = None, context = None, dtype = np.float32)
 
     return A, x
 
-def setup_vector_numpy(size, sparsity = None, context = None, dtype = np.float32):
+def setup_add_numpy(size, sparsity = None, context = None, dtype = np.float32):
     x = np.ones(size).astype(dtype) * 0.3
     y = np.ones(size).astype(dtype) * 0.9
 
@@ -273,262 +250,141 @@ def setup_spgemm_scipy(size, sparsity = None, context = None, dtype = np.float32
     return A, B
 
 def add_pyvcl(A, B, ctx = None):
-    time_before = time.time()
-    res = (A+B).execute()
-    ctx.finish_all_queues()
-    time_now = time.time() - time_before
-    return time_now
+    return Statement(A+B).execute()
+    #return (A+B).execute()
 
 def gemv_pyvcl(A, x, ctx = None):
-    time_before = time.time()
-    res = (A*x).execute()
-    ctx.finish_all_queues()
-    time_now = time.time() - time_before
-    return time_now
+    return Statement(A*x).execute()
+    #return (A*x).execute()
 
 def gemm_pyvcl(A, B, ctx = None):
-    time_before = time.time()
-    res = (A.T*B).execute()
-    ctx.finish_all_queues()
-    time_now = time.time() - time_before
-    return time_now
+    return Statement(A.T*B).execute()
+    #return (A.T*B).execute()
 
 def spgemv_pyvcl(A, x, ctx = None):
-    time_before = time.time()
-    res = (A*x).execute()
-    ctx.finish_all_queues()
-    time_now = time.time() - time_before
-    return time_now
+    return Statement(A*x).execute()
+    #return (A*x).execute()
 
 def spgemm_pyvcl(A, B, ctx = None):
-    time_before = time.time()
-    res = (A*B).execute()
-    ctx.finish_all_queues()
-    time_now = time.time() - time_before
-    return time_now
+    return Statement(A*B).execute()
+    #return (A*B).execute()
 
 def add_numpy(A, B, ctx = None):
-    time_before = time.time()
-    res = A+B
-    time_now = time.time() - time_before
-    return time_now
+    return A+B
 
 def gemv_numpy(A, x, ctx = None):
-    time_before = time.time()
-    res = A.dot(x)
-    time_now = time.time() - time_before
-    return time_now
+    return A.dot(x)
 
 def gemm_numpy(A, B, ctx = None):
-    time_before = time.time()
-    res = A.T.dot(B)
-    time_now = time.time() - time_before
-    return time_now
+    return A.T.dot(B)
 
 def spgemv_numpy(A, x, ctx = None):
-    time_before = time.time()
-    res = A.dot(x)
-    time_now = time.time() - time_before
-    return time_now
+    return A.dot(x)
 
 def spgemm_numpy(A, B, ctx = None):
-    time_before = time.time()
-    res = A.dot(B)
-    time_now = time.time() - time_before
-    return time_now
+    return A.dot(B)
 
+# TODO general parameters (sizes, sparsities, etc)
+benchmarks = {
+    'add' : {
+        'DESCRIPTION' : 'Vector Addition x = y + z',
+        'CONFIG' : (ADD_SIZES, QUICK_ADD_SIZES, None),
+        'pyviennacl' : (setup_add_pyvcl, add_pyvcl),
+        'numpy_scipy' : (setup_add_numpy, add_numpy),
+        'gnumpy': (setup_add_gnumpy, add_numpy)
+    },
+    'gemv' : {
+        'DESCRIPTION' : 'Dense Matrix-Matrix Product A.T * B',
+        'CONFIG' : (GEMV_SIZES, QUICK_GEMV_SIZES, None),
+        'pyviennacl' : (setup_gemv_pyvcl, gemv_pyvcl),
+        'numpy_scipy' : (setup_gemv_numpy, gemv_numpy),
+        'gnumpy': (setup_gemv_gnumpy, gemv_numpy)
+    },
+    'gemm' : {
+        'DESCRIPTION' : 'Dense Matrix-Vector Product A * x',
+        'CONFIG' : (GEMM_SIZES, QUICK_GEMM_SIZES, None),
+        'pyviennacl' : (setup_gemm_pyvcl, gemm_pyvcl),
+        'numpy_scipy' : (setup_gemm_numpy, gemm_numpy),
+        'gnumpy': (setup_gemm_gnumpy, gemm_numpy)
+    },
+    'spgemv' : {
+        'DESCRIPTION' : 'Sparse (%f) Matrix-Vector Product',
+        'CONFIG' : (SPGEMV_SIZES, QUICK_SPGEMV_SIZES, SPARSITY),
+        'pyviennacl' : (setup_spgemv_pyvcl, spgemv_pyvcl),
+        'numpy_scipy' : (setup_spgemv_scipy, spgemv_numpy),
+    },
+    'spgemm' : {
+        'DESCRIPTION' : 'Sparse (%f) Matrix-Matrix Product',
+        'CONFIG' : (SPGEMM_SIZES, QUICK_SPGEMM_SIZES, SPARSITY),
+        'pyviennacl' : (setup_spgemm_pyvcl, spgemm_pyvcl),
+        'numpy_scipy' : (setup_spgemm_scipy, spgemm_numpy),
+    },
+}
 
-def main(arg):
+platforms = {
+    'pyviennacl' : ('PyViennaCL', get_cl_devices),
+    'numpy_scipy' : ('NumPy/SciPy', None),
+    'gnumpy' : ('gnumpy', None)
+}
 
-    #
-    # Vector addition
-    #
+def do_benchmark(platform_id, benchmark_id, quick=False):
+    benchmark = benchmarks[benchmark_id]
+    platform = platforms[platform_id]
 
-    if arg == "add":
+    setup = benchmark[platform_id][0]
+    do_op = benchmark[platform_id][1]
 
-        print("OPERATION: Vector Addition x = y + z")
+    sparsity = benchmark['CONFIG'][2]
 
-        if PYVIENNACL:
-            for platform in cl.get_platforms():
-                for device in platform.get_devices():
-                    print("PLATFORM: PyViennaCL: %s" % device.name)
-                    try:
-                        do_benchmark(setup_vector_pyvcl, add_pyvcl, ADD_SIZES,
-                                     cl_device=device)
-                    except KeyboardInterrupt:
-                        print(" !!! Interrupted, so moving on...")
-                        continue
-                    print("")
-                
-        if NUMPY_SCIPY:
-            print("PLATFORM: NumPy")
-            try:
-                do_benchmark(setup_vector_numpy, add_numpy, ADD_SIZES)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-
-        if CUDA:
-            print("PLATFORM: gnumpy")
-            try:
-                do_benchmark(setup_vector_gnumpy, add_numpy, ADD_SIZES)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-
-    #
-    # Dense matrix multiplication
-    #
-    
-    elif arg == "gemm":
-
-        print("OPERATION: Dense Matrix-Matrix Product A.T * B")
-
-        if PYVIENNACL:
-            for platform in cl.get_platforms():
-                for device in platform.get_devices():
-                    print("PLATFORM: PyViennaCL: %s" % device.name)
-                    try:
-                        do_benchmark(setup_gemm_pyvcl, gemm_pyvcl, GEMM_SIZES,
-                                     cl_device=device)
-                    except KeyboardInterrupt:
-                        print(" !!! Interrupted, so moving on...")
-                        continue
-                    print("")
-
-        if NUMPY_SCIPY:
-            print("PLATFORM: NumPy")
-            try:
-                do_benchmark(setup_gemm_numpy, gemm_numpy, GEMM_SIZES)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-    
-        if CUDA:
-            print("PLATFORM: gnumpy")
-            try:
-                do_benchmark(setup_gemm_gnumpy, gemm_numpy, GEMM_SIZES)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-
-
-    #
-    # Dense matrix-vector multiplication
-    #
-
-    elif arg == "gemv":
-
-        print("OPERATION: Dense Matrix-Vector Product A * x")
-
-        if PYVIENNACL:
-            for platform in cl.get_platforms():
-                for device in platform.get_devices():
-                    print("PLATFORM: PyViennaCL: %s" % device.name)
-                    try:
-                        do_benchmark(setup_gemv_pyvcl, gemv_pyvcl, GEMV_SIZES,
-                                     cl_device=device)
-                    except KeyboardInterrupt:
-                        print(" !!! Interrupted, so moving on...")
-                        continue
-                    print("")
-
-        if NUMPY_SCIPY:
-            print("PLATFORM: NumPy")
-            try:
-                do_benchmark(setup_gemv_numpy, gemv_numpy, GEMV_SIZES)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-    
-        if CUDA:
-            print("PLATFORM: gnumpy")
-            try:
-                do_benchmark(setup_gemv_gnumpy, gemv_numpy, GEMV_SIZES)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-
-
-    #
-    # Sparse matrix-matrix multiplication
-    #
-
-    elif arg == "spgemm":
-
-        print("OPERATION: Sparse (%f) Matrix-Matrix Product" % SPARSITY)
-
-        if PYVIENNACL:
-            for platform in cl.get_platforms():
-                for device in platform.get_devices():
-                    print("PLATFORM: PyViennaCL: %s" % device.name)
-                    try:
-                        do_benchmark(setup_spgemm_pyvcl, spgemm_pyvcl, SPGEMM_SIZES,
-                                     sparsity=SPARSITY, cl_device=device)
-                    except KeyboardInterrupt:
-                        print(" !!! Interrupted, so moving on...")
-                        continue
-                    print("")
-
-        if NUMPY_SCIPY:
-            print("PLATFORM: SciPy")
-            try:
-                do_benchmark(setup_spgemm_scipy, spgemm_numpy, SPGEMM_SIZES,
-                             sparsity=SPARSITY)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-
-    #
-    # Sparse matrix-vector multiplication
-    #
-
-    elif arg == "spgemv":
-
-        print("OPERATION: Sparse (%f) Matrix-Vector Product" % SPARSITY)
-
-        if PYVIENNACL:
-            for platform in cl.get_platforms():
-                for device in platform.get_devices():
-                    print("PLATFORM: PyViennaCL: %s" % device.name)
-                    try:
-                        do_benchmark(setup_spgemv_pyvcl, spgemm_pyvcl, SPGEMV_SIZES,
-                                     sparsity=SPARSITY, cl_device=device)
-                    except KeyboardInterrupt:
-                        print(" !!! Interrupted, so moving on...")
-                        continue
-                    print("")
-
-        if NUMPY_SCIPY:
-            print("PLATFORM: NumPy")
-            try:
-                do_benchmark(setup_spgemv_scipy, spgemv_numpy, SPGEMV_SIZES,
-                             sparsity=SPARSITY)
-            except KeyboardInterrupt:
-                print(" !!! Interrupted, so moving on...")
-            print("")
-
+    if quick:
+        sizes = benchmark['CONFIG'][1]
     else:
+        sizes = benchmark['CONFIG'][0]
 
-        print("Choose a benchmark: add, gemv, gemm, spgemv, or spgemm")
+    print("OPERATION: " + benchmark['DESCRIPTION'])
 
-        # TODO: sparse-vec mult (theano)
+    if platform[1] is None:
+        devices = [None]
+    else:
+        devices = platform[1]()
+
+    for device in devices:
+        try:
+            if device is None:
+                print("PLATFORM: " + platform[0])
+                ctx = None
+            else:
+                print("PLATFORM: " + platform[0] + ": " + device.name)
+                ctx = Context(cl.Context([device]))
+        
+            for size in sizes:
+                try:
+                    A, B = setup(size, sparsity=sparsity, context=ctx)
+                    if ctx is not None: ctx.finish_all_queues()
+                    for i in range(3):
+                        do_op(A, B, ctx)
+            
+                    N = 0
+                    current_time = 0
+                    if ctx is not None: ctx.finish_all_queues() # Just to be sure
+                    while current_time < 1:
+                        time_before = time.time()
+                        do_op(A, B, ctx)
+                        if ctx is not None: ctx.finish_all_queues()
+                        current_time += time.time() - time_before
+                        N += 1
+                    print(size, current_time / N)
+                except Exception as e:
+                    print("Exception with size %d: %s" % (size, e))
+                    break
+        except KeyboardInterrupt:
+            print(" !!! Interrupted, so moving on...")
+        print("")
+
+
+def main(args):
+    do_benchmark('pyviennacl', 'gemm', True)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main(sys.argv[1])
-    else:
-        #print("-------------------------------------------------------------")
-        #if ADD: main("add")
-        #print("-------------------------------------------------------------")
-        #if GEMV: main("gemv")
-        #print("-------------------------------------------------------------")
-        #if GEMM: main("gemm")
-        #print("-------------------------------------------------------------")
-        #if SPGEMV: main("spgemv")
-        #print("-------------------------------------------------------------")
-        #if SPGEMM: main("spgemm")
-        #print("-------------------------------------------------------------")
-        main("") # Because Python leaks memory otherwise ...
-
+    main(sys.argv)
