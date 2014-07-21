@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 
 from __future__ import division
+import numpy as np
 
 #
 # Default configuration options
 #
 
+PYVIENNACL_SKIP_CPU = True
+
+# Data types to test
+
+DTYPES = ['float32', 'float64']
+
 # Default benchmarks
 
-ADD = True
-GEMV = True
-SPGEMV = True
-GEMM = True
-SPGEMM = True
+BENCHMARKS = ['add', 'gemv', 'gemm']#,
+              #'spgemv', 'spgemm']
 
 # Platforms
 
@@ -28,18 +32,17 @@ GEMM_SIZES = [int(10**(x/5)) for x in range(8,21)]
 SPGEMV_SIZES = [int(10**(x/5)) for x in range(8,22)]
 SPGEMM_SIZES = [int(10**(x/5)) for x in range(8,21)]
 
-QUICK_ADD_SIZES = [int(10**(x/3)) for x in range(20,22)]
-QUICK_GEMV_SIZES = [int(10**(x/5)) for x in range(18,21)]
-QUICK_GEMM_SIZES = [int(10**(x/5)) for x in range(18,21)]
-QUICK_SPGEMV_SIZES = [int(10**(x/5)) for x in range(18,21)]
-QUICK_SPGEMM_SIZES = [int(10**(x/5)) for x in range(18,21)]
+QUICK_ADD_SIZE = [10**7]
+QUICK_GEMV_SIZE = [3500]
+QUICK_GEMM_SIZE = [2100]
+QUICK_SPGEMV_SIZE = [3500]
+QUICK_SPGEMM_SIZE = [2100]
 
 SPARSITY = 0.02
 
 ################################################################################
 
-import argparse, sys, time
-import numpy as np
+import argparse, itertools, sys, time
 from pyviennacl import Statement
 from pyviennacl.backend import Context
 from timeit import timeit
@@ -48,42 +51,67 @@ except ImportError: CUDA = False
 try: import pyopencl as cl
 except ImportError: PYVIENNACL = False
 
+class UnsupportedPlatformException(Exception): pass
+
 def get_cl_devices():
     return [x for platform in cl.get_platforms() for x in platform.get_devices()]
 
 def setup_add_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
-    import pyviennacl as p
+    WITH_PYVCL = True
+    try:
+        import pyviennacl as p
+        import pyopencl as cl
+    except: WITH_PYVCL = False
+    if not WITH_PYVCL:
+        raise UnsupportedPlatformException("PyViennaCL")
 
-    x = p.Vector(size, 1.0, dtype=dtype, context=context)
-    y = p.Vector(size, 1.0, dtype=dtype, context=context)
+    x = p.Vector(size, dtype(1.0), dtype=dtype, context=context)
+    y = p.Vector(size, dtype(1.0), dtype=dtype, context=context)
 
     return x, y
 
 def setup_gemm_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
-    import pyviennacl as p
+    WITH_PYVCL = True
+    try:
+        import pyviennacl as p
+        import pyopencl as cl
+    except: WITH_PYVCL = False
+    if not WITH_PYVCL:
+        raise UnsupportedPlatformException("PyViennaCL")
 
-    A = p.Matrix(size, size, 1.0, dtype=dtype, context=context)
-    B = p.Matrix(size, size, 1.0, dtype=dtype, context=context)
+    A = p.Matrix(size, size, dtype(1.0), dtype=dtype, context=context)
+    B = p.Matrix(size, size, dtype(1.0), dtype=dtype, context=context)
 
     return A, B
 
 def setup_gemv_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
-    import pyviennacl as p
+    WITH_PYVCL = True
+    try:
+        import pyviennacl as p
+        import pyopencl as cl
+    except: WITH_PYVCL = False
+    if not WITH_PYVCL:
+        raise UnsupportedPlatformException("PyViennaCL")
 
-    A = p.Matrix(size, size, 1.0, dtype=dtype, context=context)
-    x = p.Vector(size, 1.0, dtype=dtype, context=context)
+    A = p.Matrix(size, size, dtype(1.0), dtype=dtype, context=context)
+    x = p.Vector(size, dtype(1.0), dtype=dtype, context=context)
 
     return A, x
 
 def setup_spgemv_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
-    import pyviennacl as p
+    WITH_PYVCL = True
+    try:
+        import pyviennacl as p
+        import pyopencl as cl
+    except: WITH_PYVCL = False
+    if not WITH_PYVCL:
+        raise UnsupportedPlatformException("PyViennaCL")
     import math
 
     nnz = int(max(1, math.ceil((size*size)*sparsity)))
     mod = nnz
 
-    x = np.ones((size,)).astype(dtype) * 1.1
-    x = p.Vector(x, context=context)
+    x = p.Vector(size, dtype(1.0), dtype=dtype, context=context)
 
     values = np.array([], dtype=dtype)
     max_size = 10**6
@@ -111,8 +139,14 @@ def setup_spgemv_pyvcl(size, sparsity = None, context = None, dtype = np.float32
 
     return A, x
 
-def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32):
-    import pyviennacl as p
+def setup_spgemm_pyvcl(size, sparsity = None, context = None, dtype = np.float32):
+    WITH_PYVCL = True
+    try:
+        import pyviennacl as p
+        import pyopencl as cl
+    except: WITH_PYVCL = False
+    if not WITH_PYVCL:
+        raise UnsupportedPlatformException("PyViennaCL")
     import math
 
     nnz = int(max(1, math.ceil((size*size)*sparsity)))
@@ -149,7 +183,11 @@ def setup_spgemm_pyvcl(size, sparsity = None, device = None, dtype = np.float32)
     return A, B
 
 def setup_add_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
-    import gnumpy as gnp
+    WITH_GNUMPY = True
+    try: import gnumpy as gnp
+    except: WITH_GNUMPY = False
+    if not WITH_GNUMPY:
+        raise UnsupportedPlatformException("gnumpy")
 
     x = np.ones(size).astype(dtype) * 0.3
     y = np.ones(size).astype(dtype) * 0.9
@@ -160,7 +198,11 @@ def setup_add_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
     return x, y
 
 def setup_gemm_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
-    import gnumpy as gnp
+    WITH_GNUMPY = True
+    try: import gnumpy as gnp
+    except: WITH_GNUMPY = False
+    if not WITH_GNUMPY:
+        raise UnsupportedPlatformException("gnumpy")
 
     A = np.ones((size,size)).astype(dtype) * 0.7
     B = np.ones((size,size)).astype(dtype) * 0.5
@@ -171,7 +213,11 @@ def setup_gemm_gnumpy(size, sparsity = None, context = None, dtype = np.float32)
     return A, B
 
 def setup_gemv_gnumpy(size, sparsity = None, context = None, dtype = np.float32):
-    import gnumpy as gnp
+    WITH_GNUMPY = True
+    try: import gnumpy as gnp
+    except: WITH_GNUMPY = False
+    if not WITH_GNUMPY:
+        raise UnsupportedPlatformException("gnumpy")
 
     A = np.ones((size,size)).astype(dtype) * 0.3
     A = gnp.garray(A)
@@ -200,7 +246,11 @@ def setup_gemm_numpy(size, sparsity = None, context = None, dtype = np.float32):
     return A, B
 
 def setup_spgemv_scipy(size, sparsity = None, context = None, dtype = np.float32):
-    import scipy.sparse as sp
+    WITH_SCIPY = True
+    try: import scipy.sparse as sp
+    except: WITH_SCIPY = False
+    if not WITH_SCIPY:
+        raise UnsupportedPlatformException("scipy.sparse")
     import math
 
     nnz = int(math.ceil((size*size)*sparsity))
@@ -224,9 +274,12 @@ def setup_spgemv_scipy(size, sparsity = None, context = None, dtype = np.float32
 
     return A, x
 
-
 def setup_spgemm_scipy(size, sparsity = None, context = None, dtype = np.float32):
-    import scipy.sparse as sp
+    WITH_SCIPY = True
+    try: import scipy.sparse as sp
+    except: WITH_SCIPY = False
+    if not WITH_SCIPY:
+        raise UnsupportedPlatformException("scipy.sparse")
     import math
 
     nnz = int(math.ceil((size*size)*sparsity))
@@ -284,38 +337,57 @@ def spgemv_numpy(A, x, ctx = None):
 def spgemm_numpy(A, B, ctx = None):
     return A.dot(B)
 
+def gt(x, y): return x > y
+
+def lt(x, y): return x < y
+
+def add_perf(size, sparsity, time):
+    return (np.float32().itemsize * 3 * size) / (time*(10**9)), 'GB/s', gt
+
+def gemv_perf(size, sparsity, time):
+    return (np.float32().itemsize * (size**2)) / (time * (10**9)), 'GB/s', gt
+
+def gemm_perf(size, sparsity, time):
+    return (2 * (size**3)) / (time * (10**9)), 'GFLOP/s', gt
+
+def spgemv_perf(size, sparsity, time):
+    return size*size*sparsity/time, 'Nonzeros/s', gt
+
+def spgemm_perf(size, sparsity, time):
+    return size*size*sparsity/time, 'Nonzeros/s', gt
+
 # TODO general parameters (sizes, sparsities, etc)
 benchmarks = {
     'add' : {
         'DESCRIPTION' : 'Vector Addition x = y + z',
-        'CONFIG' : (ADD_SIZES, QUICK_ADD_SIZES, None),
+        'CONFIG' : (ADD_SIZES, QUICK_ADD_SIZE, None, add_perf),
         'pyviennacl' : (setup_add_pyvcl, add_pyvcl),
         'numpy_scipy' : (setup_add_numpy, add_numpy),
         'gnumpy': (setup_add_gnumpy, add_numpy)
     },
     'gemv' : {
-        'DESCRIPTION' : 'Dense Matrix-Matrix Product A.T * B',
-        'CONFIG' : (GEMV_SIZES, QUICK_GEMV_SIZES, None),
+        'DESCRIPTION' : 'Dense Matrix-Vector Product A * x',
+        'CONFIG' : (GEMV_SIZES, QUICK_GEMV_SIZE, None, gemv_perf),
         'pyviennacl' : (setup_gemv_pyvcl, gemv_pyvcl),
         'numpy_scipy' : (setup_gemv_numpy, gemv_numpy),
         'gnumpy': (setup_gemv_gnumpy, gemv_numpy)
     },
     'gemm' : {
-        'DESCRIPTION' : 'Dense Matrix-Vector Product A * x',
-        'CONFIG' : (GEMM_SIZES, QUICK_GEMM_SIZES, None),
+        'DESCRIPTION' : 'Dense Matrix-Matrix Product A.T * B',
+        'CONFIG' : (GEMM_SIZES, QUICK_GEMM_SIZE, None, gemm_perf),
         'pyviennacl' : (setup_gemm_pyvcl, gemm_pyvcl),
         'numpy_scipy' : (setup_gemm_numpy, gemm_numpy),
         'gnumpy': (setup_gemm_gnumpy, gemm_numpy)
     },
     'spgemv' : {
-        'DESCRIPTION' : 'Sparse (%f) Matrix-Vector Product',
-        'CONFIG' : (SPGEMV_SIZES, QUICK_SPGEMV_SIZES, SPARSITY),
+        'DESCRIPTION' : 'Sparse Matrix-Vector Product',
+        'CONFIG' : (SPGEMV_SIZES, QUICK_SPGEMV_SIZE, SPARSITY, spgemv_perf),
         'pyviennacl' : (setup_spgemv_pyvcl, spgemv_pyvcl),
         'numpy_scipy' : (setup_spgemv_scipy, spgemv_numpy),
     },
     'spgemm' : {
-        'DESCRIPTION' : 'Sparse (%f) Matrix-Matrix Product',
-        'CONFIG' : (SPGEMM_SIZES, QUICK_SPGEMM_SIZES, SPARSITY),
+        'DESCRIPTION' : 'Sparse Matrix-Matrix Product',
+        'CONFIG' : (SPGEMM_SIZES, QUICK_SPGEMM_SIZE, SPARSITY, spgemm_perf),
         'pyviennacl' : (setup_spgemm_pyvcl, spgemm_pyvcl),
         'numpy_scipy' : (setup_spgemm_scipy, spgemm_numpy),
     },
@@ -327,39 +399,55 @@ platforms = {
     'gnumpy' : ('gnumpy', None)
 }
 
-def do_benchmark(platform_id, benchmark_id, quick=False):
+def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False):
     benchmark = benchmarks[benchmark_id]
     platform = platforms[platform_id]
 
     setup = benchmark[platform_id][0]
     do_op = benchmark[platform_id][1]
 
+    best_perf, unit, order = {}, None, None
+
+    perf_metric = benchmark['CONFIG'][3]
     sparsity = benchmark['CONFIG'][2]
 
     if quick:
         sizes = benchmark['CONFIG'][1]
+        if len(sizes) > 1:
+            raise Exception("Not quick if more than one size used!")
+        def quiet_print(*args): pass
     else:
         sizes = benchmark['CONFIG'][0]
-
-    print("OPERATION: " + benchmark['DESCRIPTION'])
+        def quiet_print(*args): print(*args)
 
     if platform[1] is None:
         devices = [None]
     else:
         devices = platform[1]()
 
+    # Test feasibility
+    if devices[0] is None:
+        setup(10, 0.1, None, dtype)
+    else:
+        setup(10, 0.1, Context(cl.Context([devices[0]])), dtype)
+
     for device in devices:
         try:
             if device is None:
-                print("PLATFORM: " + platform[0])
+                platform_name = platform[0] + " (" + str(np.dtype(dtype)) + ")"
                 ctx = None
             else:
-                print("PLATFORM: " + platform[0] + ": " + device.name)
+                if PYVIENNACL_SKIP_CPU and cl.device_type.to_string(device.type) == 'CPU':
+                    continue
+                platform_name = platform[0] + " on " + device.name + " (" + str(np.dtype(dtype)) + ")"
                 ctx = Context(cl.Context([device]))
+
+            best_perf[platform_name] = None
+            if not quick: print("PLATFORM: " + platform_name)
         
             for size in sizes:
                 try:
-                    A, B = setup(size, sparsity=sparsity, context=ctx)
+                    A, B = setup(size, sparsity=sparsity, context=ctx, dtype=dtype)
                     if ctx is not None: ctx.finish_all_queues()
                     for i in range(3):
                         do_op(A, B, ctx)
@@ -373,18 +461,126 @@ def do_benchmark(platform_id, benchmark_id, quick=False):
                         if ctx is not None: ctx.finish_all_queues()
                         current_time += time.time() - time_before
                         N += 1
-                    print(size, current_time / N)
+                    time_per = current_time / N
+                    perf, unit, order = perf_metric(size, sparsity, time_per)
+                    if best_perf[platform_name] is None or order(perf, best_perf[platform_name]):
+                        best_perf[platform_name] = perf
+                    quiet_print("("+",".join(map(str, [size, time_per]))+")")
                 except Exception as e:
-                    print("Exception with size %d: %s" % (size, e))
+                    quiet_print("Exception with size %d: %s" % (size, e))
                     break
         except KeyboardInterrupt:
-            print(" !!! Interrupted, so moving on...")
-        print("")
+            quiet_print(" !!! Interrupted, so moving on...")
+        quiet_print("")
+    return best_perf, unit, order
 
 
-def main(args):
-    do_benchmark('pyviennacl', 'gemm', True)
+def main():
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument('--exhaustive', action='store_true')
+
+    temp_args, temp_unknowns = parser.parse_known_args()
+    quick = not temp_args.exhaustive
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('--exhaustive', action='store_true',
+                        help="Run benchmarks over a number of sizes, printing complete results. The default is instead to produce a quick summary.")
+
+    parser.add_argument('--dtypes', metavar='DTYPE', nargs="+", type=str, default=DTYPES,
+                        help="Data type(s) to benchmark")
+
+    parser.add_argument('--benchmarks', metavar='BENCHMARK', nargs="+", type=str, default=BENCHMARKS,
+                        help="Benchmarks to run", choices=benchmarks.keys())
+
+    platform_names = list(platforms.keys())
+    platform_names.sort()
+    parser.add_argument('--platforms', metavar='PLATFORM', nargs="+", type=str, default=platform_names,
+                        help="Platforms to benchmark", choices=platform_names)
+
+    for benchmark in benchmarks.keys():
+        if quick:
+            sizes = benchmarks[benchmark]['CONFIG'][1]
+        else:
+            sizes = benchmarks[benchmark]['CONFIG'][0]
+        parser.add_argument('--' + benchmark + '_sizes', metavar='SIZE', nargs="+", type=int, default=sizes,
+                            help="Sizes to benchmark for the " + benchmark + " benchmark")
+        sparsity = benchmarks[benchmark]['CONFIG'][2]
+        if  sparsity is not None:
+            parser.add_argument('--' + benchmark + '_sparsity', metavar='SPARSITY', type=int, default=sparsity,
+                                help="Sparsity for the matrices in the " + benchmark + " benchmark")
+
+    args = parser.parse_args()
+
+    results = {}
+
+    previous_benchmark = None
+    for benchmark, dtype, platform in itertools.product(args.benchmarks, args.dtypes, args.platforms):
+        if platform not in benchmarks[benchmark].keys():
+            continue
+
+        if not quick and benchmark != previous_benchmark:
+            if previous_benchmark is not None:
+                print('')
+            print("OPERATION: " + benchmarks[benchmark]['DESCRIPTION'])
+            previous_benchmark = benchmark
+        elif quick:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+
+        sizes = getattr(args, benchmark + "_sizes")
+        try:
+            sparsity = getattr(args, benchmark + "_sparsity")
+        except AttributeError:
+            sparsity = None
+        perf = benchmarks[benchmark]['CONFIG'][3]
+        CONFIG = (sizes, sizes, sparsity, perf)
+        benchmarks[benchmark]['CONFIG'] = CONFIG
+        dtype = getattr(np, dtype)
+
+        try:
+            tmp_results = do_benchmark(platform, benchmark, dtype, quick)
+        except UnsupportedPlatformException:
+            continue
+
+        if benchmark not in results.keys():
+            results[benchmark] = {}
+        if dtype not in results[benchmark].keys():
+            results[benchmark][dtype] = {}
+        results[benchmark][dtype][platform] = tmp_results
+
+    if quick: print('\n')
+    print("Peak-performance results")
+    print("========================\n")
+
+    # Find longest platform name
+    longest = 0
+    for w in results.keys():
+        for x in results[w].keys():
+            for y in results[w][x].keys():
+                for z in results[w][x][y][0].keys():
+                    l = len(z)
+                    if l > longest: longest = l
+
+    benchmark_keys = list(results.keys())
+    benchmark_keys.sort()
+    for benchmark in benchmark_keys:
+        title = benchmarks[benchmark]['DESCRIPTION']
+        print(title)
+        print('-' * len(title))
+        for dt in results[benchmark].keys():
+            plat_keys = list(results[benchmark][dt].keys())
+            plat_keys.sort()
+            for plat in plat_keys:
+                for platform_name in results[benchmark][dt][plat][0].keys():
+                    result = results[benchmark][dt][plat][0][platform_name]
+                    if not result: continue
+                    if len(platform_name) < longest:
+                        whitespace = " " * (longest - len(platform_name))
+                    else:
+                        whitespace = ""
+                    print(platform_name + ":" + whitespace + " %.2f" % result + " " + results[benchmark][dt][plat][1])
+        print('')
 
 
-if __name__ == "__main__":
-    main(sys.argv)
+if __name__ == "__main__": main()
