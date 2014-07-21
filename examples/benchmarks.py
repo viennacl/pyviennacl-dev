@@ -341,19 +341,19 @@ def gt(x, y): return x > y
 
 def lt(x, y): return x < y
 
-def add_perf(size, sparsity, time):
-    return (np.float32().itemsize * 3 * size) / (time*(10**9)), 'GB/s', gt
+def add_perf(dtype, size, sparsity, time):
+    return (np.dtype(dtype).itemsize * 3 * size) / (time*(10**9)), 'GB/s', gt
 
-def gemv_perf(size, sparsity, time):
-    return (np.float32().itemsize * (size**2)) / (time * (10**9)), 'GB/s', gt
+def gemv_perf(dtype, size, sparsity, time):
+    return (np.dtype(dtype).itemsize * (size**2)) / (time * (10**9)), 'GB/s', gt
 
-def gemm_perf(size, sparsity, time):
+def gemm_perf(dtype, size, sparsity, time):
     return (2 * (size**3)) / (time * (10**9)), 'GFLOP/s', gt
 
-def spgemv_perf(size, sparsity, time):
+def spgemv_perf(dtype, size, sparsity, time):
     return size*size*sparsity/time, 'Nonzeros/s', gt
 
-def spgemm_perf(size, sparsity, time):
+def spgemm_perf(dtype, size, sparsity, time):
     return size*size*sparsity/time, 'Nonzeros/s', gt
 
 # TODO general parameters (sizes, sparsities, etc)
@@ -462,7 +462,7 @@ def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False):
                         current_time += time.time() - time_before
                         N += 1
                     time_per = current_time / N
-                    perf, unit, order = perf_metric(size, sparsity, time_per)
+                    perf, unit, order = perf_metric(dtype, size, sparsity, time_per)
                     if best_perf[platform_name] is None or order(perf, best_perf[platform_name]):
                         best_perf[platform_name] = perf
                     quiet_print("("+",".join(map(str, [size, time_per]))+")")
