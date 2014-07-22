@@ -56,7 +56,7 @@ class TemplateBase(object):
         vcl_template = self.make_vcl_template(self.parameters.make_parameters());
         vcl_statement = statement.vcl_statement;
         vcl_context = statement.result.context.vcl_sub_context;
-        vcl_statement.check_template(vcl_template, vcl_context);
+        return vcl_statement.check_template(vcl_template, vcl_context);
         
     def execute(self, statement, force_compilation=False):
         vcl_template = self.make_vcl_template(self.parameters.make_parameters());

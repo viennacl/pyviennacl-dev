@@ -133,10 +133,10 @@ public:
     vcl::scheduler::execute(get_vcl_statement());
   }
 
-  void check_template(vcl::device_specific::template_base const & tplt, viennacl::ocl::context const & context)
+  int check_template(vcl::device_specific::template_base const & tplt, viennacl::ocl::context const & context)
   {
     vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
-    tplt.check_statements(tmp_statement, context.current_device());
+    return tplt.check_invalid(tmp_statement, context.current_device());
   }
   
   void execute_template(vcl::device_specific::template_base & tplt, vcl::ocl::context & ctx, bool force_compilation)
