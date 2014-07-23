@@ -1177,6 +1177,18 @@ class Scalar(ScalarBase):
         self.vcl_leaf = vcl_type(self._value, self._context.vcl_context)
         self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
 
+    @property
+    def value(self):
+        """
+        The stored value of the scalar.
+        """
+        return self.vcl_leaf.to_host()
+
+    @value.setter
+    def value(self, value):
+        self._value = self.dtype.type(value)
+        self._init_scalar()
+
 
 class Vector(Leaf):
     """

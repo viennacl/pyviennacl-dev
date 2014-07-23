@@ -179,6 +179,7 @@ DISAMBIGUATE_CLASS_FUNCTION_PTR(statement_node_wrapper,         // class
     .def("check_template", &statement_wrapper::check_template)
     .def("execute_template", &statement_wrapper::execute_template)
     .def("execute", &statement_wrapper::execute)
+    .def("print", &statement_wrapper::print_vcl_statement)
     .def("clear", &statement_wrapper::clear)
     .def("erase_node", &statement_wrapper::erase_node)
     .def("get_node", &statement_wrapper::get_node)

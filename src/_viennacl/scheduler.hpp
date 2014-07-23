@@ -129,6 +129,10 @@ public:
     return vcl::scheduler::statement(vcl_expression_nodes);
   }
 
+  void print_vcl_statement() const {
+    std::cout << get_vcl_statement() << std::endl;
+  }
+
   void execute() {
     vcl::scheduler::execute(get_vcl_statement());
   }

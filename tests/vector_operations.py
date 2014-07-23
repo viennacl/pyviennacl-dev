@@ -122,10 +122,6 @@ def run_test(*args, **kwargs):
     Z = alpha * vcl_B + vcl_C
     act_diff = math.fabs(diff(Y, Z))
     if act_diff > epsilon:
-        print(act_diff)
-        print(Y, type(Y))
-        print(Z, type(Z))
-        print(Z - Y)
         raise RuntimeError("Failed: scaled add (left)")
     print("Test: scaled add (left) passed")
 
@@ -134,7 +130,6 @@ def run_test(*args, **kwargs):
     Z = vcl_B + alpha * vcl_C
     act_diff = math.fabs(diff(Y, Z))
     if act_diff > epsilon: # (Z == Y).all():
-        pass
         raise RuntimeError("Failed: scaled add (left)")
     print("Test: scaled add (right) passed")
 
@@ -143,7 +138,6 @@ def run_test(*args, **kwargs):
     Z = alpha * vcl_B + alpha * vcl_C
     act_diff = math.fabs(diff(Y, Z))
     if act_diff > epsilon:
-        pass
         raise RuntimeError("Failed: scaled add (both)")
     print("Test: scaled add (both) passed")
 
@@ -151,21 +145,24 @@ def run_test(*args, **kwargs):
     X = vcl_A.value
     X -= vcl_B.value
     vcl_A -= vcl_B
-    if not (vcl_A == X).all():
+    act_diff = math.fabs(diff(vcl_A, X))
+    if act_diff > epsilon:
         raise RuntimeError("Failed: in-place sub")
     print("Test: in-place sub passed")
 
     # Scaled in-place sub
     X -= alpha.value * vcl_B.value
     vcl_A -= alpha * vcl_B
-    if not (vcl_A == X).all():
+    act_diff = math.fabs(diff(vcl_A, X))
+    if act_diff > epsilon:
         raise RuntimeError("Failed: scaled in-place sub")
     print("Test: scaled in-place sub passed")
 
     # Sub
     Y = vcl_A.value - vcl_B.value
     Z = vcl_A - vcl_B
-    if not (Y == Z).all():
+    act_diff = math.fabs(diff(Y, Z))
+    if act_diff > epsilon:
         raise RuntimeError("Failed: sub")
     print("Test: sub passed")
 
