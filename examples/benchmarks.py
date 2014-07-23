@@ -7,22 +7,23 @@ import numpy as np
 # Default configuration options
 #
 
+# Skip OpenCL CPU devices using PyViennaCL
+
 PYVIENNACL_SKIP_CPU = True
+
+# Times for which to run each benchmark loop
+
+TEST_TIME = 0.5 # seconds
+QUICK_TEST_TIME = 0.2 # seconds
 
 # Data types to test
 
-DTYPES = ['float32', 'float64']
+DTYPES = ['float32', 'float64'] # TODO: integers
 
-# Default benchmarks
+# Benchmarks to run by default
 
 BENCHMARKS = ['add', 'gemv', 'gemm']#,
               #'spgemv', 'spgemm']
-
-# Platforms
-
-PYVIENNACL = True  # PyViennaCL benchmarks
-NUMPY_SCIPY = True # NumPy / SciPy benchmarks
-CUDA = True        # Only if gnumpy is installed
 
 # Matrix structure parameters
 
@@ -356,7 +357,6 @@ def spgemv_perf(dtype, size, sparsity, time):
 def spgemm_perf(dtype, size, sparsity, time):
     return size*size*sparsity/time, 'Nonzeros/s', gt
 
-# TODO general parameters (sizes, sparsities, etc)
 benchmarks = {
     'add' : {
         'DESCRIPTION' : 'Vector Addition x = y + z',
@@ -412,11 +412,13 @@ def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False):
     sparsity = benchmark['CONFIG'][2]
 
     if quick:
+        test_time = TEST_TIME
         sizes = benchmark['CONFIG'][1]
         if len(sizes) > 1:
             raise Exception("Not quick if more than one size used!")
         def quiet_print(*args): pass
     else:
+        test_time = QUICK_TEST_TIME
         sizes = benchmark['CONFIG'][0]
         def quiet_print(*args): print(*args)
 
@@ -455,7 +457,7 @@ def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False):
                     N = 0
                     current_time = 0
                     if ctx is not None: ctx.finish_all_queues() # Just to be sure
-                    while current_time < 1:
+                    while current_time < test_time:
                         time_before = time.time()
                         do_op(A, B, ctx)
                         if ctx is not None: ctx.finish_all_queues()
