@@ -101,6 +101,20 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
   return array;
 }
 
+template<class MatrixT>
+vcl::matrix_slice<MatrixT>
+project_matrix_slice(MatrixT& m, const vcl::slice& r1, const vcl::slice& r2) {
+  return (vcl::matrix_slice<MatrixT>)
+    vcl::matrix_slice<MatrixT>(m, r1, r2);
+}
+
+template<class MatrixT>
+vcl::matrix_range<MatrixT>
+project_matrix_range(MatrixT& m, const vcl::range& r1, const vcl::range& r2) {
+  return (vcl::matrix_range<MatrixT>)
+    vcl::matrix_range<MatrixT>(m, r1, r2);
+}
+
 #define EXPORT_DENSE_MATRIX_BASE_CLASS(TYPE)                            \
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::matrix_base<TYPE>,               \
                                   vcl::matrix_base<TYPE>::handle_type&, \
@@ -138,7 +152,9 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
              vcl::tools::shared_ptr<vcl::matrix_slice<vcl::matrix_base<TYPE> > >, \
              bp::bases<vcl::matrix_base<TYPE> > >                       \
   ("matrix_slice_" #TYPE, bp::no_init)                                  \
-  ;
+  ;                                                                     \
+  bp::def("project_matrix_" #TYPE, project_matrix_range<vcl::matrix_base<TYPE> >); \
+  bp::def("project_matrix_" #TYPE, project_matrix_slice<vcl::matrix_base<TYPE> >);
 
 // TODO: cl_mem ctr
 #define EXPORT_DENSE_MATRIX_CLASS(TYPE, LAYOUT, F, CPU_F)               \
@@ -163,37 +179,7 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
              bp::bases<vcl::matrix_base<TYPE> > >                       \
   ("matrix_slice", bp::no_init)                                         \
   ;                                                                     \
-  DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::matrix_range<                 \
-                                   vcl::matrix<TYPE, F> >),             \
-                            vcl::project,                               \
-                            project_matrix_##TYPE##_##LAYOUT##_range_range, \
-                            (CONCAT(vcl::matrix<TYPE, F>&,              \
-                                    const vcl::range&,                  \
-                                    const vcl::range&)))                \
-  DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::matrix_range<                   \
-                                   vcl::matrix_range<vcl::matrix<TYPE, F> > >), \
-                            vcl::project,                               \
-                            project_matrix_range_##TYPE##_##LAYOUT##_range_range, \
-                            (CONCAT(vcl::matrix_range<vcl::matrix<TYPE, F> >&, \
-                                    const vcl::range&,                  \
-                                    const vcl::range&)))                \
-  DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::matrix_slice<                   \
-                                   vcl::matrix<TYPE, F> >),             \
-                            vcl::project,                               \
-                            project_matrix_##TYPE##_##LAYOUT##_slice_slice, \
-                            (CONCAT(vcl::matrix<TYPE, F>&,              \
-                                    const vcl::slice&,                  \
-                                    const vcl::slice&)))                \
-  DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::matrix_slice<                   \
-                                   vcl::matrix_slice<vcl::matrix<TYPE, F> > >), \
-                            vcl::project,                               \
-                            project_matrix_slice_##TYPE##_##LAYOUT##_slice_slice, \
-                            (CONCAT(vcl::matrix_slice<vcl::matrix<TYPE, F> >&, \
-                                    const vcl::slice&,                  \
-                                    const vcl::slice&)))                \
-  bp::def("project_matrix_" #TYPE, project_matrix_##TYPE##_##LAYOUT##_range_range); \
-  bp::def("project_matrix_" #TYPE, project_matrix_range_##TYPE##_##LAYOUT##_range_range); \
-  bp::def("project_matrix_" #TYPE, project_matrix_##TYPE##_##LAYOUT##_slice_slice); \
-  bp::def("project_matrix_" #TYPE, project_matrix_slice_##TYPE##_##LAYOUT##_slice_slice);
+  bp::def("project_matrix_" #TYPE, project_matrix_range<vcl::matrix<TYPE, F> >); \
+  bp::def("project_matrix_" #TYPE, project_matrix_slice<vcl::matrix<TYPE, F> >);
 
 #endif
