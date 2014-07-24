@@ -32,9 +32,13 @@ Convenient equivalences
 from pyviennacl import pycore
 
 abs = pycore.ElementAbs
+absolute = pycore.ElementAbs
 acos = pycore.ElementAcos
 asin = pycore.ElementAsin
 atan = pycore.ElementAtan
+arccos = pycore.ElementAcos
+arcsin = pycore.ElementAsin
+arctan = pycore.ElementAtan
 ceil = pycore.ElementCeil
 cos = pycore.ElementCos
 cosh = pycore.ElementCosh

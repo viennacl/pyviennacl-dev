@@ -408,32 +408,8 @@ class MagicMethods(object):
         this incurs the computation of the expression represented by ``y`` at
         this point. Nonetheless, the result is the appropriate PyViennaCL type.
         """
-        if isinstance(rhs, MagicMethods):
-            if not self.shape == rhs.shape:
-                raise TypeError("Operands must have the same shape!")
-            return self.result_container_type(_v.element_pow(self.vcl_leaf,
-                                                             rhs.vcl_leaf),
-                                              dtype = self.dtype,
-                                              layout = self.layout)
-        else:
-            return self.result_container_type(self.value ** rhs,
-                                              dtype = self.dtype,
-                                              layout = self.layout)
+        return ElementPow(self, rhs)
 
-    def __rpow__(self, rhs):
-        """
-        x.__rpow__(y) <==> y**x
-        """
-        if isinstance(rhs, MagicMethods):
-            if not self.shape == rhs.shape:
-                raise TypeError("Operands must have the same shape!")
-            return self.result_container_type(_v.element_pow(rhs.vcl_leaf,
-                                                             self.vcl_leaf),
-                                              dtype = self.dtype)
-        else:
-            return self.result_container_type(rhs ** self.value,
-                                              dtype = self.dtype)
-        
     def __eq__(self, rhs):
         """
         The equality operator.
@@ -2494,6 +2470,7 @@ class Norm_1(Node):
         ('Vector',): HostScalar
     }
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_NORM_1_TYPE
+    shape = ()
 
 
 class Norm_2(Node):
@@ -2504,6 +2481,7 @@ class Norm_2(Node):
         ('Vector',): HostScalar
     }
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_NORM_2_TYPE
+    shape = ()
 
 
 class Norm_Inf(Node):
@@ -2514,6 +2492,7 @@ class Norm_Inf(Node):
         ('Vector',): HostScalar
     }
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_NORM_INF_TYPE
+    shape = ()
 
 
 class ElementAbs(Node):
@@ -2939,7 +2918,7 @@ class Mul(Node):
                            SparseMatrixBase)):
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MAT_MAT_PROD_TYPE
                 self.shape = (self.operands[0].shape[0],
-                                     self.operands[1].shape[1])
+                              self.operands[1].shape[1])
             elif self.operands[1].result_container_type == Vector:
                 # Need to make sure that matrix and vector shapes are aligned
                 if self.operands[0].shape[1] != self.operands[1].shape[0]:
@@ -2997,6 +2976,29 @@ class Div(Node):
     }
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_DIV_TYPE
 
+    def _node_init(self):
+        for x in self.operands:
+            if x.result_container_type != ScalarBase:
+                self.shape = x.shape
+                break
+
+
+class ElementPow(Node):
+    """
+    Represents the elementwise exponentiation of one object by another of the
+    same type.
+    """
+    result_types = {
+        ('Vector', 'Vector'): Vector,
+        ('Matrix', 'Matrix'): Matrix
+    }
+    operation_node_type = _v.operation_node_type.OPERATION_BINARY_ELEMENT_POW_TYPE
+
+    def _node_init(self):
+        if self.operands[0].shape != self.operands[1].shape:
+            raise TypeError("Cannot ElementProd two differently shaped objects! %s" % self.express())
+        self.shape = self.operands[0].shape
+
 
 class ElementProd(Node):
     """
@@ -3009,6 +3011,11 @@ class ElementProd(Node):
     }
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_ELEMENT_PROD_TYPE
 
+    def _node_init(self):
+        if self.operands[0].shape != self.operands[1].shape:
+            raise TypeError("Cannot ElementProd two differently shaped objects! %s" % self.express())
+        self.shape = self.operands[0].shape
+
 
 class ElementDiv(Node):
     """
@@ -3020,6 +3027,11 @@ class ElementDiv(Node):
         ('Matrix', 'Matrix'): Matrix
     }
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_ELEMENT_DIV_TYPE
+
+    def _node_init(self):
+        if self.operands[0].shape != self.operands[1].shape:
+            raise TypeError("Cannot ElementDiv two differently shaped objects! %s" % self.express())
+        self.shape = self.operands[0].shape
 
 
 class Dot(Node):
