@@ -63,7 +63,13 @@ def diff(a, b):
         return ret
     else:
         # We don't have either ndarrays or ViennaCL types so assume plain scalar
-        return math.fabs(a - b) / max(math.fabs(a), math.fabs(b))
+        if isinstance(a, p.MagicMethods):
+            if issubclass(a.result_container_type, p.ScalarBase):
+                a = a.value
+        if isinstance(b, p.MagicMethods):
+            if issubclass(b.result_container_type, p.ScalarBase):
+                b = b.value
+        return np.fabs(a - b) / max(np.fabs(a), np.fabs(b))
 
 
 def get_host_scalar(dtype):
