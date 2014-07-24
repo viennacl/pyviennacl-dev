@@ -49,6 +49,10 @@ public:
     return vcl_node;
   }
 
+  void print_vcl_statement_node() const {
+    std::cout << get_vcl_statement_node() << std::endl;
+  }
+
 #define SET_OPERAND(T, I)					   \
   void set_operand_to_ ## I (int o, T I) {			   \
     switch (o) {						   \

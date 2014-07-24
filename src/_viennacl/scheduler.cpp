@@ -11,7 +11,24 @@ PYVCL_SUBMODULE(scheduler)
     ;
 
   bp::enum_<vcl::scheduler::operation_node_type>("operation_node_type")
+    ENUM_VALUE(vcl::scheduler, OPERATION_INVALID_TYPE)
+
+    // unary operator
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_MINUS_TYPE)
+
     // unary expression
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_CHAR_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_UCHAR_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_SHORT_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_USHORT_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_INT_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_UINT_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_LONG_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_ULONG_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_HALF_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_FLOAT_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_CAST_DOUBLE_TYPE)
+
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_ABS_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_ACOS_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_ASIN_TYPE)
@@ -29,6 +46,7 @@ PYVCL_SUBMODULE(scheduler)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_SQRT_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TAN_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TANH_TYPE)
+
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TRANS_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_NORM_1_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_NORM_2_TYPE)
@@ -41,12 +59,32 @@ PYVCL_SUBMODULE(scheduler)
     ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_INPLACE_SUB_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ADD_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_SUB_TYPE)
-    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MAT_VEC_PROD_TYPE)
-    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MAT_MAT_PROD_TYPE)
-    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MULT_TYPE)// scalar * vector/matrix
-    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_DIV_TYPE) // vector/matrix / scalar
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MULT_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_DIV_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_ARGFMAX_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_ARGFMIN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_ARGMAX_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_ARGMIN_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_PROD_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_DIV_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_EQ_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_NEQ_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_GREATER_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_GEQ_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_LESS_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_LEQ_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_POW_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_FMAX_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_FMIN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_MAX_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_ELEMENT_MIN_TYPE)
+
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MATRIX_DIAG_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_VECTOR_DIAG_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MATRIX_ROW_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MATRIX_COLUMN_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MAT_VEC_PROD_TYPE)
+    ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_MAT_MAT_PROD_TYPE)
     ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_INNER_PROD_TYPE)
     ;
 
@@ -170,6 +208,7 @@ DISAMBIGUATE_CLASS_FUNCTION_PTR(statement_node_wrapper,         // class
     .add_property("vcl_statement_node",
 	 bp::make_function(get_vcl_statement_node,
 			   bp::return_value_policy<bp::return_by_value>()))
+    .def("print", &statement_node_wrapper::print_vcl_statement_node)
     ;
 
 #undef SET_OPERAND
