@@ -182,3 +182,71 @@ def get_matrix_slice(size1, size2, layout, dtype,
     vcl_slice_A = vcl_big_slice_A[size1:-size1:2, size2::3]
 
     return numpy_A, vcl_slice_A
+
+
+# Test functions
+
+def dot(A, B):
+    return A.dot(B)
+
+def mul(A, B):
+    return A * B
+
+def pow(A, B):
+    return A ** B
+
+def div(A, B):
+    return A / B
+
+def floordiv(A, B):
+    return A // B
+
+def add(A, B):
+    return A + B
+
+def iadd(A, B):
+    A += B
+    return A 
+
+def scaled_add_left1(A, B, p):
+    return (p * A) + B
+
+def scaled_add_right1(A, B, p):
+    return A + (B * p)
+
+def scaled_add_both1(A, B, p):
+    return (p * A) + (B * p)
+
+def scaled_add_left2(A, B, p):
+    return (A / p) + B
+
+def scaled_add_right2(A, B, p):
+    return A + (B / p)
+
+def scaled_add_both2(A, B, p):
+    return (A / p) + (B / p)
+
+def sub(A, B):
+    return A - B
+
+def isub(A, B):
+    A -= B
+    return A
+
+def scaled_sub_left1(A, B, p):
+    return (p * A) - B
+
+def scaled_sub_right1(A, B, p):
+    return A - (B * p)
+
+def scaled_sub_both1(A, B, p):
+    return (p * A) - (B * p)
+
+def scaled_sub_left2(A, B, p):
+    return (A / p) - B
+
+def scaled_sub_right2(A, B, p):
+    return A - (B / p)
+
+def scaled_sub_both2(A, B, p):
+    return (A / p) - (B / p)
