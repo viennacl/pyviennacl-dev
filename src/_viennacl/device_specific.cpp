@@ -20,7 +20,6 @@ make_statements_tuple(bp::list statement_wrappers,
 
 PYVCL_SUBMODULE(device_specific)
 {
-  
 
   //Base
   {
@@ -76,11 +75,18 @@ PYVCL_SUBMODULE(device_specific)
   { 
     #define __PROP(name) __PROP_BASE(name, matrix_product_template)
     WRAP_TEMPLATE(matrix_product_template, char, char);
-    WRAP_PARAMETERS(matrix_product_template, uint, size_t, uint, size_t, uint, uint, uint, bool, bool, size_t, size_t)
+    bp::scope b = WRAP_PARAMETERS(matrix_product_template, uint, size_t, uint, size_t, uint, uint, uint, ds::fetching_policy_type, ds::fetching_policy_type, size_t, size_t)
         __PROP(kL) __PROP(mS) __PROP(kS) __PROP(nS)
-        __PROP(use_A_local) __PROP(use_B_local)
+        __PROP(A_fetching_policy) __PROP(B_fetching_policy)
         __PROP(local_fetch_0) __PROP(local_fetch_1)
         __PROP(mL) __PROP(nL);
+    
+    bp::enum_<ds::fetching_policy_type>
+      ("FetchingPolicy")
+      ENUM_VALUE(ds, FETCH_LOCAL)
+      ENUM_VALUE(ds, FETCH_GLOBAL_CONTIGUOUS)
+      ENUM_VALUE(ds, FETCH_GLOBAL_STRIDED)
+      ;
     #undef __PROP
   }
  
