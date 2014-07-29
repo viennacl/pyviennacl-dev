@@ -7,10 +7,6 @@ import numpy as np
 # Default configuration options
 #
 
-# Skip OpenCL CPU devices using PyViennaCL
-
-PYVIENNACL_SKIP_CPU = True
-
 # Times for which to run each benchmark loop
 
 TEST_TIME = 0.5 # seconds
@@ -399,7 +395,7 @@ platforms = {
     'gnumpy' : ('gnumpy', None)
 }
 
-def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False):
+def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False, skip_cpu=False):
     benchmark = benchmarks[benchmark_id]
     platform = platforms[platform_id]
 
@@ -439,7 +435,7 @@ def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False):
                 platform_name = platform[0] + " (" + str(np.dtype(dtype)) + ")"
                 ctx = None
             else:
-                if PYVIENNACL_SKIP_CPU and cl.device_type.to_string(device.type) == 'CPU':
+                if skip_cpu and cl.device_type.to_string(device.type) == 'CPU':
                     continue
                 platform_name = platform[0] + " on " + device.name + " (" + str(np.dtype(dtype)) + ")"
                 ctx = Context(cl.Context([device]))
@@ -489,16 +485,19 @@ def main():
     parser.add_argument('--exhaustive', action='store_true',
                         help="Run benchmarks over a number of sizes, printing complete results. The default is instead to produce a quick summary.")
 
-    parser.add_argument('--dtypes', metavar='DTYPE', nargs="+", type=str, default=DTYPES,
-                        help="Data type(s) to benchmark")
-
     parser.add_argument('--benchmarks', metavar='BENCHMARK', nargs="+", type=str, default=BENCHMARKS,
                         help="Benchmarks to run", choices=benchmarks.keys())
+
+    parser.add_argument('--dtypes', metavar='DTYPE', nargs="+", type=str, default=DTYPES,
+                        help="Data type(s) to benchmark")
 
     platform_names = list(platforms.keys())
     platform_names.sort()
     parser.add_argument('--platforms', metavar='PLATFORM', nargs="+", type=str, default=platform_names,
                         help="Platforms to benchmark", choices=platform_names)
+
+    parser.add_argument('--opencl-skip-cpu', action='store_true',
+                        help="Skip CPU devices when using PyViennaCL's OpenCL backend")
 
     for benchmark in benchmarks.keys():
         if quick:
@@ -541,7 +540,7 @@ def main():
         dtype = getattr(np, dtype)
 
         try:
-            tmp_results = do_benchmark(platform, benchmark, dtype, quick)
+            tmp_results = do_benchmark(platform, benchmark, dtype, quick, args.opencl_skip_cpu)
         except UnsupportedPlatformException:
             continue
 
