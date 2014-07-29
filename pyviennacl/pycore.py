@@ -1087,9 +1087,10 @@ class ScalarBase(Leaf):
         """
         x.__pow__(y) <==> x**y
         """
-        if isinstance(rhs, ScalarBase):
-            return self.result_container_type(self.value ** rhs.value,
-                                              dtype = self.dtype)
+        if isinstance(rhs, MagicMethods):
+            if issubclass(rhs.result_container_type, ScalarBase):
+                return self.result_container_type(self.value ** rhs.value,
+                                                  dtype = self.dtype)
         else:
             return self.result_container_type(self.value ** rhs,
                                               dtype = self.dtype)
@@ -1105,9 +1106,10 @@ class ScalarBase(Leaf):
         this incurs the computation of the expression represented by ``y`` at
         this point. Nonetheless the result is the appropriate PyViennaCL type.
         """
-        if isinstance(rhs, ScalarBase):
-            return self.result_container_type(rhs ** self,
-                                              dtype = self.dtype)
+        if isinstance(rhs, MagicMethods):
+            if issubclass(rhs.result_container_type, ScalarBase):
+                return self.result_container_type(rhs.value ** self.value,
+                                                  dtype = self.dtype)
         else:
             return self.result_container_type(rhs ** self.value,
                                               dtype = self.dtype)

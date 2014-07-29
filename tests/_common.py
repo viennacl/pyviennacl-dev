@@ -72,14 +72,6 @@ def diff(a, b):
         return np.fabs(a - b) / max(np.fabs(a), np.fabs(b))
 
 
-def get_host_scalar(dtype):
-    return p.HostScalar(random.random(), dtype=dtype)
-
-
-def get_device_scalar(dtype):
-    return p.Scalar(random.random(), dtype=dtype)
-
-
 def get_vector(size, dtype, context=default_context):
     numpy_A = np.random.rand(size)
     numpy_A = np.asarray(numpy_A, dtype=dtype)
@@ -109,6 +101,37 @@ def get_vector_slice(size, dtype, context=default_context):
     vcl_slice_A = vcl_big_slice_A[size:-size:2]
 
     return numpy_A, vcl_slice_A
+
+
+def get_python_int():
+    return int(random.random())
+
+
+def get_python_float():
+    return random.random()
+
+
+def get_numpy_scalar(dtype):
+    return dtype(random.random())
+
+
+def get_host_scalar(dtype):
+    return p.HostScalar(random.random(), dtype=dtype)
+
+
+def get_device_scalar(dtype):
+    return p.Scalar(random.random(), dtype=dtype)
+
+
+def get_scalar_from_vector_norm(dtype):
+    tmp, vec = get_vector(10, dtype)
+    return vec.norm(2)
+
+
+def get_scalar_from_vector_dot_product(dtype):
+    tmp, vec1 = get_vector(10, dtype)
+    tmp, vec2 = get_vector(10, dtype)
+    return vec1.dot(vec2)
 
 
 def get_numpy_upper_matrix(size1, size2, order, dtype):
@@ -192,11 +215,23 @@ def dot(A, B):
 def mul(A, B):
     return A * B
 
+def imul(A, B):
+    A *= B
+    return A
+
 def pow(A, B):
     return A ** B
 
+def ipow(A, B):
+    A **= B
+    return A
+
 def div(A, B):
     return A / B
+
+def idiv(A, B):
+    A /= B
+    return A
 
 def floordiv(A, B):
     return A // B
