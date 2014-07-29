@@ -13,23 +13,23 @@ dtype_tolerances = [(p.float32, 1.0E-3), (p.float64, 1.0E-11)]
 
 
 A_matrix_operations = [
-#    ('abs', 'np.absolute', 'p.absolute'),
-#    ('acos', 'np.arccos', 'p.arctan'),
-#    ('asin', 'np.arcsin', 'p.arcsin'),
-#    ('atan', 'np.arctan', 'p.arccos'),
-#    ('ceil', 'np.ceil', 'p.ceil'),
-#    ('cos', 'np.cos', 'p.cos'),
-#    ('cosh', 'np.cosh', 'p.cosh'),
-#    ('exp', 'np.exp', 'p.exp'),
-#    ('fabs', 'np.fabs', 'p.fabs'),
-#    ('floor', 'np.floor', 'p.floor'),
-#    ('log', 'np.log', 'p.log'),
-#    ('log10', 'np.log10', 'p.log10'),
-#    ('sin', 'np.sin', 'p.sin'),
-#    ('sinh', 'np.sinh', 'p.sinh'),
-#    ('sqrt', 'np.sqrt', 'p.sqrt'),
-#    ('tan', 'np.tan', 'p.tan'),
-#    ('tanh', 'np.tanh', 'p.tanh')
+    #('abs', 'np.absolute', 'p.absolute'), # Only for int types!
+    ('acos', 'np.arccos', 'p.arccos'),
+    ('asin', 'np.arcsin', 'p.arcsin'),
+    ('atan', 'np.arctan', 'p.arctan'),
+    ('ceil', 'np.ceil', 'p.ceil'),
+    ('cos', 'np.cos', 'p.cos'),
+    ('cosh', 'np.cosh', 'p.cosh'),
+    ('exp', 'np.exp', 'p.exp'),
+    ('fabs', 'np.fabs', 'p.fabs'),
+    ('floor', 'np.floor', 'p.floor'),
+    ('log', 'np.log', 'p.log'),
+    ('log10', 'np.log10', 'p.log10'),
+    ('sin', 'np.sin', 'p.sin'),
+    ('sinh', 'np.sinh', 'p.sinh'),
+    ('sqrt', 'np.sqrt', 'p.sqrt'),
+    ('tan', 'np.tan', 'p.tan'),
+    ('tanh', 'np.tanh', 'p.tanh')
 ]
 
 Ap_matrix_operations = [
