@@ -181,6 +181,12 @@ def get_matrix(size1, size2, layout, dtype,
     return numpy_A, vcl_A
 
 
+def get_matrix_trans(size1, size2, layout, dtype,
+                     form=None, context=default_context):
+    numpy_A, vcl_A = get_matrix(size2, size1, layout, dtype, form, context)
+    return numpy_A.T, vcl_A.T
+
+
 def get_matrix_range(size1, size2, layout, dtype,
                      form=None, context=default_context):
     numpy_A, vcl_A = get_matrix(size1, size2, layout, dtype, form, context)
@@ -192,6 +198,12 @@ def get_matrix_range(size1, size2, layout, dtype,
     vcl_range_A = vcl_big_range_A[size1:2*size1, size2:2*size2]
 
     return numpy_A, vcl_range_A
+
+
+def get_matrix_range_trans(size1, size2, layout, dtype,
+                           form=None, context=default_context):
+    numpy_A, vcl_A = get_matrix_range(size2, size1, layout, dtype, form, context)
+    return numpy_A.T, vcl_A.T
 
 
 def get_matrix_slice(size1, size2, layout, dtype,
@@ -207,7 +219,26 @@ def get_matrix_slice(size1, size2, layout, dtype,
     return numpy_A, vcl_slice_A
 
 
+def get_matrix_slice_trans(size1, size2, layout, dtype,
+                           form=None, context=default_context):
+    numpy_A, vcl_A = get_matrix_slice(size2, size1, layout, dtype, form, context)
+    return numpy_A.T, vcl_A.T
+
+
 # Test functions
+
+def dot(A, B):
+    return A.dot(B)
+
+def iadd_dot(A, B):
+    C = A.dot(B)
+    C += A.dot(B)
+    return C
+
+def isub_dot(A, B):
+    C = A.dot(B)
+    C -= A.dot(B)
+    return C
 
 def dot(A, B):
     return A.dot(B)

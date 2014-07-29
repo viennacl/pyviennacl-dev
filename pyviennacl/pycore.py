@@ -2770,6 +2770,12 @@ class Trans(Node):
         self.shape = (self.operands[0].shape[1],
                       self.operands[0].shape[0])
 
+    def dot(self, rhs):
+        """
+        TODO docstring
+        """
+        return self * rhs
+
 
 class Assign(Node):
     """

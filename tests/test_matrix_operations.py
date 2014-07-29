@@ -6,7 +6,7 @@ from _common import *
 from itertools import product
 
 layouts = [p.ROW_MAJOR, p.COL_MAJOR]
-matrix_getters = [get_matrix, get_matrix_range, get_matrix_slice]
+matrix_getters = [get_matrix, get_matrix_range, get_matrix_slice, get_matrix_trans, get_matrix_range_trans, get_matrix_slice_trans]
 vector_getters = [get_vector, get_vector_range, get_vector_slice]
 scalar_getters = [get_host_scalar, get_device_scalar]
 dtype_tolerances = [(p.float32, 1.0E-3), (p.float64, 1.0E-11)]
@@ -38,7 +38,7 @@ Ap_matrix_operations = [
 ]
 
 Ax_matrix_operations = [
-    ('dot_vector', 'dot', 'dot')
+    ('dgemv', 'dot', 'dot')
 ]
 
 AB_matrix_operations = [
@@ -50,6 +50,12 @@ AB_matrix_operations = [
     #('elementwise_pow', 'pow', 'pow'),
     ('elementwise_prod', 'mul', 'p.ElementProd'),
     ('elementwise_div', 'div', 'p.ElementDiv')
+ ]
+
+AB_matrix_products = [
+    ('dgemm', 'dot', 'dot'),
+    ('iadd_dgemm', 'iadd_dot', 'iadd_dot'),
+    ('isub_dgemm', 'isub_dot', 'isub_dot'),
  ]
 
 ABp_matrix_operations = [
@@ -121,6 +127,17 @@ for layout, d_t in product(layouts, dtype_tolerances):
     for getter1, getter2 in product(matrix_getters, matrix_getters):
         numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
         numpy_B, vcl_B = getter2(size1, size2, layout, dt, None)
+        numpy_C = %s(numpy_A, numpy_B)
+        vcl_C = %s(vcl_A, vcl_B)
+""" + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
+        exec(test_code)
+
+
+    for op in AB_matrix_products:
+        test_code = (test_code_header + """
+    for getter1, getter2 in product(matrix_getters, matrix_getters):
+        numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
+        numpy_B, vcl_B = getter2(size2, size1, layout, dt, None)
         numpy_C = %s(numpy_A, numpy_B)
         vcl_C = %s(vcl_A, vcl_B)
 """ + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
