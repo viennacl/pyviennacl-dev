@@ -6,6 +6,7 @@ PYVCL_SUBMODULE(scheduler)
 
   bp::enum_<vcl::scheduler::operation_node_type_family>
     ("operation_node_type_family")
+    ENUM_VALUE(vcl::scheduler, OPERATION_INVALID_TYPE_FAMILY)
     ENUM_VALUE(vcl::scheduler, OPERATION_UNARY_TYPE_FAMILY)
     ENUM_VALUE(vcl::scheduler, OPERATION_BINARY_TYPE_FAMILY)
     ;

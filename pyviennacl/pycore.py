@@ -278,6 +278,7 @@ class MagicMethods(object):
     to PyViennaCL. For more information, see the individual methods below.
     """
     flushed = False
+    no_fix = False
 
     @property
     def itemsize(self):
@@ -2030,9 +2031,11 @@ class Node(MagicMethods):
     it in Python, then you should derive from this class.
     """
 
-    statement_node_type_family = _v.statement_node_type_family.COMPOSITE_OPERATION_FAMILY
+    statement_node_type_family = _v.statement_node_type_family.INVALID_TYPE_FAMILY
     statement_node_subtype = _v.statement_node_subtype.INVALID_SUBTYPE
     statement_node_numeric_type = _v.statement_node_numeric_type.INVALID_NUMERIC_TYPE
+    operation_node_type_family = _v.operation_node_type_family.OPERATION_INVALID_TYPE_FAMILY
+    operation_node_type = _v.operation_node_type.OPERATION_INVALID_TYPE
     operands = []
     flushed = False
 
@@ -2068,6 +2071,8 @@ class Node(MagicMethods):
 
         self._vcl_node_init()
         self._test_init() # Make sure we can execute
+
+        self.statement_node_type_family = _v.statement_node_type_family.COMPOSITE_OPERATION_FAMILY # Finish initialising
 
     def __enter__(self):
         return self

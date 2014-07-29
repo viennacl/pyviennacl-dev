@@ -21,7 +21,16 @@ def fix_operand(opand):
     if (np_result_type(opand).name in p.HostScalarTypes
         and not isinstance(opand, p.MagicMethods)):
         return p.HostScalar(opand)
-    else: return opand
+    if isinstance(opand, p.Node):
+        if opand.no_fix:
+            return opand
+        if opand.flushed:
+            return opand.result
+        # TODO: REMOVE NEXT TEST
+        if opand.operation_node_type_family == _viennacl.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY and not isinstance(opand, p.Assign):
+            opand.no_fix = True
+            return opand.result
+    return opand
 
 def from_ndarray(obj):
     """
