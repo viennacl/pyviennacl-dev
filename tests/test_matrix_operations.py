@@ -6,9 +6,17 @@ from _common import *
 from itertools import product
 
 layouts = [p.ROW_MAJOR, p.COL_MAJOR]
-matrix_getters = [get_matrix, get_matrix_range, get_matrix_slice, get_matrix_trans, get_matrix_range_trans, get_matrix_slice_trans]
-vector_getters = [get_vector, get_vector_range, get_vector_slice]
-scalar_getters = [get_host_scalar, get_device_scalar]
+matrix_getters = [('matrix', 'get_matrix'),
+                  ('matrix_range', 'get_matrix_range'),
+                  ('matrix_slice', 'get_matrix_slice'),
+                  ('matrix_trans', 'get_matrix_trans'),
+                  ('matrix_range_trans', 'get_matrix_range_trans'),
+                  ('matrix_slice_trans', 'get_matrix_slice_trans')]
+vector_getters = [('vector', 'get_vector'),
+                  ('vector_range', 'get_vector_range'),
+                  ('vector_slice', 'get_vector_slice')]
+scalar_getters = [('host_scalar', 'get_host_scalar'),
+                  ('device_scalar', 'get_device_scalar')]
 dtype_tolerances = [(p.float32, 1.0E-3), (p.float64, 1.0E-11)]
 
 
@@ -47,7 +55,7 @@ AB_matrix_operations = [
     ('sub', 'sub', 'sub'),
     ('isub', 'isub', 'isub'),
 
-    #('elementwise_pow', 'pow', 'pow'),
+    ('elementwise_pow', 'pow', 'pow'),
     ('elementwise_prod', 'mul', 'p.ElementProd'),
     ('elementwise_div', 'div', 'p.ElementDiv')
  ]
@@ -77,85 +85,94 @@ ABp_matrix_operations = [
 ]
 
 
-test_code_header = """
-def test_%s_%s_%s():
+A_test_code_header = """
+def test_%s_%s_%s_%s():
+    size1, size2 = 11, 10
+    alpha1 = p.Scalar
+"""
+
+Ap_test_code_header = """
+def test_%s_%s_%s_%s_%s():
+    size1, size2 = 11, 10
+    alpha1 = p.Scalar
+"""
+Ax_test_code_header = Ap_test_code_header
+AB_test_code_header = Ap_test_code_header
+
+ABp_test_code_header = """
+def test_%s_%s_%s_%s_%s_%s():
     size1, size2 = 11, 10
     alpha1 = p.Scalar
 """
 
 test_code_footer = """
-        act_diff = math.fabs(diff(numpy_C, vcl_C))
-        assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
+    act_diff = math.fabs(diff(numpy_C, vcl_C))
+    assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
 """
 
-for layout, d_t in product(layouts, dtype_tolerances):
-    dt = d_t[0]
-    tol = d_t[1]
+for layout_, d_t_, getter1_, op_ in product(layouts, dtype_tolerances, matrix_getters, A_matrix_operations):
+    dt = d_t_[0]
+    tol = d_t_[1]
+    test_code = (A_test_code_header + """
+    numpy_A, vcl_A = %s(size1, size2, '%s', dt, None)
+    numpy_C = %s(numpy_A)
+    vcl_C = %s(vcl_A)
+""" + test_code_footer) % (getter1_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, op_[1], op_[2])
+    exec(test_code)
 
-    for op in A_matrix_operations:
-        test_code = (test_code_header + """
-    for getter1 in matrix_getters:
-        numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
-        numpy_C = %s(numpy_A)
-        vcl_C = %s(vcl_A)
-""" + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
-        exec(test_code)
+for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, scalar_getters, Ap_matrix_operations):
+    dt = d_t_[0]
+    tol = d_t_[1]
+    test_code = (Ap_test_code_header + """
+    numpy_A, vcl_A = %s(size1, size2, '%s', dt, None)
+    alpha = %s(dt)
+    numpy_C = %s(numpy_A, alpha.value)
+    vcl_C = %s(vcl_A, alpha)
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], op_[1], op_[2])
+    exec(test_code)
 
-    for op in Ap_matrix_operations:
-        test_code = (test_code_header + """
-    for getter1, getter2 in product(matrix_getters, scalar_getters):
-        numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
-        alpha = getter2(dt)
-        numpy_C = %s(numpy_A, alpha.value)
-        vcl_C = %s(vcl_A, alpha)
-""" + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
-        exec(test_code)
+for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, vector_getters, Ax_matrix_operations):
+    dt = d_t_[0]
+    tol = d_t_[1]
+    test_code = (Ax_test_code_header + """
+    numpy_A, vcl_A = %s(size1, size2, '%s', dt, None)
+    numpy_x, vcl_x = %s(size2, dt)
+    numpy_C = %s(numpy_A, numpy_x)
+    vcl_C = %s(vcl_A, vcl_x)
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], op_[1], op_[2])
+    exec(test_code)
 
-    for op in Ax_matrix_operations:
-        test_code = (test_code_header + """
-    for getter1, getter2 in product(matrix_getters, vector_getters):
-        numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
-        numpy_x, vcl_x = getter2(size2, dt)
-        numpy_C = %s(numpy_A, numpy_x)
-        vcl_C = %s(vcl_A, vcl_x)
-""" + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
-        exec(test_code)
+for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, matrix_getters, AB_matrix_operations):
+    dt = d_t_[0]
+    tol = d_t_[1]
+    test_code = (AB_test_code_header + """
+    numpy_A, vcl_A = %s(size1, size2, '%s', dt, None)
+    numpy_B, vcl_B = %s(size1, size2, '%s', dt, None)
+    numpy_C = %s(numpy_A, numpy_B)
+    vcl_C = %s(vcl_A, vcl_B)
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], layout_, op_[1], op_[2])
+    exec(test_code)
 
+for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, matrix_getters, AB_matrix_products):
+    dt = d_t_[0]
+    tol = d_t_[1]
+    test_code = (AB_test_code_header + """
+    numpy_A, vcl_A = %s(size1, size2, '%s', dt, None)
+    numpy_B, vcl_B = %s(size2, size1, '%s', dt, None)
+    numpy_C = %s(numpy_A, numpy_B)
+    vcl_C = %s(vcl_A, vcl_B)
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], layout_, op_[1], op_[2])
+    exec(test_code)
 
-    for op in AB_matrix_operations:
-        test_code = (test_code_header + """
-    for getter1, getter2 in product(matrix_getters, matrix_getters):
-        numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
-        numpy_B, vcl_B = getter2(size1, size2, layout, dt, None)
-        numpy_C = %s(numpy_A, numpy_B)
-        vcl_C = %s(vcl_A, vcl_B)
-""" + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
-        exec(test_code)
+for layout_, d_t_, getter1_, getter2_, getter3_, op_ in product(layouts, dtype_tolerances, matrix_getters, matrix_getters, scalar_getters, ABp_matrix_operations):
+    dt = d_t_[0]
+    tol = d_t_[1]
+    test_code = (ABp_test_code_header + """
+    numpy_A, vcl_A = %s(size1, size2, '%s', dt, None)
+    numpy_B, vcl_B = %s(size1, size2, '%s', dt, None)
+    alpha = %s(dt)
+    numpy_C = %s(numpy_A, numpy_B, alpha.value)
+    vcl_C = %s(vcl_A, vcl_B, alpha)
+""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], layout_, getter3_[1], op_[1], op_[2])
+    exec(test_code)
 
-
-    for op in AB_matrix_products:
-        test_code = (test_code_header + """
-    for getter1, getter2 in product(matrix_getters, matrix_getters):
-        numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
-        numpy_B, vcl_B = getter2(size2, size1, layout, dt, None)
-        numpy_C = %s(numpy_A, numpy_B)
-        vcl_C = %s(vcl_A, vcl_B)
-""" + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
-        exec(test_code)
-
-
-    for op in ABp_matrix_operations:
-        test_code = (test_code_header + """
-    for getter1, getter2, getter3 in product(matrix_getters, matrix_getters, scalar_getters):
-        numpy_A, vcl_A = getter1(size1, size2, layout, dt, None)
-        numpy_B, vcl_B = getter2(size1, size2, layout, dt, None)
-        alpha = getter3(dt)
-        numpy_C = %s(numpy_A, numpy_B, alpha.value)
-        vcl_C = %s(vcl_A, vcl_B, alpha)
-""" + test_code_footer) % (op[0], layout, dt.__name__, op[1], op[2])
-        exec(test_code)
-
-
-# TODO
-# + initialisers: scalars, ndarray, Matrix
-# + non-square matrices, trans matrices

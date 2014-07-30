@@ -10,8 +10,15 @@ from itertools import product
 
 layouts = [p.ROW_MAJOR, p.COL_MAJOR]
 dtype_tolerances = [(p.float32, 1.0E-1), (p.float64, 1.0E-8)]
-matrix_getters = [get_matrix, get_matrix_range, get_matrix_slice, get_matrix_trans, get_matrix_range_trans, get_matrix_slice_trans]
-vector_getters = [get_vector, get_vector_range, get_vector_slice]
+matrix_getters = [('matrix', 'get_matrix'),
+                  ('matrix_range', 'get_matrix_range'),
+                  ('matrix_slice', 'get_matrix_slice'),
+                  ('matrix_trans', 'get_matrix_trans'),
+                  ('matrix_range_trans', 'get_matrix_range_trans'),
+                  ('matrix_slice_trans', 'get_matrix_slice_trans')]
+vector_getters = [('vector', 'get_vector'),
+                  ('vector_range', 'get_vector_range'),
+                  ('vector_slice', 'get_vector_slice')]
 
 forms = ['upper', 'unit_upper', 'lower', 'unit_lower']
 forms_tags = {
@@ -21,36 +28,38 @@ forms_tags = {
     'unit_lower': p.unit_lower_tag()
 }
 
-for layout_, d_t_, form_ in product(layouts, dtype_tolerances, forms):
+for layout_, d_t_, form_, getter1_, getter2_ in product(layouts, dtype_tolerances, forms, matrix_getters, matrix_getters):
     dt_ = d_t_[0]
     tol_ = d_t_[1]
 
-    def A_solve_B_test_factory(A_form, dt, tol, layout):
+    def A_solve_B_test_factory(A_form, dt, tol, layout, getter1, getter2):
         def _test():
             size1, size2 = 6, 6
-            for getter1, getter2 in product(matrix_getters, matrix_getters):
-                numpy_A, vcl_A = getter1(size1, size2, layout, dt, A_form)
-                numpy_B, vcl_B = getter2(size1, size2, layout, dt)
-                vcl_X = p.solve(vcl_A, vcl_B, forms_tags[A_form])
-                numpy_X = npla.solve(numpy_A, numpy_B)
-                act_diff = math.fabs(diff(numpy_X, vcl_X))
-                assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
+            numpy_A, vcl_A = getter1(size1, size2, layout, dt, A_form)
+            numpy_B, vcl_B = getter2(size1, size2, layout, dt)
+            vcl_X = p.solve(vcl_A, vcl_B, forms_tags[A_form])
+            numpy_X = npla.solve(numpy_A, numpy_B)
+            act_diff = math.fabs(diff(numpy_X, vcl_X))
+            assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
         return _test
         
-    exec("test_A_%s_B_%s_%s = A_solve_B_test_factory('%s', p.%s, %g, '%s')" % (form_, layout_, dt_.__name__, form_, dt_.__name__, tol_, layout_))
+    exec("test_%s_%s_A_%s_B_%s_%s = A_solve_B_test_factory('%s', p.%s, %g, '%s', %s, %s)" % (getter1_[0], form_, getter2_[0], layout_, dt_.__name__, form_, dt_.__name__, tol_, layout_, getter1_[1], getter2_[1]))
 
-    def A_solve_b_test_factory(A_form, dt, tol, layout):
+for layout_, d_t_, form_, getter1_, getter2_ in product(layouts, dtype_tolerances, forms, matrix_getters, vector_getters):
+    dt_ = d_t_[0]
+    tol_ = d_t_[1]
+
+    def A_solve_b_test_factory(A_form, dt, tol, layout, getter1, getter2):
         def _test():
             size1, size2 = 6, 6
-            for getter1, getter2 in product(matrix_getters, vector_getters):
-                numpy_A, vcl_A = getter1(size1, size2, layout, dt, A_form)
-                numpy_b, vcl_b = getter2(size1, dt)
-                vcl_x = p.solve(vcl_A, vcl_b, forms_tags[A_form])
-                numpy_x = spla.solve(numpy_A, numpy_b)
-                act_diff = math.fabs(diff(numpy_x, vcl_x))
-                print(getter1.__name__, getter2.__name__, A_form)
-                assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
+            numpy_A, vcl_A = getter1(size1, size2, layout, dt, A_form)
+            numpy_b, vcl_b = getter2(size1, dt)
+            vcl_x = p.solve(vcl_A, vcl_b, forms_tags[A_form])
+            numpy_x = npla.solve(numpy_A, numpy_b)
+            act_diff = math.fabs(diff(numpy_x, vcl_x))
+            print(getter1.__name__, getter2.__name__, A_form)
+            assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
         return _test
         
-    exec("test_A_%s_b_%s_%s = A_solve_b_test_factory('%s', p.%s, %g, '%s')" % (form_, layout_, dt_.__name__, form_, dt_.__name__, tol_, layout_))
+    exec("test_%s_%s_A_%s_b_%s_%s = A_solve_b_test_factory('%s', p.%s, %g, '%s', %s, %s)" % (getter1_[0], form_, getter2_[0], layout_, dt_.__name__, form_, dt_.__name__, tol_, layout_, getter1_[1], getter2_[1]))
 
