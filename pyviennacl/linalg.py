@@ -450,19 +450,15 @@ def solve(A, B, tag, precond = None):
         or ``B`` is neither a ``Matrix`` nor a ``Vector`` instance,
         or if ``tag`` is unsupported.
     """
-    if not (isinstance(A, Matrix) or isinstance(A, SparseMatrixBase)):
+    if not isinstance(A, MagicMethods):
+        raise TypeError("A must be dense or sparse matrix type")
+    elif not (issubclass(A.result_container_type, Matrix) or issubclass(A.result_container_type, SparseMatrixBase)):
         raise TypeError("A must be dense or sparse matrix type")
 
-    if isinstance(B, Matrix):
-        result_type = Matrix
-    elif isinstance(B, Vector):
-        result_type = Vector
-        if not isinstance(B.vcl_leaf,
-                getattr(_v, "vector_" + vcl_statement_node_numeric_type_strings[
-                    B.statement_node_numeric_type])):
-            B = Vector(B)
-    else:
+    if not isinstance(B, MagicMethods):
         raise TypeError("B must be Matrix or Vector type")
+    else:
+        result_type = B.result_container_type
 
     try:
         if isinstance(tag, precond_tag) and not (precond is None):

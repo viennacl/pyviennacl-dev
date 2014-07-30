@@ -10,7 +10,7 @@ default_log_handler.setFormatter(logging.Formatter(
 ))
 logging.getLogger('pyviennacl').addHandler(default_log_handler)
 
-def fix_operand(opand):
+def fix_operand(opand, node=None):
     """
     TODO docstring
     """
@@ -22,12 +22,12 @@ def fix_operand(opand):
         and not isinstance(opand, p.MagicMethods)):
         return p.HostScalar(opand)
     if isinstance(opand, p.Node):
-        if opand.no_fix:
-            return opand
         if opand.flushed:
             return opand.result
+        if opand.no_fix:
+            return opand
         # TODO: REMOVE NEXT TEST
-        if opand.operation_node_type_family == _viennacl.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY and not isinstance(opand, p.Assign):
+        if opand.operation_node_type_family == _viennacl.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY and not (isinstance(opand, p.Assign) or isinstance(node, p.Assign)):
             opand.no_fix = True
             return opand.result
     return opand

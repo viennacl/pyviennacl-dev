@@ -170,7 +170,7 @@ scalar case, simple numerical equality is used.
 """
 
 from __future__ import division
-import itertools, logging, math, abc
+import itertools, logging, math
 from pyviennacl import (_viennacl as _v,
                         backend, util)
 from numpy import (ndarray, array, zeros,
@@ -2053,7 +2053,9 @@ class Node(MagicMethods):
         else:
             raise TypeError("Only unary or binary nodes supported currently")
 
-        self.operands = list(map(util.fix_operand, args))
+        def fix_operand(args):
+            return util.fix_operand(args, self)
+        self.operands = list(map(fix_operand, args))
 
         if self.result_container_type is None:
             # Try swapping the operands, in case the operation supports
@@ -2351,6 +2353,10 @@ class Node(MagicMethods):
         Execute the expression tree taking this instance as the root, and
         then cache and return the result.
         """
+        if self.flushed:
+            log.warn("Node already flushed, so returning cached result")
+            return self._result
+
         s = Statement(self)
         self._result = s.execute()
         self.flushed = True
