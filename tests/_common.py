@@ -168,6 +168,14 @@ numpy_matrix_forms = {
     'unit_lower': get_numpy_unit_lower_matrix
 }
 
+trans_form = {
+    None: None,
+    'upper': 'lower',
+    'unit_upper': 'unit_lower',
+    'lower': 'upper',
+    'unit_lower': 'unit_upper'
+}
+
 
 def get_matrix(size1, size2, layout, dtype,
                form=None, context=default_context):
@@ -183,6 +191,7 @@ def get_matrix(size1, size2, layout, dtype,
 
 def get_matrix_trans(size1, size2, layout, dtype,
                      form=None, context=default_context):
+    form = trans_form[form]
     numpy_A, vcl_A = get_matrix(size2, size1, layout, dtype, form, context)
     return numpy_A.T, vcl_A.T
 
@@ -202,6 +211,7 @@ def get_matrix_range(size1, size2, layout, dtype,
 
 def get_matrix_range_trans(size1, size2, layout, dtype,
                            form=None, context=default_context):
+    form = trans_form[form]
     numpy_A, vcl_A = get_matrix_range(size2, size1, layout, dtype, form, context)
     return numpy_A.T, vcl_A.T
 
@@ -221,6 +231,7 @@ def get_matrix_slice(size1, size2, layout, dtype,
 
 def get_matrix_slice_trans(size1, size2, layout, dtype,
                            form=None, context=default_context):
+    form = trans_form[form]
     numpy_A, vcl_A = get_matrix_slice(size2, size1, layout, dtype, form, context)
     return numpy_A.T, vcl_A.T
 
