@@ -27,7 +27,7 @@ def fix_operand(opand, node=None):
         if opand.no_fix:
             return opand
         # TODO: REMOVE NEXT TEST
-        if opand.operation_node_type_family == _viennacl.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY and not (isinstance(opand, p.Assign) or isinstance(node, p.Assign)):
+        if opand.operation_node_type_family == _viennacl.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY and not (type(opand) == p.Assign or type(node) == p.Assign):
             opand.no_fix = True
             return opand.result
     return opand

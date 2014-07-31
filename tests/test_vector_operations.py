@@ -45,7 +45,7 @@ xy_vector_operations = [
     ('isub', 'isub', 'isub'),
     ('dot_vector', 'dot', 'dot'),
 
-    #('elementwise_pow', 'pow', 'pow'),
+    ('elementwise_pow', 'pow', 'pow'),
     ('elementwise_prod', 'mul', 'p.ElementProd'),
     ('elementwise_div', 'div', 'p.ElementDiv')
  ]
