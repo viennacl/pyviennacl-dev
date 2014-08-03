@@ -10,6 +10,9 @@ vcl::vcl_size_t get_ram_handle(vcl::backend::mem_handle& m) {
 vcl::vcl_size_t get_opencl_handle(vcl::backend::mem_handle& m) {
   return (vcl::vcl_size_t) m.opencl_handle().get();
 }
+const vcl::ocl::context& get_opencl_context(vcl::backend::mem_handle& m) {
+  return m.opencl_handle().context();
+}
 #endif
 #ifdef VIENNACL_WITH_CUDA
 vcl::vcl_size_t get_cuda_handle(vcl::backend::mem_handle& m) {
@@ -43,6 +46,10 @@ PYVCL_SUBMODULE(platform_support)
     .add_property("ram_handle", get_ram_handle)
 #ifdef VIENNACL_WITH_OPENCL
     .add_property("opencl_handle", get_opencl_handle)
+    .add_property("opencl_context",
+                  bp::make_function(get_opencl_context,
+                                    bp::return_value_policy<bp::reference_existing_object>()))
+
 #endif
 #ifdef VIENNACL_WITH_CUDA
     .add_property("cuda_handle", get_cuda_handle)

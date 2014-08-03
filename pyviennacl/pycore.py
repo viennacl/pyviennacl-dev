@@ -171,8 +171,7 @@ scalar case, simple numerical equality is used.
 
 from __future__ import division
 import itertools, logging, math
-from pyviennacl import (_viennacl as _v,
-                        backend, util)
+from pyviennacl import (_viennacl as _v, backend, util)
 from numpy import (ndarray, array, zeros,
                    inf, nan, dtype, number,
                    equal as np_equal, array_equal,
@@ -1656,6 +1655,12 @@ class SparseMatrixBase(Leaf):
         self.cpu_leaf.set_entry(key[0], key[1], value)
         #self.nnz # Updates nonzero list
 
+    def insert(self, x, y, value):
+        self.flushed = False
+        if isinstance(value, ScalarBase):
+            value = value.value
+        self.cpu_leaf.insert_entry(x, y, value)
+
     def __delitem__(self, key):
         #if not isinstance(key, tuple):
         #    raise KeyError("Key must be a 2-tuple")
@@ -2415,7 +2420,9 @@ class CustomNode(Node):
         """
         TODO docstring
         """
-        self.operands = list(map(util.fix_operand, args))
+        def fix_operand(args):
+            return util.fix_operand(args, self)
+        self.operands = list(map(fix_operand, args))
         self.statement_node_type_family = self.result_container_type.statement_node_type_family
         self.statement_node_subtype = self.result_container_type.statement_node_subtype
         self.statement_node_numeric_type = HostScalarTypes[self.dtype.name]

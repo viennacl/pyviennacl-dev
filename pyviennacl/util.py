@@ -32,6 +32,7 @@ def fix_operand(opand, node=None):
             return opand.result
     return opand
 
+
 def from_ndarray(obj):
     """
     Convert a NumPy ``ndarray`` into a PyViennaCL object of appropriate
@@ -58,4 +59,3 @@ def from_ndarray(obj):
     else:
         raise AttributeError("Cannot cope with %d dimensions!" % self.operands[0].ndim)
     return new
-

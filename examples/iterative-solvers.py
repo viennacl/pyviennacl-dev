@@ -28,7 +28,7 @@ b = read_vector(os.path.join(os.path.dirname(os.path.realpath(__file__)), "rhs65
 print("Loaded RHS vector")
 
 # Construct the tag to denote the GMRES solver
-tag = p.gmres_tag(tolerance = 1e-5, max_iterations = 150, krylov_dim = 50)
+tag = p.tags.GMRES(tolerance = 1e-5, max_iterations = 150, krylov_dim = 50)
 
 # Solve the system
 x = p.solve(A, b, tag)

@@ -22,10 +22,10 @@ vector_getters = [('vector', 'get_vector'),
 
 forms = ['upper', 'unit_upper', 'lower', 'unit_lower']
 forms_tags = {
-    'upper': p.upper_tag(),
-    'unit_upper': p.unit_upper_tag(),
-    'lower': p.lower_tag(),
-    'unit_lower': p.unit_lower_tag()
+    'upper': p.tags.Upper(),
+    'unit_upper': p.tags.UnitUpper(),
+    'lower': p.tags.Lower(),
+    'unit_lower': p.tags.UnitLower()
 }
 
 for layout_, d_t_, form_, getter1_, getter2_ in product(layouts, dtype_tolerances, forms, matrix_getters, matrix_getters):

@@ -7,7 +7,7 @@ def read_mtx(fname, dtype):
     Very crude!
     """
     fd = open(fname)
-    lines = map(lambda x: x.strip().split(" "), fd.readlines())
+    lines = list(map(lambda x: x.strip().split(" "), fd.readlines()))
     ln = -1
     for line in lines:
         ln += 1
@@ -23,15 +23,15 @@ def read_mtx(fname, dtype):
     def assign(l):
         try:
             i, j, v = int(l[0]), int(l[1]), mat_type(l[2])
-            mat[i-1, j-1] = v
+            mat.insert(i-1, j-1, v)
         except ValueError:
             pass
-    map(assign, lines[ln+1:])
+    result = list(map(assign, lines[ln+1:]))
     return mat
 
 def read_vector(fname, dtype):
     fd = open(fname)
-    lines = map(lambda x: x.strip().split(" "), fd.readlines())
+    lines = list(map(lambda x: x.strip().split(" "), fd.readlines()))
     count = int(lines[0][0])
     vector = list(map(lambda x: p.np_result_type(dtype).type(x), lines[1]))
     vector = p.Vector(vector, dtype = dtype)

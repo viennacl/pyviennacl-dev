@@ -72,15 +72,19 @@ def diff(a, b):
         return np.fabs(a - b) / max(np.fabs(a), np.fabs(b))
 
 
-def get_vector(size, dtype, context=default_context):
-    numpy_A = np.random.rand(size)
+def get_vector(size, dtype, context=default_context, vector=None):
+    if vector:
+        try: numpy_A = vector.as_ndarray()
+        except: numpy_A = vector
+    else:
+        numpy_A = np.random.rand(size)
     numpy_A = np.asarray(numpy_A, dtype=dtype)
     vcl_A = p.Vector(numpy_A, context=context)
     return numpy_A, vcl_A
 
 
-def get_vector_range(size, dtype, context=default_context):
-    numpy_A, vcl_A = get_vector(size, dtype, context)
+def get_vector_range(size, dtype, context=default_context, vector=None):
+    numpy_A, vcl_A = get_vector(size, dtype, context, vector)
 
     big_A = np.ones((size*4,), dtype=dtype)
 
@@ -91,8 +95,8 @@ def get_vector_range(size, dtype, context=default_context):
     return numpy_A, vcl_range_A
 
 
-def get_vector_slice(size, dtype, context=default_context):
-    numpy_A, vcl_A = get_vector(size, dtype, context)
+def get_vector_slice(size, dtype, context=default_context, vector=None):
+    numpy_A, vcl_A = get_vector(size, dtype, context, vector)
 
     big_A = np.ones((size*4,), dtype=dtype)
 

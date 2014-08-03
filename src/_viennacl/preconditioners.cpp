@@ -17,8 +17,8 @@ PYVCL_SUBMODULE(preconditioners)
 
   bp::class_<vcl::linalg::ichol0_tag>("ichol0_tag");
 
-  EXPORT_ICHOL0_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_ICHOL0_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_ICHOL0_PRECOND(compressed_matrix, float);
+  EXPORT_ICHOL0_PRECOND(compressed_matrix, double);
 
   // [BLOCK-]ILU(T/0)
 
@@ -36,13 +36,13 @@ PYVCL_SUBMODULE(preconditioners)
     .add_property("drop_tolerance",
                   &vcl::linalg::ilut_tag::get_drop_tolerance,
                   &vcl::linalg::ilut_tag::set_drop_tolerance)
-    .add_property("use_level_scheduling",
+    .add_property("with_level_scheduling",
                   ilut_get_level_scheduling,
                   ilut_set_level_scheduling)
     ;
 
-  EXPORT_ILUT_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_ILUT_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_ILUT_PRECOND(compressed_matrix, float);
+  EXPORT_ILUT_PRECOND(compressed_matrix, double);
 
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::ilu0_tag, bool,
                                   use_level_scheduling,
@@ -52,28 +52,28 @@ PYVCL_SUBMODULE(preconditioners)
                                   ilu0_set_level_scheduling, (bool));
   bp::class_<vcl::linalg::ilu0_tag>("ilu0_tag")
     .def(bp::init<bool>())
-    .add_property("use_level_scheduling",
+    .add_property("with_level_scheduling",
                   ilu0_get_level_scheduling,
                   ilu0_set_level_scheduling)
     ;
 
 
-  EXPORT_ILU0_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_ILU0_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_ILU0_PRECOND(compressed_matrix, float);
+  EXPORT_ILU0_PRECOND(compressed_matrix, double);
 
-  EXPORT_BLOCK_ILUT_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_BLOCK_ILUT_PRECOND(vcl::compressed_matrix<double>);
-  EXPORT_BLOCK_ILU0_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_BLOCK_ILU0_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_BLOCK_ILUT_PRECOND(compressed_matrix, float);
+  EXPORT_BLOCK_ILUT_PRECOND(compressed_matrix, double);
+  EXPORT_BLOCK_ILU0_PRECOND(compressed_matrix, float);
+  EXPORT_BLOCK_ILU0_PRECOND(compressed_matrix, double);
   
   // JACOBI
 
   bp::class_<vcl::linalg::jacobi_tag>("jacobi_tag");
 
-  EXPORT_JACOBI_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_JACOBI_PRECOND(vcl::compressed_matrix<double>);
-  EXPORT_JACOBI_PRECOND(vcl::coordinate_matrix<float>);
-  EXPORT_JACOBI_PRECOND(vcl::coordinate_matrix<double>);
+  EXPORT_JACOBI_PRECOND(compressed_matrix, float);
+  EXPORT_JACOBI_PRECOND(compressed_matrix, double);
+  EXPORT_JACOBI_PRECOND(coordinate_matrix, float);
+  EXPORT_JACOBI_PRECOND(coordinate_matrix, double);
 
   // ROW SCALING
 
@@ -82,10 +82,10 @@ PYVCL_SUBMODULE(preconditioners)
     .add_property("norm", &vcl::linalg::row_scaling_tag::norm)
     ;
 
-  EXPORT_ROW_SCALING_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_ROW_SCALING_PRECOND(vcl::compressed_matrix<double>);
-  EXPORT_ROW_SCALING_PRECOND(vcl::coordinate_matrix<float>);
-  EXPORT_ROW_SCALING_PRECOND(vcl::coordinate_matrix<double>);
+  EXPORT_ROW_SCALING_PRECOND(compressed_matrix, float);
+  EXPORT_ROW_SCALING_PRECOND(compressed_matrix, double);
+  EXPORT_ROW_SCALING_PRECOND(coordinate_matrix, float);
+  EXPORT_ROW_SCALING_PRECOND(coordinate_matrix, double);
 
 #ifdef VIENNACL_WITH_OPENCL
 
@@ -115,10 +115,10 @@ PYVCL_SUBMODULE(preconditioners)
     .add_property("threshold",
                   &vcl::linalg::amg_tag::get_threshold,
                   &vcl::linalg::amg_tag::set_threshold)
-    .add_property("jacobiweight",
+    .add_property("jacobi_weight",
                   &vcl::linalg::amg_tag::get_jacobiweight,
                   &vcl::linalg::amg_tag::set_as)
-    .add_property("interpolweight",
+    .add_property("interpol_weight",
                   &vcl::linalg::amg_tag::get_interpolweight,
                   &vcl::linalg::amg_tag::set_interpolweight)
     .add_property("presmooth",
@@ -127,13 +127,13 @@ PYVCL_SUBMODULE(preconditioners)
     .add_property("postsmooth",
                   &vcl::linalg::amg_tag::get_postsmooth,
                   &vcl::linalg::amg_tag::set_postsmooth)
-    .add_property("coarselevels",
+    .add_property("coarse_levels",
                   &vcl::linalg::amg_tag::get_coarselevels,
                   &vcl::linalg::amg_tag::set_coarselevels)
     ;
 
-  EXPORT_AMG_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_AMG_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_AMG_PRECOND(compressed_matrix, float);
+  EXPORT_AMG_PRECOND(compressed_matrix, double);
 
   // (F)SPAI
 
@@ -156,8 +156,8 @@ PYVCL_SUBMODULE(preconditioners)
                   &vcl::linalg::spai_tag::setIsRight)
     ;
 
-  EXPORT_SPAI_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_SPAI_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_SPAI_PRECOND(compressed_matrix, float);
+  EXPORT_SPAI_PRECOND(compressed_matrix, double);
 
   bp::class_<vcl::linalg::fspai_tag>("fspai_tag")
     .def(bp::init<double, unsigned int, bool, bool>())
@@ -175,8 +175,8 @@ PYVCL_SUBMODULE(preconditioners)
                   &vcl::linalg::fspai_tag::setIsRight)
     ;
 
-  EXPORT_FSPAI_PRECOND(vcl::compressed_matrix<float>);
-  EXPORT_FSPAI_PRECOND(vcl::compressed_matrix<double>);
+  EXPORT_FSPAI_PRECOND(compressed_matrix, float);
+  EXPORT_FSPAI_PRECOND(compressed_matrix, double);
 
 #endif // VIENNACL_WITH_OPENCL
 

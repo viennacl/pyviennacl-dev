@@ -41,7 +41,7 @@ b = p.Vector(np.random.rand(N).astype(np.float32))
 print("b is %s" % b)
 
 # Solve the system; note the choice of tag to denote an upper triangular system
-x = p.solve(A, b, p.upper_tag())
+x = p.solve(A, b, p.tags.Upper())
 
 # Copy the solution from the device to host and display it
 print("Solution of Ax = b for x:\n%s" % x)
