@@ -1445,8 +1445,12 @@ class SparseMatrixBase(Leaf):
 
         if len(args) == 0:
             # 0: empty -> empty
-            def get_cpu_leaf(cpu_t):
-                return cpu_t()
+            if 'shape' in kwargs.keys():
+                def get_cpu_leaf(cpu_t):
+                    return cpu_t(*shape)
+            else:
+                def get_cpu_leaf(cpu_t):
+                    return cpu_t()
         elif len(args) == 1:
             if isinstance(args[0], tuple):
                 # Then we construct from given data
@@ -1659,7 +1663,7 @@ class SparseMatrixBase(Leaf):
         self.flushed = False
         if isinstance(value, ScalarBase):
             value = value.value
-        self.cpu_leaf.insert_entry(x, y, value)
+        self.cpu_leaf.insert_entry(x, y, np_result_type(self).type(value))
 
     def __delitem__(self, key):
         #if not isinstance(key, tuple):
@@ -1679,7 +1683,10 @@ class SparseMatrixBase(Leaf):
                     ")\t\t", "{}".format(self[coord]), "\n"]
         out = out[:-1]
         return "".join(out)
-    __repr__ = __str__
+
+    def __repr__(self):
+        out = "<pyviennacl.%s object of size (%d, %d) with %d nonzeros at 0x%x>" % (type(self).__name__, self.size1, self.size2, self.nnz, id(self))
+        return out
 
     def dot(self, rhs):
         """

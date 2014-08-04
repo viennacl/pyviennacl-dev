@@ -274,12 +274,11 @@ class FSPAI(PreconditionerTag):
 
     def __init__(self, residual_norm_threshold=1e-3,
                  iteration_limit=5,
-                 residual_threshold=1e-2,
                  is_static=False,
                  is_right=False):
         if not backend.WITH_OPENCL:
             raise NotImplementedError("FSPAI preconditioner only available with OpenCL")
-        self.vcl_tag = self.vcl_tag_type(residual_norm_threshold, iteration_limit, residual_threshold, is_static, is_right)
+        self.vcl_tag = self.vcl_tag_type(residual_norm_threshold, iteration_limit, is_static, is_right)
 
     @property
     def residual_norm_threshold(self):
@@ -288,10 +287,6 @@ class FSPAI(PreconditionerTag):
     @property
     def iteration_limit(self):
         return self.vcl_tag.iteration_limit
-
-    @property
-    def residual_threshold(self):
-        return self.vcl_tag.residual_threshold
 
     @property
     def is_static(self):

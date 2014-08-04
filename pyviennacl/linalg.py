@@ -133,6 +133,9 @@ def solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner()):
     else:
         result_type = B.result_container_type
 
+    if precond_tag is None:
+        precond_tag = tags.NoPreconditioner()
+
     if isinstance(solver_tag, tags.SolverWithoutPreconditioner):
         return result_type(solver_tag.vcl_solve_call
                            (A.vcl_leaf, B.vcl_leaf,

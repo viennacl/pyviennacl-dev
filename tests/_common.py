@@ -73,9 +73,9 @@ def diff(a, b):
 
 
 def get_vector(size, dtype, context=default_context, vector=None):
-    if vector:
+    if vector is not None:
         try: numpy_A = vector.as_ndarray()
-        except: numpy_A = vector
+        except AttributeError: numpy_A = vector
     else:
         numpy_A = np.random.rand(size)
     numpy_A = np.asarray(numpy_A, dtype=dtype)
@@ -238,6 +238,34 @@ def get_matrix_slice_trans(size1, size2, layout, dtype,
     form = trans_form[form]
     numpy_A, vcl_A = get_matrix_slice(size2, size1, layout, dtype, form, context)
     return numpy_A.T, vcl_A.T
+
+
+def get_sparse_matrix(size, sparsity=0.1, dtype=np.float32,
+                      sparse_type=p.CompressedMatrix):
+    nnz = int(max(1, math.ceil((size*size)*sparsity)))
+    nnz_per_row = max(1, int(nnz / (size*2))-1)
+    nnz = (nnz_per_row * size * 2) + size
+
+    A = sparse_type(shape=(size, size, nnz), dtype=dtype)
+
+    for row in range(size):
+        for n in range(nnz_per_row):
+            cols = []
+            diag = 0
+            while True:
+                col = np.random.randint(0, size)
+                if (col not in cols) and (col != row):
+                    cols.append(col)
+                    break
+            value = random.random()
+            A.insert(row, col, value)
+            A.insert(col, row, value)
+            diag += value
+        for col in range(size):
+            diag += A[col, row]
+        A[row, row] = diag*2
+
+    return A
 
 
 # Test functions
