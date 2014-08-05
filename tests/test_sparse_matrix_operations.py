@@ -9,7 +9,10 @@ from itertools import product
 
 size, sparsity = 20, 0.1
 
-dtype_tolerances = [('float32', 1.0E-3), ('float64', 1.0E-8)]
+if double_support:
+    dtype_tolerances = [('float32', 1.0E-3), ('float64', 1.0E-8)]
+else:
+    dtype_tolerances = [('float32', 1.0E-3)]
 
 dense_matrix_getters = [('matrix', 'get_matrix'),
                         ('matrix_range', 'get_matrix_range'),

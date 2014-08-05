@@ -92,7 +92,10 @@ class Context(object):
     sub_context = None
     _programs = None
 
-    def __init__(self, domain_or_context = DefaultMemory):
+    def __init__(self, domain_or_context=DefaultMemory):
+        if domain_or_context is None:
+            domain_or_context = DefaultMemory
+
         if isinstance(domain_or_context, Context):
             self.domain = domain_or_context.domain
             self.vcl_context = domain_or_context.vcl_context

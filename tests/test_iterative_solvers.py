@@ -7,9 +7,13 @@ import scipy.sparse.linalg as spspla
 from _common import *
 from itertools import product
 
-size, sparsity = 20, 0.1
+points_x_y = 5
 
-dtype_tolerances = [('float32', 1.0E-2), ('float64', 1.0E-6)]
+if double_support:
+    dtype_tolerances = [('float32', 1.0E-2), ('float64', 1.0E-6)]
+else:
+    dtype_tolerances = [('float32', 1.0E-2)]
+
 
 matrix_types = [('compressed_matrix', 'p.CompressedMatrix'),
                 ('coordinate_matrix', 'p.CoordinateMatrix'),
@@ -49,15 +53,15 @@ for d_t_, solver_, sparse_type_, vector_getter_, precond_ in product(dtype_toler
 
     def A_solve_b_test_factory(dt, tol, sparse_type, vector_getter, solver_tag_type, precond_tag_type):
         def _test():
-            solver_tag = solver_tag_type(tolerance=tol/1000)
+            solver_tag = solver_tag_type(tolerance=tol/10)
             precond_tag = precond_tag_type()
 
-            vcl_system = get_sparse_matrix(size, sparsity, dt, sparse_type)
+            vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt)
             numpy_system = vcl_system.as_ndarray() # TODO: SciPy-ise
 
-            numpy_solution, vcl_solution = vector_getter(size, dt, vector=np.ones(size).astype(dt))
+            numpy_solution, vcl_solution = vector_getter(vcl_system.size1, dt, vector=np.ones(vcl_system.size1).astype(dt))
 
-            numpy_rhs, vcl_rhs = vector_getter(size, dt, vector=vcl_system*vcl_solution)
+            numpy_rhs, vcl_rhs = vector_getter(vcl_system.size1, dt, vector=vcl_system*vcl_solution)
 
             # solve using pyviennacl
             vcl_solution = p.solve(vcl_system, vcl_rhs, solver_tag, precond_tag)

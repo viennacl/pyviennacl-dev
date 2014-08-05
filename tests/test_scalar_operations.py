@@ -11,7 +11,11 @@ rhs_scalar_getters = [('host_scalar', 'get_host_scalar'),
                       ('device_scalar', 'get_device_scalar'),
                       ('scalar_from_vector_norm', 'get_scalar_from_vector_norm'),
                       ('scalar_from_vector_dot_product', 'get_scalar_from_vector_dot_product')]
-dtype_tolerances = [(p.float32, 1.0E-3), (p.float64, 1.0E-11)]
+
+if double_support:
+    dtype_tolerances = [('float32', 1.0E-3), ('float64', 1.0E-11)]
+else:
+    dtype_tolerances = [('float32', 1.0E-3)]
 
 
 p_scalar_operations = [
@@ -116,7 +120,7 @@ for d_t_, getter1_, getter2_, op_ in product(dtype_tolerances, lhs_rhs_scalar_ge
     beta = %s(dt)
     numpy_C = %s(alpha.value, beta.value)
     vcl_C = %s(alpha, beta)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt, getter1_[1], getter2_[1], op_[1], op_[2])
     exec(test_code)
 
     test_code = (vcl_numpy_test_code_header + """
@@ -124,7 +128,7 @@ for d_t_, getter1_, getter2_, op_ in product(dtype_tolerances, lhs_rhs_scalar_ge
     beta = %s(dt)
     numpy_C = %s(alpha.value, beta.value)
     vcl_C = %s(alpha, beta.value)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt, getter1_[1], getter2_[1], op_[1], op_[2])
     exec(test_code)
 
 for d_t_, getter1_, getter2_, getter3_, op_ in product(dtype_tolerances, lhs_rhs_scalar_getters, rhs_scalar_getters, rhs_scalar_getters, pqr_scalar_operations):
@@ -136,7 +140,7 @@ for d_t_, getter1_, getter2_, getter3_, op_ in product(dtype_tolerances, lhs_rhs
     gamma = %s(dt)
     numpy_C = %s(alpha.value, beta.value, gamma.value)
     vcl_C = %s(alpha, beta, gamma)
-""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
     exec(test_code)
 
     test_code = (numpy_vcl_vcl_test_code_header + """
@@ -145,7 +149,7 @@ for d_t_, getter1_, getter2_, getter3_, op_ in product(dtype_tolerances, lhs_rhs
     gamma = %s(dt)
     numpy_C = %s(alpha.value, beta.value, gamma.value)
     vcl_C = %s(alpha.value, beta, gamma)
-""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
     exec(test_code)
 
     test_code = (vcl_numpy_vcl_test_code_header + """
@@ -154,7 +158,7 @@ for d_t_, getter1_, getter2_, getter3_, op_ in product(dtype_tolerances, lhs_rhs
     gamma = %s(dt)
     numpy_C = %s(alpha.value, beta.value, gamma.value)
     vcl_C = %s(alpha, beta.value, gamma)
-""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
     exec(test_code)
 
     test_code = (vcl_vcl_numpy_test_code_header + """
@@ -163,5 +167,5 @@ for d_t_, getter1_, getter2_, getter3_, op_ in product(dtype_tolerances, lhs_rhs
     gamma = %s(dt)
     numpy_C = %s(alpha.value, beta.value, gamma.value)
     vcl_C = %s(alpha, beta, gamma.value)
-""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
     exec(test_code)

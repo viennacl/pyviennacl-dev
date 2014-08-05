@@ -6,7 +6,7 @@ import pyviennacl as p
 
 logger = logging.getLogger('pyviennacl')
 default_context = p.backend.Context()
-
+double_support = ([x for x in p.backend.Context().devices if x.double_fp_config] != [])
 
 def diff(a, b):
     ret = 0
@@ -243,27 +243,32 @@ def get_matrix_slice_trans(size1, size2, layout, dtype,
 def get_sparse_matrix(size, sparsity=0.1, dtype=np.float32,
                       sparse_type=p.CompressedMatrix):
     nnz = int(max(1, math.ceil((size*size)*sparsity)))
-    nnz_per_row = max(1, int(nnz / (size*2))-1)
-    nnz = (nnz_per_row * size * 2) + size
+    nnz_per_row = max(1, int(math.sqrt(nnz))-2)
 
     A = sparse_type(shape=(size, size, nnz), dtype=dtype)
 
-    for row in range(size):
+    nonzeros = []
+    rows = []
+    while len(rows) < nnz_per_row:
+        r = np.random.randint(0, size)
+        if r not in rows: rows.append(r)
+    for row in rows:
         for n in range(nnz_per_row):
-            cols = []
             diag = 0
             while True:
                 col = np.random.randint(0, size)
-                if (col not in cols) and (col != row):
-                    cols.append(col)
+                if not (((row, col) in nonzeros) or ((col, row) in nonzeros) or (col == row)):
+                    nonzeros.append((row, col))
+                    nonzeros.append((col, row))
                     break
-            value = random.random()
+            value = 1.0 #random.random()
+            print(row, col, value)
             A.insert(row, col, value)
             A.insert(col, row, value)
-            diag += value
-        for col in range(size):
-            diag += A[col, row]
-        A[row, row] = diag*2
+
+    for row in range(size):
+        diags = [x for x in nonzeros if row in x]
+        A[row, row] = len(diags) or 1.0
 
     return A
 

@@ -9,7 +9,12 @@ from _common import *
 from itertools import product
 
 layouts = [p.ROW_MAJOR, p.COL_MAJOR]
-dtype_tolerances = [(p.float32, 1.0E-1), (p.float64, 1.0E-8)]
+
+if double_support:
+    dtype_tolerances = [('float32', 1.0E-3), ('float64', 1.0E-8)]
+else:
+    dtype_tolerances = [('float32', 1.0E-3)]
+
 matrix_getters = [('matrix', 'get_matrix'),
                   ('matrix_range', 'get_matrix_range'),
                   ('matrix_slice', 'get_matrix_slice'),
@@ -43,7 +48,7 @@ for layout_, d_t_, form_, getter1_, getter2_ in product(layouts, dtype_tolerance
             assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
         return _test
         
-    exec("test_%s_%s_A_%s_B_%s_%s = A_solve_B_test_factory('%s', p.%s, %g, '%s', %s, %s)" % (getter1_[0], form_, getter2_[0], layout_, dt_.__name__, form_, dt_.__name__, tol_, layout_, getter1_[1], getter2_[1]))
+    exec("test_%s_%s_A_%s_B_%s_%s = A_solve_B_test_factory('%s', p.%s, %g, '%s', %s, %s)" % (getter1_[0], form_, getter2_[0], layout_, dt_, form_, dt_, tol_, layout_, getter1_[1], getter2_[1]))
 
 for layout_, d_t_, form_, getter1_, getter2_ in product(layouts, dtype_tolerances, forms, matrix_getters, vector_getters):
     dt_ = d_t_[0]
@@ -61,5 +66,5 @@ for layout_, d_t_, form_, getter1_, getter2_ in product(layouts, dtype_tolerance
             assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
         return _test
         
-    exec("test_%s_%s_A_%s_b_%s_%s = A_solve_b_test_factory('%s', p.%s, %g, '%s', %s, %s)" % (getter1_[0], form_, getter2_[0], layout_, dt_.__name__, form_, dt_.__name__, tol_, layout_, getter1_[1], getter2_[1]))
+    exec("test_%s_%s_A_%s_b_%s_%s = A_solve_b_test_factory('%s', p.%s, %g, '%s', %s, %s)" % (getter1_[0], form_, getter2_[0], layout_, dt_, form_, dt_, tol_, layout_, getter1_[1], getter2_[1]))
 

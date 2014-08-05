@@ -2,8 +2,19 @@
 #define _PYVIENNACL_CPU_COMPRESSED_MATRIX_HPP
 
 #include "sparse_matrix.hpp"
+#include <viennacl/tools/matrix_generation.hpp>
+
+template <typename ScalarT>
+cpu_compressed_matrix_wrapper<ScalarT>
+generate_fdm_laplace(vcl::vcl_size_t points_x, vcl::vcl_size_t points_y) {
+  typedef ublas::compressed_matrix<ScalarT, ublas::row_major> ublas_sparse_t;
+  ublas_sparse_t A(points_x * points_y, points_x * points_y, points_x * points_y);
+  vcl::tools::generate_fdm_laplace<ublas_sparse_t>(A, points_x, points_y);
+  return cpu_compressed_matrix_wrapper<ScalarT>(A);
+}
 
 #define EXPORT_CPU_COMPRESSED_MATRIX(TYPE)                              \
+  bp::def("generate_fdm_laplace_" #TYPE, &generate_fdm_laplace<TYPE>);  \
   bp::class_<cpu_compressed_matrix_wrapper<TYPE> >                      \
   ("cpu_compressed_matrix_" #TYPE)                                      \
   .def(bp::init<>())                                                    \

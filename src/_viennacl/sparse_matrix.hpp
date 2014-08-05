@@ -108,6 +108,13 @@ public:
     _places = NULL;
   }
 
+  cpu_compressed_matrix_wrapper(const ublas_sparse_t& cpu_sparse_matrix)
+    : _dirty(true)
+  {
+    cpu_compressed_matrix = ublas_sparse_t(cpu_sparse_matrix);
+    _places = NULL;
+  }
+
   cpu_compressed_matrix_wrapper(const np::ndarray& array) : _dirty(true)
   {
     _places = NULL;

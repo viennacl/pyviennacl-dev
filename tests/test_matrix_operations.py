@@ -17,8 +17,11 @@ vector_getters = [('vector', 'get_vector'),
                   ('vector_slice', 'get_vector_slice')]
 scalar_getters = [('host_scalar', 'get_host_scalar'),
                   ('device_scalar', 'get_device_scalar')]
-dtype_tolerances = [(p.float32, 1.0E-3), (p.float64, 1.0E-11)]
 
+if double_support:
+    dtype_tolerances = [('float32', 1.0E-3), ('float64', 1.0E-11)]
+else:
+    dtype_tolerances = [('float32', 1.0E-3)]
 
 A_matrix_operations = [
     #('abs', 'np.absolute', 'p.absolute'), # Only for int types!
@@ -117,7 +120,7 @@ for layout_, d_t_, getter1_, op_ in product(layouts, dtype_tolerances, matrix_ge
     numpy_A, vcl_A = %s(size1, size2, '%s', dt, None)
     numpy_C = %s(numpy_A)
     vcl_C = %s(vcl_A)
-""" + test_code_footer) % (getter1_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], op_[0], layout_, dt, getter1_[1], layout_, op_[1], op_[2])
     exec(test_code)
 
 for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, scalar_getters, Ap_matrix_operations):
@@ -128,7 +131,7 @@ for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances,
     alpha = %s(dt)
     numpy_C = %s(numpy_A, alpha.value)
     vcl_C = %s(vcl_A, alpha)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt, getter1_[1], layout_, getter2_[1], op_[1], op_[2])
     exec(test_code)
 
 for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, vector_getters, Ax_matrix_operations):
@@ -139,7 +142,7 @@ for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances,
     numpy_x, vcl_x = %s(size2, dt)
     numpy_C = %s(numpy_A, numpy_x)
     vcl_C = %s(vcl_A, vcl_x)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt, getter1_[1], layout_, getter2_[1], op_[1], op_[2])
     exec(test_code)
 
 for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, matrix_getters, AB_matrix_operations):
@@ -150,7 +153,7 @@ for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances,
     numpy_B, vcl_B = %s(size1, size2, '%s', dt, None)
     numpy_C = %s(numpy_A, numpy_B)
     vcl_C = %s(vcl_A, vcl_B)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], layout_, op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt, getter1_[1], layout_, getter2_[1], layout_, op_[1], op_[2])
     exec(test_code)
 
 for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances, matrix_getters, matrix_getters, AB_matrix_products):
@@ -161,7 +164,7 @@ for layout_, d_t_, getter1_, getter2_, op_ in product(layouts, dtype_tolerances,
     numpy_B, vcl_B = %s(size2, size1, '%s', dt, None)
     numpy_C = %s(numpy_A, numpy_B)
     vcl_C = %s(vcl_A, vcl_B)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], layout_, op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], layout_, dt, getter1_[1], layout_, getter2_[1], layout_, op_[1], op_[2])
     exec(test_code)
 
 for layout_, d_t_, getter1_, getter2_, getter3_, op_ in product(layouts, dtype_tolerances, matrix_getters, matrix_getters, scalar_getters, ABp_matrix_operations):
@@ -173,6 +176,6 @@ for layout_, d_t_, getter1_, getter2_, getter3_, op_ in product(layouts, dtype_t
     alpha = %s(dt)
     numpy_C = %s(numpy_A, numpy_B, alpha.value)
     vcl_C = %s(vcl_A, vcl_B, alpha)
-""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], layout_, dt.__name__, getter1_[1], layout_, getter2_[1], layout_, getter3_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], layout_, dt, getter1_[1], layout_, getter2_[1], layout_, getter3_[1], op_[1], op_[2])
     exec(test_code)
 

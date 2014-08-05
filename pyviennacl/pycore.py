@@ -1415,6 +1415,19 @@ class SparseMatrixBase(Leaf):
     flushed = False
     statement_node_type_family = _v.statement_node_type_family.MATRIX_TYPE_FAMILY
 
+    @classmethod
+    def generate_fdm_laplace(cls, points_x, points_y, dtype=None, context=None):
+        """
+        TODO docstring
+        """
+        A = cls(dtype=dtype, context=context)
+        vcl_context = A.context.vcl_context
+        generator = getattr(_v, "generate_fdm_laplace_" + vcl_statement_node_numeric_type_strings[A.statement_node_numeric_type])
+        cpu_laplace = generator(points_x, points_y)
+        A.cpu_leaf = cpu_laplace
+        A.cpu_leaf.vcl_context = vcl_context
+        return A
+
     @property
     def vcl_leaf_factory(self):
         """

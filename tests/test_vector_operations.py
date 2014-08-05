@@ -10,7 +10,11 @@ vector_getters = [('vector', 'get_vector'),
                   ('vector_slice', 'get_vector_slice')]
 scalar_getters = [('host_scalar', 'get_host_scalar'),
                   ('device_scalar', 'get_device_scalar')]
-dtype_tolerances = [(p.float32, 1.0E-3), (p.float64, 1.0E-11)]
+
+if double_support:
+    dtype_tolerances = [('float32', 1.0E-3), ('float64', 1.0E-11)]
+else:
+    dtype_tolerances = [('float32', 1.0E-3)]
 
 
 x_vector_operations = [
@@ -101,7 +105,7 @@ for d_t, getter1_, op_ in product(dtype_tolerances, vector_getters, x_vector_ope
     numpy_A, vcl_A = %s(size, dt)
     numpy_C = %s(numpy_A)
     vcl_C = %s(vcl_A)
-""" + test_code_footer) % (getter1_[0], op_[0], dt.__name__, getter1_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], op_[0], dt, getter1_[1], op_[1], op_[2])
     exec(test_code)
 
 for d_t, getter1_, getter2_, op_ in product(dtype_tolerances, vector_getters, scalar_getters, xp_vector_operations):
@@ -112,7 +116,7 @@ for d_t, getter1_, getter2_, op_ in product(dtype_tolerances, vector_getters, sc
     alpha = %s(dt)
     numpy_C = %s(numpy_A, alpha.value)
     vcl_C = %s(vcl_A, alpha)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt, getter1_[1], getter2_[1], op_[1], op_[2])
     exec(test_code)
 
 for d_t, getter1_, getter2_, op_ in product(dtype_tolerances, vector_getters, vector_getters, xy_vector_operations):
@@ -123,7 +127,7 @@ for d_t, getter1_, getter2_, op_ in product(dtype_tolerances, vector_getters, ve
     numpy_B, vcl_B = %s(size, dt)
     numpy_C = %s(numpy_A, numpy_B)
     vcl_C = %s(vcl_A, vcl_B)
-""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], op_[0], dt, getter1_[1], getter2_[1], op_[1], op_[2])
     exec(test_code)
 
 for d_t, getter1_, getter2_, getter3_, op_ in product(dtype_tolerances, vector_getters, vector_getters, scalar_getters, xyp_vector_operations):
@@ -135,7 +139,7 @@ for d_t, getter1_, getter2_, getter3_, op_ in product(dtype_tolerances, vector_g
     alpha = %s(dt)
     numpy_C = %s(numpy_A, numpy_B, alpha.value)
     vcl_C = %s(vcl_A, vcl_B, alpha)
-""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt.__name__, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
+""" + test_code_footer) % (getter1_[0], getter2_[0], getter3_[0], op_[0], dt, getter1_[1], getter2_[1], getter3_[1], op_[1], op_[2])
     exec(test_code)
 
 
