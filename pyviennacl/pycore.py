@@ -324,22 +324,22 @@ class MagicMethods(object):
         Returns a new instance of this class representing a new copy of this
         instance's data.
         """
-        return type(self)(self)
+        return self.result_container_type(self)
 
     def new_instance(self, data=None):
         """
         TODO docstring
         """
         if data is None:
-            return type(self)(shape = self.shape,
-                              dtype = self.dtype,
-                              layout = self.layout,
-                              context = self.context)
+            return self.result_container_type(shape = self.shape,
+                                              dtype = self.dtype,
+                                              layout = self.layout,
+                                              context = self.context)
         else:
-            return type(self)(data, shape = self.shape,
-                              dtype = self.dtype,
-                              layout = self.layout,
-                              context = self.context)
+            return self.result_container_type(data, shape = self.shape,
+                                              dtype = self.dtype,
+                                              layout = self.layout,
+                                              context = self.context)
 
     def norm(self, ord=None):
         """
@@ -388,6 +388,12 @@ class MagicMethods(object):
     #@property
     #def norm_inf(self):
     #    return Norm_Inf(self) #.result
+
+    def dot(self, rhs):
+        """
+        TODO docstring
+        """
+        return self.__matmul__(rhs)
 
     def prod(self, rhs):
         """
@@ -519,6 +525,25 @@ class MagicMethods(object):
                                                       dtype = self.dtype)
             else:
                 return self.value * rhs
+        try:
+            op = ElementProd(self, rhs)
+        except TypeError:
+            op = Mul(self, rhs)
+        return op
+
+    def __matmul__(self, rhs):
+        """
+        x.__matmul__(y) <==> x@y
+
+        Returns
+        -------
+        z : {Mul(x, y), Dot(x, y)}
+            Returns a Dot instance for two vectors, or a Mul instance.
+        """
+        if issubclass(self.result_container_type, Vector):
+            if isinstance(rhs, MagicMethods):
+                if issubclass(rhs.result_container_type, Vector):
+                    return Dot(self, rhs)
         op = Mul(self, rhs)
         return op
 
@@ -1206,14 +1231,22 @@ class Vector(Leaf):
         if 'shape' in kwargs.keys():
             if len(kwargs['shape']) != 1:
                 raise TypeError("Vector can only have a 1-d shape")
-            args = list(args)
-            args.insert(0, kwargs['shape'][0])
+            shape = kwargs['shape']
+        elif 'size' in kwargs.keys():
+            shape = (kwargs['size'],)
+        else:
+            shape = None
 
         # TODO: Create Vector from row or column matrix..
 
         if len(args) == 0:
-            def get_leaf(vcl_t):
-                return vcl_t()
+            if shape:
+                def get_leaf(vcl_t):
+                    return vcl_t(shape[0], self._context.vcl_context)
+            else:
+                def get_leaf(vcl_t):
+                    return vcl_t(self._context.vcl_context)
+                
         elif len(args) == 1:
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type, Vector):
@@ -1221,10 +1254,15 @@ class Vector(Leaf):
                         raise TypeError("TODO Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
+                    if shape is None:
+                        shape = args[0].shape
+                    elif shape != args[0].shape:
+                        raise TypeError("Shapes not compatible")
                     def get_leaf(vcl_t):
                         return vcl_t(args[0].result.vcl_leaf)
                 else:
                     raise TypeError("Vectors can only be constructed like this from one-dimensional objects")
+
             elif isinstance(args[0], ndarray):
                 if args[0].ndim > 1:
                     one_d = [x for x in args[0].shape if x > 1]
@@ -1234,26 +1272,36 @@ class Vector(Leaf):
                 else:
                     a = args[0]
                 self.dtype = np_result_type(args[0])
+                if shape is None:
+                    shape = args[0].shape
+                elif shape != args[0].shape:
+                    raise TypeError("Shapes not compatible")
                 def get_leaf(vcl_t):
                     return vcl_t(a, self._context.vcl_context)
+
             elif isinstance(args[0], _v.vector_base):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
-                # This doesn't do any dtype checking, so beware...
+                # This doesn't do any shape or dtype checking, so beware...
                 def get_leaf(vcl_t):
                     return args[0]
             else:
-                # This doesn't do any dtype checking, so beware...
+                # This doesn't do any shape or dtype checking, so beware...
                 def get_leaf(vcl_t):
                     try:
                         return vcl_t(args[0], self._context.vcl_context)
                     except:
                         return vcl_t(args[0])
+
         elif len(args) == 2:
             if self.dtype is None:
                 self.dtype = np_result_type(args[1])
-            def get_leaf(vcl_t):
-                return vcl_t(args[0], args[1], self._context.vcl_context)
+            if shape is None:
+                def get_leaf(vcl_t):
+                    return vcl_t(args[0], args[1], self._context.vcl_context)
+            else:
+                def get_leaf(vcl_t):
+                    return vcl_t(shape[0], args[1], self._context.vcl_context)
         else:
             raise TypeError("Vector cannot be constructed in this way")
 
@@ -1342,14 +1390,6 @@ class Vector(Leaf):
                               layout=COL_MAJOR) # I don't know why COL_MAJOR..
         raise TypeError("Cannot calculate the outer-product of non-vector type: %s" % type(rhs))
 
-    def dot(self, rhs):
-        """
-        Returns an expression representing the inner product of ``self`` and
-        ``rhs``: ``Dot(self, rhs)``.
-        """
-        return Dot(self, rhs)
-    inner = dot
-
     def as_column(self):
         """
         Returns a representation of this instance as a column Matrix.
@@ -1381,21 +1421,6 @@ class Vector(Leaf):
         TODO docstring
         """
         return [self.handle[0].buffer, uint32(self.internal_size)]
-
-    def __mul__(self, rhs):
-        """
-        x.__mul__(rhs) <==> x*rhs
-
-        Returns
-        -------
-        z : {ElementProd(x, rhs), Mul(x, rhs)}
-            Returns an ElementProd instance if rhs is a Vector, otherwise
-            returns a Mul instance, which may or may not be well defined.
-        """
-        if isinstance(rhs, MagicMethods):
-            if issubclass(rhs.result_container_type, Vector):
-                return ElementProd(self, rhs)
-        return Mul(self, rhs)
 
 
 class SparseMatrixBase(Leaf):
@@ -1457,6 +1482,14 @@ class SparseMatrixBase(Leaf):
         """
         if 'shape' in kwargs.keys():
             shape = kwargs['shape']
+        else:
+            shape = None
+
+        if len(shape) != 2:
+            raise TypeError("Any matrix can only be 2-dimensional!")
+
+        if 'nnz' in kwargs.keys():
+            nnz = kwargs['nnz']
 
         if 'layout' in kwargs.keys():
             if kwargs['layout'] == COL_MAJOR:
@@ -1471,69 +1504,89 @@ class SparseMatrixBase(Leaf):
 
         if len(args) == 0:
             # 0: empty -> empty
-            if 'shape' in kwargs.keys():
+            if shape:
                 def get_cpu_leaf(cpu_t):
                     return cpu_t(*shape)
             else:
                 def get_cpu_leaf(cpu_t):
                     return cpu_t()
+
         elif len(args) == 1:
             if isinstance(args[0], tuple):
                 # Then we construct from given data
-                if 'shape' in kwargs.keys():
+                if nnz:
+                    nnz = max(len(args[0][2])+1, nnz)
+                else:
+                    nnz = len(args[0][2])+1
+                if shape:
                     shape = list(shape)
-                    if len(shape) < 3:
-                        shape.append(len(args[0][0]))
                     shape[0] = max(max(args[0][0])+1, shape[0])
                     shape[1] = max(max(args[0][1])+1, shape[1])
-                    shape[2] = max(len(args[0][2])+1, shape[2])
                     def get_cpu_leaf(cpu_t):
-                        return cpu_t(*shape)
+                        return cpu_t(shape[0], shape[1], nnz)
                 else:
                     # args[0] is (rows, cols, values), so ...
                     def get_cpu_leaf(cpu_t):
                         return cpu_t(max(args[0][0])+1, max(args[0][1])+1,
-                                     len(args[0][0])+1)
+                                     nnz)
                 CONSTRUCT_FROM_DATA = True
                 data = args[0]
+
             elif isinstance(args[0], Matrix):
                 # 1: Matrix instance -> copy
+                if shape is None:
+                    shape = args[0].shape
+                elif shape != args[0].shape:
+                    raise TypeError("Shapes not compatible")
                 if self.dtype is None:
                     self.dtype = args[0].dtype
                 self.layout = args[0].layout
                 def get_cpu_leaf(cpu_t):
                     return cpu_t(args[0].as_ndarray())
+
             elif isinstance(args[0], SparseMatrixBase):
                 # 1: SparseMatrixBase instance -> copy
+                if shape is None:
+                    shape = args[0].shape
+                elif shape != args[0].shape:
+                    raise TypeError("Shapes not compatible")
                 if self.dtype is None:
                     self.dtype = args[0].dtype
                 self.layout = args[0].layout
                 def get_cpu_leaf(cpu_t):
                     return args[0].cpu_leaf
+
             elif isinstance(args[0], Node):
                 # 1: Node instance -> get result and copy
                 result = args[0].result
+                if shape is None:
+                    shape = result.shape
+                elif shape != result.shape:
+                    raise TypeError("Shapes not compatible")
+                if self.dtype is None:
+                    self.dtype = result.dtype
+                self.layout = result.layout
                 if isinstance(result, SparseMatrixBase):
-                    if self.dtype is None:
-                        self.dtype = result.dtype
-                    self.layout = result.layout
                     def get_cpu_leaf(cpu_t):
                         return result.cpu_leaf
                 elif isinstance(result, Matrix):
-                    if self.dtype is None:
-                        self.dtype = result.dtype
-                    self.layout = result.layout
                     def get_cpu_leaf(cpu_t):
                         return cpu_t(result.as_ndarray())
                 else:
                     raise TypeError(
                         "Sparse matrix cannot be constructed thus")
+
             elif isinstance(args[0], ndarray):
                 # 1: ndarray -> init and fill
+                if shape is None:
+                    shape = args[0].shape
+                elif shape != args[0].shape:
+                    raise TypeError("Shapes not compatible")
                 if self.dtype is None:
                     self.dtype = np_result_type(args[0])
                 def get_cpu_leaf(cpu_t):
                     return cpu_t(args[0])
+
             else:
                 if WITH_SCIPY:
                     # then test for scipy.sparse matrix
@@ -1541,14 +1594,17 @@ class SparseMatrixBase(Leaf):
                 else:
                     # error!
                     raise TypeError("Sparse matrix cannot be constructed thus")
+
         elif len(args) == 2:
             # 2: 2 ints -> shape
             def get_cpu_leaf(cpu_t):
                 return cpu_t(args[0], args[1])
+
         elif len(args) == 3:
             # 3: 3 ints -> shape+nnz
             def get_cpu_leaf(cpu_t):
                 return cpu_t(args[0], args[1], args[2])
+
         else:
             raise TypeError("Sparse matrix cannot be constructed thus")
 
@@ -1714,12 +1770,6 @@ class SparseMatrixBase(Leaf):
         out = "<pyviennacl.%s object of size (%d, %d) with %d nonzeros at 0x%x>" % (type(self).__name__, self.size1, self.size2, self.nnz, id(self))
         return out
 
-    def dot(self, rhs):
-        """
-        TODO docstring
-        """
-        return self * rhs
-
 
 class CompressedMatrix(SparseMatrixBase):
     """
@@ -1850,8 +1900,9 @@ class Matrix(Leaf):
         if 'shape' in kwargs.keys():
             if len(kwargs['shape']) != 2:
                 raise TypeError("Matrix can only have a 2-d shape")
-            args = list(args)
-            args.insert(0, kwargs['shape'])
+            shape = kwargs['shape']
+        else:
+            shape = None
 
         if 'layout' in kwargs.keys():
             if kwargs['layout'] == COL_MAJOR:
@@ -1862,63 +1913,105 @@ class Matrix(Leaf):
             self.layout = ROW_MAJOR
 
         if len(args) == 0:
-            def get_leaf(vcl_t):
-                return vcl_t()
+            if shape:
+                def get_leaf(vcl_t):
+                    return vcl_t(shape[0], shape[1], self._context.vcl_context)
+            else:
+                def get_leaf(vcl_t):
+                    return vcl_t(self._context.vcl_context)
+
         elif len(args) == 1:
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type,
                               SparseMatrixBase):
+                    if shape is None:
+                        shape = args[0].shape
+                    elif shape != args[0].shape:
+                        raise TypeError("Shapes not compatible!")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     self.layout = args[0].result.layout
                     def get_leaf(vcl_t):
                         return vcl_t(args[0].result.as_ndarray(),
                                      self._context.vcl_context)
+
                 elif issubclass(args[0].result_container_type, Matrix):
                     if args[0].context.domain is not self._context.domain:
                         raise TypeError("TODO Can only construct from objects with same memory domain")
+                    if shape is None:
+                        shape = args[0].shape
+                    elif shape != args[0].shape:
+                        raise TypeError("Shapes not compatible!")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     self.layout = args[0].result.layout
                     def get_leaf(vcl_t):
                         return vcl_t(args[0].result.vcl_leaf)
+
                 else:
                     raise TypeError(
                         "Matrix cannot be constructed in this way")
+
             elif isinstance(args[0], tuple) or isinstance(args[0], list):
+                if shape is None:
+                    shape = args[0]
+                elif list(shape) != list(args[0]):
+                    raise TypeError("Shapes not compatible!")
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0][0], args[0][1],
-                                 self._context.vcl_context)
+                    return vcl_t(shape[0], shape[1], self._context.vcl_context)
+
             elif isinstance(args[0], _v.matrix_base):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
+                # NB: No shape or dtype checking!
                 def get_leaf(vcl_t):
                     return args[0]
+
             elif isinstance(args[0], ndarray):
+                if shape is None:
+                    shape = args[0].shape
+                elif shape != args[0].shape:
+                    raise TypeError("Shapes not compatible!")
                 if self.dtype is None:
                     self.dtype = args[0].dtype
                 def get_leaf(vcl_t):
                     return vcl_t(args[0], self._context.vcl_context)
+
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
                     return args[0]
+
         elif len(args) == 2:
             if isinstance(args[0], tuple) or isinstance(args[0], list):
+                if shape is None:
+                    shape = args[0]
+                elif list(shape) != list(args[0]):
+                    raise TypeError("Shapes not compatible!")
                 if self.dtype is None:
                     self.dtype = np_result_type(args[1])
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0][0], args[0][1], args[1],
+                    return vcl_t(shape[0], shape[1], args[1],
                                  self._context.vcl_context)
             else:
+                if shape is None:
+                    shape = args
+                elif list(shape) != list(args):
+                    raise TypeError("Shapes not compatible!")
                 def get_leaf(vcl_t):
-                    return vcl_t(args[0], args[1], self._context.vcl_context)
+                    return vcl_t(shape[0], shape[1], self._context.vcl_context)
+
         elif len(args) == 3:
+            if shape is None:
+                shape = args[:2]
+            elif list(shape) != list(args[:2]):
+                raise TypeError("Shapes not compatible!")
             if self.dtype is None:
                 self.dtype = np_result_type(args[2])
             def get_leaf(vcl_t):
-                return vcl_t(args[0], args[1], args[2],
+                return vcl_t(shape[0], shape[1], args[2],
                              self._context.vcl_context)
+
         else:
             raise TypeError("Matrix cannot be constructed in this way")
 
@@ -2050,12 +2143,6 @@ class Matrix(Leaf):
         """
         return Trans(self)
     trans = T
-
-    def dot(self, rhs):
-        """
-        TODO docstring
-        """
-        return self * rhs
 
 
 class Node(MagicMethods):
@@ -2830,12 +2917,6 @@ class Trans(Node):
         self.shape = (self.operands[0].shape[1],
                       self.operands[0].shape[0])
 
-    def dot(self, rhs):
-        """
-        TODO docstring
-        """
-        return self * rhs
-
 
 class Assign(Node):
     """
@@ -3155,11 +3236,7 @@ class Statement(object):
         if isinstance(root, Assign):
             self.result = root.operands[0]
         else:
-            self.result = root.result_container_type(
-                shape = root.shape,
-                dtype = root.dtype,
-                layout = root.layout,
-                context = root.operands[0].context)
+            self.result = root.new_instance()
             top = Assign(self.result, root)
             next_node.append(top)
 
