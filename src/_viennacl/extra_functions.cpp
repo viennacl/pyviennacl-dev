@@ -9,6 +9,7 @@
 
 #ifdef VIENNACL_WITH_OPENCL
 #include <viennacl/linalg/nmf.hpp>
+#include <viennacl/linalg/svd.hpp>
 #include <viennacl/fft.hpp>
 #else
 // This is here to keep #ifdefs to a minimum
@@ -87,37 +88,82 @@ DO_OP_FUNC(op_recoverq) {
 }
 CLOSE_OP_FUNC;
 
-DO_OP_FUNC(op_fft)
+DO_OP_FUNC(op_fft_2d)
 {
 #ifdef VIENNACL_WITH_OPENCL
-  vcl::fft(o.operand1, o.operand2);
+  vcl::fft(o.operand1, o.operand2, o.operand3, o.operand4);
 #endif
   return bp::object();
 }
 CLOSE_OP_FUNC;
 
-DO_OP_FUNC(op_inplace_fft)
+DO_OP_FUNC(op_fft_3d)
 {
 #ifdef VIENNACL_WITH_OPENCL
-  vcl::inplace_fft(o.operand1);
+  vcl::fft(o.operand1, o.operand2, o.operand3);
 #endif
   return bp::object();
 }
 CLOSE_OP_FUNC;
 
-DO_OP_FUNC(op_ifft)
+DO_OP_FUNC(op_inplace_fft_2d)
 {
 #ifdef VIENNACL_WITH_OPENCL
-  vcl::ifft(o.operand1, o.operand2);
+  vcl::inplace_fft(o.operand1, o.operand2, o.operand3);
 #endif
   return bp::object();
 }
 CLOSE_OP_FUNC;
 
-DO_OP_FUNC(op_inplace_ifft)
+DO_OP_FUNC(op_inplace_fft_3d)
 {
 #ifdef VIENNACL_WITH_OPENCL
-  vcl::inplace_ifft(o.operand1);
+  vcl::inplace_fft(o.operand1, o.operand2);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_ifft_2d)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::ifft(o.operand1, o.operand2, o.operand3);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_inplace_ifft_2d)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::inplace_ifft(o.operand1, o.operand2);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_convolve_2d)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::linalg::convolve(o.operand1, o.operand2, o.operand3);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_convolve_i_2d)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::linalg::convolve_i(o.operand1, o.operand2, o.operand3);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_fft_normalize_2d)
+{
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::detail::fft::normalize(o.operand1);
 #endif
   return bp::object();
 }
@@ -126,6 +172,14 @@ CLOSE_OP_FUNC;
 DO_OP_FUNC(op_nmf) {
 #ifdef VIENNACL_WITH_OPENCL
   vcl::linalg::nmf(o.operand1, o.operand2, o.operand3, o.operand4);
+#endif
+  return bp::object();
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_svd) {
+#ifdef VIENNACL_WITH_OPENCL
+  vcl::linalg::svd(o.operand1, o.operand2, o.operand3);
 #endif
   return bp::object();
 }
@@ -153,7 +207,7 @@ CLOSE_OP_FUNC;
           vcl::matrix<TYPE, F>&, vcl::matrix<TYPE, F>&,                 \
           op_recoverq>);
 
-// TODO: NMF only supports row_major right now
+// TODO: NMF, FFT only support row_major right now
 #define EXPORT_FUNCTIONS(TYPE)                                          \
   EXPORT_FUNCTIONS_F(TYPE, vcl::row_major);                             \
   EXPORT_FUNCTIONS_F(TYPE, vcl::column_major);                          \
@@ -163,6 +217,11 @@ CLOSE_OP_FUNC;
           vcl::matrix<TYPE, vcl::row_major>&,                           \
           const vcl::linalg::nmf_config&,                               \
           op_nmf>);                                                     \
+  bp::def("svd", pyvcl_do_3ary_op<bp::object,                           \
+          vcl::matrix<TYPE, vcl::row_major>&,                           \
+          vcl::matrix<TYPE, vcl::row_major>&,                           \
+          vcl::matrix<TYPE, vcl::row_major>&,                           \
+          op_svd>);                                                     \
   bp::def("inner_prod", pyvcl_do_2ary_op<vcl::scalar<TYPE>,             \
           vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           op_inner_prod>);                                              \
@@ -182,18 +241,35 @@ CLOSE_OP_FUNC;
   bp::def("norm_inf", pyvcl_do_1ary_op<vcl::scalar<TYPE>,               \
           vcl::vector_base<TYPE>&,                                      \
           op_norm_inf>);                                                \
-  bp::def("fft", pyvcl_do_2ary_op<bp::object,                           \
+  bp::def("fft", pyvcl_do_4ary_op<bp::object,                           \
           vcl::vector<TYPE>&, vcl::vector<TYPE>&,                       \
-          op_fft>);                                                     \
-  bp::def("ifft", pyvcl_do_2ary_op<bp::object,                          \
-          vcl::vector<TYPE>&, vcl::vector<TYPE>&,                       \
-          op_ifft>);                                                    \
-  bp::def("inplace_fft", pyvcl_do_1ary_op<bp::object,                   \
-          vcl::vector<TYPE>&,                                           \
-          op_inplace_fft>);                                             \
-  bp::def("inplace_ifft", pyvcl_do_1ary_op<bp::object,                  \
-          vcl::vector<TYPE>&,                                           \
-          op_inplace_ifft>);
+          vcl::vcl_size_t, TYPE,                                        \
+          op_fft_2d>);                                                  \
+  bp::def("ifft", pyvcl_do_3ary_op<bp::object,                          \
+          vcl::vector<TYPE>&, vcl::vector<TYPE>&, vcl::vcl_size_t,      \
+          op_ifft_2d>);                                                 \
+  bp::def("inplace_fft", pyvcl_do_3ary_op<bp::object,                   \
+          vcl::vector<TYPE>&, vcl::vcl_size_t, TYPE,                    \
+          op_inplace_fft_2d>);                                          \
+  bp::def("inplace_ifft", pyvcl_do_2ary_op<bp::object,                  \
+          vcl::vector<TYPE>&, vcl::vcl_size_t,                          \
+          op_inplace_ifft_2d>);                                         \
+  bp::def("fft", pyvcl_do_3ary_op<bp::object,                           \
+          vcl::matrix<TYPE, vcl::row_major>&,                           \
+          vcl::matrix<TYPE, vcl::row_major>&, TYPE,                     \
+          op_fft_3d>);                                                  \
+  bp::def("inplace_fft", pyvcl_do_2ary_op<bp::object,                   \
+          vcl::matrix<TYPE, vcl::row_major>&, TYPE,                     \
+          op_inplace_fft_3d>);                                          \
+  bp::def("convolve", pyvcl_do_3ary_op<bp::object,                      \
+          vcl::vector<TYPE>&, vcl::vector<TYPE>&, vcl::vector<TYPE>&,   \
+          op_convolve_2d>);                                             \
+  bp::def("convolve_i", pyvcl_do_3ary_op<bp::object,                    \
+          vcl::vector<TYPE>&, vcl::vector<TYPE>&, vcl::vector<TYPE>&,   \
+          op_convolve_i_2d>);                                           \
+  bp::def("normalize", pyvcl_do_1ary_op<bp::object, vcl::vector<TYPE>&, \
+          op_fft_normalize_2d>);
+
 
 PYVCL_SUBMODULE(extra_functions)
 {
@@ -222,6 +298,10 @@ PYVCL_SUBMODULE(extra_functions)
                                   max_iterations, 
                                   get_max_iterations,
                                   () const);
+  DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, vcl::vcl_size_t,
+                                  iters,
+                                  get_iterations,
+                                  () const);
   DISAMBIGUATE_CLASS_FUNCTION_PTR(vcl::linalg::nmf_config, void,
                                   max_iterations, 
                                   set_max_iterations,
@@ -245,6 +325,7 @@ PYVCL_SUBMODULE(extra_functions)
   bp::class_<vcl::linalg::nmf_config>
     ("nmf_config",
      bp::init<double, double, vcl::vcl_size_t, vcl::vcl_size_t>())
+    .add_property("iterations", get_iterations)
     .add_property("tolerance", get_tolerance, set_tolerance)
     .add_property("stagnation_tolerance",
                   get_stagnation_tolerance, set_stagnation_tolerance)

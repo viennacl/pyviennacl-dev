@@ -52,14 +52,20 @@ enum op_t {
   op_solve,          // 10
   op_solve_precond,  // 11
   op_inplace_solve,  // 12
-  op_fft,            // 13
-  op_ifft,           // 14
-  op_inplace_fft,    // 15
-  op_inplace_ifft,   // 16
-  op_inplace_qr,     // 17
-  op_inplace_qr_apply_trans_q, // 18
-  op_recoverq,       // 19
-  op_nmf             // 20
+  op_fft_2d,         // 13
+  op_ifft_2d,        // 14
+  op_inplace_fft_2d, // 15
+  op_inplace_ifft_2d,// 16
+  op_convolve_2d,    // 17
+  op_convolve_i_2d,  // 18
+  op_fft_3d,         // 19
+  op_inplace_fft_3d, // 20
+  op_fft_normalize_2d, // 21
+  op_inplace_qr,     // 22
+  op_inplace_qr_apply_trans_q, // 23
+  op_recoverq,       // 24
+  op_nmf,            // 25
+  op_svd             // 26
 };
 
 // Generic operation dispatch class -- specialised for different ops

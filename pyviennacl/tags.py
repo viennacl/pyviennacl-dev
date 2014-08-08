@@ -21,6 +21,7 @@ class SolverWithoutPreconditioner(object): pass
 
 class EigenvalueTag(object): pass
 
+class NMFTag(object): pass
 
 class NoPreconditioner(PreconditionerTag):
     vcl_tag_type = None
@@ -463,7 +464,7 @@ class GMRES(SolverTag):
     def vcl_solve_call(self, *args):
         return _v.iterative_solve(*args)
 
-    def __init__(self,tolerance = 1e-8, max_iterations = 300, krylov_dim = 20):
+    def __init__(self, tolerance=1e-8, max_iterations=300, krylov_dim=20):
         """
         TODO docstring
 
@@ -614,3 +615,59 @@ class Lanczos(EigenvalueTag):
         """
         return self.vcl_tag.method
 
+
+class NMF(NMFTag):
+    """
+    TODO docstring
+    """
+    def __init__(self, tolerance=1e-4, stagnation_tolerance=1e-5,
+                 max_iterations=10000, check_after_steps=100,
+                 print_relative_error=False):
+        """
+        TODO docstring
+        """
+        self.vcl_tag = _v.nmf_config(tolerance, stagnation_tolerance,
+                                     max_iterations, check_after_steps)
+        self.vcl_tag.print_relative_error = print_relative_error
+
+    @property
+    def iterations(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.iterations
+
+    @property
+    def tolerance(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.tolerance
+
+    @property
+    def stagnation_tolerance(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.stagnation_tolerance
+
+    @property
+    def max_iterations(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.max_iterations
+
+    @property
+    def check_after_steps(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.check_after_steps
+
+    @property
+    def print_relative_error(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.print_relative_error
