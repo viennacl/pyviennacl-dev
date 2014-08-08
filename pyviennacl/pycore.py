@@ -290,7 +290,7 @@ class MagicMethods(object):
                            self.shape,
                            self.dtype,
                            order = self.layout,
-                           data = self.handle.memory_object,
+                           data = self.handle[0].memory_object,
                            strides = self.strides)
         return c
 
@@ -326,13 +326,26 @@ class MagicMethods(object):
         """
         return type(self)(self)
 
+    def new_instance(self, data=None):
+        """
+        TODO docstring
+        """
+        if data is None:
+            return type(self)(shape = self.shape,
+                              dtype = self.dtype,
+                              layout = self.layout,
+                              context = self.context)
+        else:
+            return type(self)(data, shape = self.shape,
+                              dtype = self.dtype,
+                              layout = self.layout,
+                              context = self.context)
+
     def norm(self, ord=None):
         """
         Returns a norm of this instance, if that is defined.
         
         The norm returned depends on the ``ord`` parameter, as in SciPy.
-        * If this instance is a ``Matrix``, then ``ord`` must be ``None``,
-          and the only norm supported is the Frobenius norm.
 
         Parameters
         ----------
@@ -708,7 +721,7 @@ class MagicMethods(object):
         """
         if issubclass(self.result_container_type, ScalarBase):
             return self.result_container_type(-self.value, dtype = self.dtype)
-        return Mul(self.dtype.type(-1), self)
+        return Neg(self)
 
     def __abs__(self):
         """
@@ -1127,7 +1140,7 @@ class HostScalar(ScalarBase):
     
     def _init_scalar(self):
         self.vcl_leaf = self._value
-        self._handle = None
+        self._handle = (None,)
         #self._context = None
 
 
@@ -1153,7 +1166,7 @@ class Scalar(ScalarBase):
         #if isinstance(self._value, number):
         #    self._value = asscalar(self._value)
         self.vcl_leaf = vcl_type(self._value, self._context.vcl_context)
-        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
+        self._handle = (backend.MemoryHandle(self.vcl_leaf.handle),)
 
     @property
     def value(self):
@@ -1204,7 +1217,7 @@ class Vector(Leaf):
         elif len(args) == 1:
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type, Vector):
-                    if args[0].handle.domain is not self._context.domain:
+                    if args[0].handle[0].domain is not self._context.domain:
                         raise TypeError("TODO Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
@@ -1258,7 +1271,7 @@ class Vector(Leaf):
                 "dtype %s not supported" % self.statement_node_numeric_type)
 
         self.vcl_leaf = get_leaf(vcl_type)
-        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
+        self._handle = (backend.MemoryHandle(self.vcl_leaf.handle),)
         self.size = self.vcl_leaf.size
         self.shape = (self.size,)
         self.internal_size = self.vcl_leaf.internal_size
@@ -1367,7 +1380,7 @@ class Vector(Leaf):
         """
         TODO docstring
         """
-        return [self.handle.buffer, uint32(self.internal_size)]
+        return [self.handle[0].buffer, uint32(self.internal_size)]
 
     def __mul__(self, rhs):
         """
@@ -1573,7 +1586,7 @@ class SparseMatrixBase(Leaf):
         """
         if not self.flushed:
             self.flush()
-        return self._handle
+        return self._handle,
 
     @property
     def nonzeros(self):
@@ -1924,7 +1937,7 @@ class Matrix(Leaf):
             raise TypeError("dtype %s not supported" % self.statement_node_numeric_type)
 
         self.vcl_leaf = get_leaf(vcl_type)
-        self._handle = backend.MemoryHandle(self.vcl_leaf.handle)
+        self._handle = (backend.MemoryHandle(self.vcl_leaf.handle),)
         self.size1 = self.vcl_leaf.size1
         self.size2 = self.vcl_leaf.size2
         self.size = self.size1 * self.size2 # Flat size
@@ -2021,7 +2034,7 @@ class Matrix(Leaf):
         """
         TODO docstring
         """
-        return [self.handle.buffer,
+        return [self.handle[0].buffer,
                 uint32(self.internal_size1), uint32(self.internal_size2)]
 
     #def clear(self):
@@ -2533,6 +2546,20 @@ class Norm_Inf(Node):
     }
     operation_node_type = _v.operation_node_type.OPERATION_UNARY_NORM_INF_TYPE
     shape = ()
+
+
+class Neg(Node):
+    """
+    Represent -x; the negation of the operand.
+    """
+    result_types = {
+        ('Vector',): Vector,
+        ('Matrix',): Matrix
+    }
+    operation_node_type = _v.operation_node_type.OPERATION_UNARY_MINUS_TYPE
+
+    def _node_init(self):
+        self.shape = self.operands[0].shape
 
 
 class ElementAbs(Node):
