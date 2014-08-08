@@ -19,11 +19,12 @@ scalar_getters = [('host_scalar', 'get_host_scalar'),
                   ('device_scalar', 'get_device_scalar')]
 
 if double_support:
-    dtype_tolerances = [('float32', 1.0E-3), ('float64', 1.0E-11)]
+    dtype_tolerances = [('float32', 1.0E-5), ('float64', 1.0E-11)]
 else:
-    dtype_tolerances = [('float32', 1.0E-3)]
+    dtype_tolerances = [('float32', 1.0E-5)]
 
 A_matrix_operations = [
+    ('norm_fro', 'np_norm_fro', 'vcl_norm_fro'),
     #('abs', 'np.absolute', 'p.absolute'), # Only for int types!
     ('acos', 'np.arccos', 'p.arccos'),
     ('asin', 'np.arcsin', 'p.arcsin'),

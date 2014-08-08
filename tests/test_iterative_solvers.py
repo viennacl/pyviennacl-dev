@@ -56,7 +56,8 @@ for d_t_, solver_, sparse_type_, vector_getter_, precond_ in product(dtype_toler
             solver_tag = solver_tag_type(tolerance=tol/10)
             precond_tag = precond_tag_type()
 
-            vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt)
+            #vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt)
+            vcl_system = get_sparse_matrix(20, dtype=dt, sparse_type=sparse_type)
             numpy_system = vcl_system.as_ndarray() # TODO: SciPy-ise
 
             numpy_solution, vcl_solution = vector_getter(vcl_system.size1, dt, vector=np.ones(vcl_system.size1).astype(dt))
@@ -67,7 +68,7 @@ for d_t_, solver_, sparse_type_, vector_getter_, precond_ in product(dtype_toler
             vcl_solution = p.solve(vcl_system, vcl_rhs, solver_tag, precond_tag)
 
             # compare with numpy_solution
-            act_diff = math.fabs(diff(numpy_solution, vcl_solution))
+            act_diff = math.fabs(diff(vcl_rhs, vcl_system.dot(vcl_solution)))
             assert act_diff <= tol, "diff was {} > tolerance {}".format(act_diff, tol)
             del solver_tag, precond_tag, vcl_system, vcl_solution, vcl_rhs
 

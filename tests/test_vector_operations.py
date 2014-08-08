@@ -18,6 +18,9 @@ else:
 
 
 x_vector_operations = [
+    ('norm_1', 'np_norm_1', 'vcl_norm_1'),
+    ('norm_2', 'np_norm_2', 'vcl_norm_2'),
+    ('norm_inf', 'np_norm_inf', 'vcl_norm_inf'),
 #    ('abs', 'np.absolute', 'p.absolute'),
     ('acos', 'np.arccos', 'p.arccos'),
     ('asin', 'np.arcsin', 'p.arcsin'),

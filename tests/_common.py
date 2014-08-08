@@ -261,7 +261,7 @@ def get_sparse_matrix(size, sparsity=0.1, dtype=np.float32,
                     nonzeros.append((row, col))
                     nonzeros.append((col, row))
                     break
-            value = 1.0 #random.random()
+            value = -1.0 #random.random()
             print(row, col, value)
             A.insert(row, col, value)
             A.insert(col, row, value)
@@ -274,6 +274,30 @@ def get_sparse_matrix(size, sparsity=0.1, dtype=np.float32,
 
 
 # Test functions
+
+def np_norm_1(A):
+    return np.linalg.norm(A, 1)
+
+def np_norm_2(A):
+    return np.linalg.norm(A, 2)
+
+def np_norm_inf(A):
+    return np.linalg.norm(A, np.inf)
+
+def np_norm_fro(A):
+    return np.linalg.norm(A, 'fro')
+
+def vcl_norm_1(A):
+    return p.norm(A, 1)
+
+def vcl_norm_2(A):
+    return p.norm(A, 2)
+
+def vcl_norm_inf(A):
+    return p.norm(A, np.inf)
+
+def vcl_norm_fro(A):
+    return p.norm(A, 'fro')
 
 def dot(A, B):
     return A.dot(B)
