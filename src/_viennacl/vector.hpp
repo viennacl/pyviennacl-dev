@@ -91,6 +91,15 @@ bp::list vcl_vector_to_list(const vcl::vector_base<SCALARTYPE>& v)
 }
 
 template <class SCALARTYPE>
+vcl::tools::shared_ptr<std::vector<SCALARTYPE> >
+vcl_vector_to_std_vector(const vcl::vector_base<SCALARTYPE>& v)
+{
+  std::vector<SCALARTYPE> *c = new std::vector<SCALARTYPE>(v.size());
+  vcl::copy(v.begin(), v.end(), c->begin());
+  return vcl::tools::shared_ptr<std::vector<SCALARTYPE> >(c);
+}
+
+template <class SCALARTYPE>
 np::ndarray vcl_vector_to_ndarray(const vcl::vector_base<SCALARTYPE>& v)
 {
   return np::from_object(vcl_vector_to_list<SCALARTYPE>(v),
@@ -153,6 +162,16 @@ vcl_vector_init_scalar(vcl::vcl_size_t length, SCALARTYPE value,
 }
 
 template <class SCALARTYPE>
+vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >
+vcl_vector_init_std_vector(const std::vector<SCALARTYPE>& cpu_vec,
+                           const vcl::context &ctx)
+{
+  vcl::vector<SCALARTYPE> *v = new vcl::vector<SCALARTYPE>(cpu_vec.size(), ctx);
+  vcl::copy(cpu_vec.begin(), cpu_vec.end(), v->begin());
+  return vcl::tools::shared_ptr<vcl::vector<SCALARTYPE> >(v);
+}
+
+template <class SCALARTYPE>
 vcl::tools::shared_ptr<vcl::vector_base<SCALARTYPE> >
 vcl_range(vcl::vector_base<SCALARTYPE>& vec,
           std::size_t start, std::size_t end)
@@ -211,6 +230,7 @@ CLOSE_OP_FUNC;
     .def("set_entry", &set_vcl_vector_entry<TYPE, vcl::vector_base<TYPE> >) \
     .def("as_ndarray", &vcl_vector_to_ndarray<TYPE>)			\
     .def("as_list", &vcl_vector_to_list<TYPE>)                          \
+    .def("as_std_vector", &vcl_vector_to_std_vector<TYPE>)              \
     .add_property("memory_domain", &vcl::vector_base<TYPE>::memory_domain) \
     .add_property("handle", bp::make_function                           \
                   (get_vector_##TYPE##_handle,                          \
@@ -240,6 +260,7 @@ CLOSE_OP_FUNC;
     .def("__init__", bp::make_constructor(vcl_vector_init_ndarray<TYPE>)) \
     .def("__init__", bp::make_constructor(vcl_vector_init_list<TYPE>))	\
     .def("__init__", bp::make_constructor(vcl_vector_init_scalar<TYPE>))\
+    .def("__init__", bp::make_constructor(vcl_vector_init_std_vector<TYPE>)) \
     ;                                                                   \
   bp::class_<std::vector<TYPE>,						\
 	     vcl::tools::shared_ptr<std::vector<TYPE> > >			\
