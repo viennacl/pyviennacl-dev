@@ -130,7 +130,7 @@ def setup_spgemv_pyvcl(size, sparsity = None, context = None, dtype = np.float32
     del values
     data = tuple(data)
 
-    A = p.CompressedMatrix(data, shape=(size, size, nnz),
+    A = p.CompressedMatrix(data, shape=(size, size), nnz=nnz,
                            dtype=dtype, context=context)
     A.flush()
 
@@ -169,11 +169,11 @@ def setup_spgemm_pyvcl(size, sparsity = None, context = None, dtype = np.float32
     del values
     data = tuple(data)
 
-    A = p.CompressedMatrix(data, shape=(size, size, nnz),
+    A = p.CompressedMatrix(data, shape=(size, size), nnz=nnz,
                            dtype=dtype, context=context)
     A.flush()
 
-    B = p.CompressedMatrix(data, shape=(size, size, nnz),
+    B = p.CompressedMatrix(data, shape=(size, size), nnz=nnz,
                            dtype=dtype, context=context)
     B.flush()
 

@@ -17,7 +17,7 @@ general system.
 import pyviennacl as p
 import numpy as np
 import os, random
-from util import read_mtx, read_vector
+from p.io import read_mtx, read_vector
 
 A = read_mtx(os.path.join(os.path.dirname(os.path.realpath(__file__)), "mat65k.mtx"),
              dtype=np.float32)

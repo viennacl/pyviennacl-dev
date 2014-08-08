@@ -245,7 +245,7 @@ def get_sparse_matrix(size, sparsity=0.1, dtype=np.float32,
     nnz = int(max(1, math.ceil((size*size)*sparsity)))
     nnz_per_row = max(1, int(math.sqrt(nnz))-2)
 
-    A = sparse_type(shape=(size, size, nnz), dtype=dtype)
+    A = sparse_type(shape=(size, size), nnz=nnz, dtype=dtype)
 
     nonzeros = []
     rows = []
