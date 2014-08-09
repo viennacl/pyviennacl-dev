@@ -1235,7 +1235,7 @@ class Vector(Leaf):
         elif 'size' in kwargs.keys():
             shape = (kwargs['size'],)
         else:
-            shape = None
+            shape = ()
 
         # TODO: Create Vector from row or column matrix..
 
@@ -1254,7 +1254,7 @@ class Vector(Leaf):
                         raise TypeError("TODO Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
-                    if shape is None:
+                    if not shape:
                         shape = args[0].shape
                     elif shape != args[0].shape:
                         raise TypeError("Shapes not compatible")
@@ -1272,7 +1272,7 @@ class Vector(Leaf):
                 else:
                     a = args[0]
                 self.dtype = np_result_type(args[0])
-                if shape is None:
+                if not shape:
                     shape = args[0].shape
                 elif shape != args[0].shape:
                     raise TypeError("Shapes not compatible")
@@ -1296,7 +1296,7 @@ class Vector(Leaf):
         elif len(args) == 2:
             if self.dtype is None:
                 self.dtype = np_result_type(args[1])
-            if shape is None:
+            if not shape:
                 def get_leaf(vcl_t):
                     return vcl_t(args[0], args[1], self._context.vcl_context)
             else:
@@ -1483,9 +1483,9 @@ class SparseMatrixBase(Leaf):
         if 'shape' in kwargs.keys():
             shape = kwargs['shape']
         else:
-            shape = None
+            shape = ()
 
-        if len(shape) != 2:
+        if shape and len(shape) != 2:
             raise TypeError("Any matrix can only be 2-dimensional!")
 
         if 'nnz' in kwargs.keys():
@@ -1534,7 +1534,7 @@ class SparseMatrixBase(Leaf):
 
             elif isinstance(args[0], Matrix):
                 # 1: Matrix instance -> copy
-                if shape is None:
+                if not shape:
                     shape = args[0].shape
                 elif shape != args[0].shape:
                     raise TypeError("Shapes not compatible")
@@ -1546,7 +1546,7 @@ class SparseMatrixBase(Leaf):
 
             elif isinstance(args[0], SparseMatrixBase):
                 # 1: SparseMatrixBase instance -> copy
-                if shape is None:
+                if not shape:
                     shape = args[0].shape
                 elif shape != args[0].shape:
                     raise TypeError("Shapes not compatible")
@@ -1559,7 +1559,7 @@ class SparseMatrixBase(Leaf):
             elif isinstance(args[0], Node):
                 # 1: Node instance -> get result and copy
                 result = args[0].result
-                if shape is None:
+                if not shape:
                     shape = result.shape
                 elif shape != result.shape:
                     raise TypeError("Shapes not compatible")
@@ -1578,7 +1578,7 @@ class SparseMatrixBase(Leaf):
 
             elif isinstance(args[0], ndarray):
                 # 1: ndarray -> init and fill
-                if shape is None:
+                if not shape:
                     shape = args[0].shape
                 elif shape != args[0].shape:
                     raise TypeError("Shapes not compatible")
@@ -1902,7 +1902,7 @@ class Matrix(Leaf):
                 raise TypeError("Matrix can only have a 2-d shape")
             shape = kwargs['shape']
         else:
-            shape = None
+            shape = ()
 
         if 'layout' in kwargs.keys():
             if kwargs['layout'] == COL_MAJOR:
@@ -1924,7 +1924,7 @@ class Matrix(Leaf):
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type,
                               SparseMatrixBase):
-                    if shape is None:
+                    if not shape:
                         shape = args[0].shape
                     elif shape != args[0].shape:
                         raise TypeError("Shapes not compatible!")
@@ -1938,7 +1938,7 @@ class Matrix(Leaf):
                 elif issubclass(args[0].result_container_type, Matrix):
                     if args[0].context.domain is not self._context.domain:
                         raise TypeError("TODO Can only construct from objects with same memory domain")
-                    if shape is None:
+                    if not shape:
                         shape = args[0].shape
                     elif shape != args[0].shape:
                         raise TypeError("Shapes not compatible!")
@@ -1953,7 +1953,7 @@ class Matrix(Leaf):
                         "Matrix cannot be constructed in this way")
 
             elif isinstance(args[0], tuple) or isinstance(args[0], list):
-                if shape is None:
+                if not shape:
                     shape = args[0]
                 elif list(shape) != list(args[0]):
                     raise TypeError("Shapes not compatible!")
@@ -1968,7 +1968,7 @@ class Matrix(Leaf):
                     return args[0]
 
             elif isinstance(args[0], ndarray):
-                if shape is None:
+                if not shape:
                     shape = args[0].shape
                 elif shape != args[0].shape:
                     raise TypeError("Shapes not compatible!")
@@ -1984,7 +1984,7 @@ class Matrix(Leaf):
 
         elif len(args) == 2:
             if isinstance(args[0], tuple) or isinstance(args[0], list):
-                if shape is None:
+                if not shape:
                     shape = args[0]
                 elif list(shape) != list(args[0]):
                     raise TypeError("Shapes not compatible!")
@@ -1994,7 +1994,7 @@ class Matrix(Leaf):
                     return vcl_t(shape[0], shape[1], args[1],
                                  self._context.vcl_context)
             else:
-                if shape is None:
+                if not shape:
                     shape = args
                 elif list(shape) != list(args):
                     raise TypeError("Shapes not compatible!")
@@ -2002,7 +2002,7 @@ class Matrix(Leaf):
                     return vcl_t(shape[0], shape[1], self._context.vcl_context)
 
         elif len(args) == 3:
-            if shape is None:
+            if not shape:
                 shape = args[:2]
             elif list(shape) != list(args[:2]):
                 raise TypeError("Shapes not compatible!")

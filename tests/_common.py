@@ -262,7 +262,6 @@ def get_sparse_matrix(size, sparsity=0.1, dtype=np.float32,
                     nonzeros.append((col, row))
                     break
             value = -1.0 #random.random()
-            print(row, col, value)
             A.insert(row, col, value)
             A.insert(col, row, value)
 

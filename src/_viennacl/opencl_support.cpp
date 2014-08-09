@@ -62,6 +62,14 @@ std::string get_device_full_info(vcl::ocl::device& d) {
   return d.full_info();
 }
 
+std::string ctx_get_cache_path(vcl::ocl::context& ctx) {
+  return std::string(ctx.cache_path());
+}
+
+void ctx_set_cache_path(vcl::ocl::context& ctx, const std::string& path) {
+  ctx.cache_path(const_cast<char*>(path.c_str()));
+}
+
 const vcl::ocl::command_queue& ctx_get_queue(vcl::ocl::context& ctx,
                                              vcl::vcl_size_t device_int_ptr,
                                              vcl::vcl_size_t id) {
@@ -184,6 +192,7 @@ PYVCL_SUBMODULE(opencl_support)
   bp::class_<vcl::ocl::context>("context", bp::no_init)
     .def("__init__", bp::make_constructor(vcl_context_from_int_ptr))
     .def("init_new_context", init_new_context)
+    .add_property("cache_path", ctx_get_cache_path, ctx_set_cache_path)
     .add_property("current_device",
                   bp::make_function(&vcl::ocl::context::current_device,
                                     bp::return_value_policy<bp::reference_existing_object>()))

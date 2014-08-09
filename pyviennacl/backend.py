@@ -7,6 +7,10 @@ TODO:
 """
 import pyviennacl as p
 from . import _viennacl as _v
+
+from appdirs import AppDirs
+appdirs = AppDirs("pyviennacl", "viennacl", version=p.__version__)
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -125,6 +129,8 @@ class Context(object):
             for device in self.devices:
                 if not self.queues[device]:
                     self.add_queue(device)
+            if not self.cache_path:
+                self.cache_path = appdirs.user_config_dir
         #if self.domain is OpenCLMemory:
         #    vcl.set_active_context(self)
 
@@ -142,11 +148,23 @@ class Context(object):
         return not self == other
 
     @property
+    def cache_path(self):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only OpenCL contexts support kernel caching")
+        try: return self.vcl_sub_context.cache_path
+        except: return ''
+
+    @cache_path.setter
+    def cache_path(self, path):
+        if self.domain is not OpenCLMemory:
+            raise TypeError("Only OpenCL contexts support kernel caching")
+        self.vcl_sub_context.cache_path = path
+
+    @property
     def vcl_sub_context(self):
-        if self.domain is OpenCLMemory:
-            return vcl.get_viennacl_object(self.sub_context, self)
-        else:
+        if self.domain is not OpenCLMemory:
             raise TypeError("Only OpenCL sub-context supported currently")
+        return vcl.get_viennacl_object(self.sub_context, self)
 
     @property
     def opencl_context(self):
