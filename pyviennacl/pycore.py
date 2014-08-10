@@ -2454,6 +2454,8 @@ class Node(MagicMethods):
                 return self._shape
         except: pass
 
+        log.warning("Node class %s does not define its own shape; guessing.." % type(self).__name__)
+
         ndim = self.result_ndim
         max_size = self.result_max_axis_size
         shape = []
@@ -2510,7 +2512,7 @@ class Node(MagicMethods):
         then cache and return the result.
         """
         if self.flushed:
-            log.warn("Node already flushed, so returning cached result")
+            log.warning("Node already flushed, so returning cached result")
             return self._result
 
         s = Statement(self)
@@ -2619,7 +2621,7 @@ class CustomNode(Node):
         operands = self.operands + [result]
         if self.context.domain is backend.OpenCLMemory:
             if isinstance(self._kernel, cl.Kernel):
-                self._execute_opencl_kernel(*operands)
+                self._opencl_execute_kernel(*operands)
             else:
                 self._kernel(*operands)
         else:
@@ -2627,10 +2629,33 @@ class CustomNode(Node):
         self._result = result
         self.flushed = True
 
-    def _execute_opencl_kernel(self, *operands):
+    def _opencl_execute_kernel(self, *operands):
+        """
+        TODO docstring
+        """
         args = [x.as_opencl_kernel_operands() for x in operands]
         args = itertools.chain(*args)
-        self._kernel(self.context.current_queue, self.shape, None, *args)
+        self._kernel(self.context.current_queue,
+                     self._opencl_global_size, self._opencl_local_size, *args)
+
+    @property
+    def _opencl_global_size(self):
+        """
+        TODO docstring -- override
+        """
+        log.warning("No global work size specified; using default (128, 128)")
+        if len(self.shape) == 1:
+            return (128,)
+        else:
+            return (128, 128)
+
+    @property
+    def _opencl_local_size(self):
+        """
+        TODO docstring -- override
+        """
+        log.warning("No local work size specific; using None")
+        return None
 
 
 class Norm_1(Node):
@@ -2957,6 +2982,11 @@ class Assign(Node):
     """
     result_types = {}
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_ASSIGN_TYPE
+
+    def _node_init(self):
+        if self.operands[0].shape != self.operands[1].shape:
+            raise TypeError("Cannot assign two differently shaped objects! %s" % self.express())
+        self.shape = self.operands[0].shape
 
 
 class InplaceAdd(Assign):
