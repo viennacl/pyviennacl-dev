@@ -25,6 +25,7 @@ rhs_vector_getters = [('vector', 'get_vector')] #,
                       #('vector_slice', 'get_vector_slice')]
 
 solvers = [('cg', 'p.tags.CG'),
+           #('mixed_precision_cg', 'p.tags.MixedPrecisionCG'),
            ('bicgstab', 'p.tags.BiCGStab'),
            ('gmres', 'p.tags.GMRES')]
 

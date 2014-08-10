@@ -388,6 +388,69 @@ class CG(SolverTag):
         return self.vcl_tag.error
 
 
+class MixedPrecisionCG(SolverTag):
+    """
+    TODO docstring -- EXPERIMENTAL
+
+    Instruct the solver to solve using the conjugate gradient solver.
+
+    Assumes that the system matrix is symmetric positive definite.
+
+    Used for supplying solver parameters.
+    """
+    def vcl_solve_call(self, *args):
+        return _v.iterative_solve(*args)
+
+    def __init__(self, tolerance = 1e-8, max_iterations = 300, inner_tolerance = 1e-2):
+        """
+        TODO docstring
+
+        Parameters
+        ----------
+        tolerance : float, optional
+            Relative tolerance for the residual
+            (solver quits if ||r|| < tolerance * ||r_initial|| obtains)
+        max_iterations : int, optional
+            The maximum number of iterations
+        """
+        self.vcl_tag = _v.mixed_precision_cg_tag(tolerance, max_iterations, inner_tolerance)
+
+    @property
+    def tolerance(self):
+        """
+        The relative tolerance
+        """
+        return self.vcl_tag.tolerance
+
+    @property
+    def inner_tolerance(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.inner_tolerance
+
+    @property
+    def max_iterations(self):
+        """
+        The maximum number of iterations
+        """
+        return self.vcl_tag.max_iterations
+
+    @property
+    def iters(self):
+        """
+        The number of solver iterations
+        """
+        return self.vcl_tag.iters
+
+    @property
+    def error(self):
+        """
+        The estimated relative error at the end of the solver run
+        """
+        return self.vcl_tag.error
+
+
 class BiCGStab(SolverTag):
     """
     Instruct the solver to solve using the stabilised bi-conjugate gradient
