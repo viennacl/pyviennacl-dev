@@ -319,7 +319,6 @@ def convolve(input1, input2):
     _v.convolve(input1.vcl_leaf, input2.vcl_leaf, output.vcl_leaf)
     return output
 
-
 def convolve_i(input1, input2):
     """
     TODO docstring
@@ -328,3 +327,19 @@ def convolve_i(input1, input2):
     _v.convolve_i(input1.vcl_leaf, input2.vcl_leaf, output.vcl_leaf)
     return output
 
+
+def svd(A, inplace=True):
+    """
+    TODO docstring
+    """
+    if not inplace: S = A.copy()
+    else: S = A
+
+    U = Matrix(A.shape[0], A.shape[0], 0.0,
+               dtype=A.dtype, layout=A.layout, context=A.context)
+    V = Matrix(A.shape[1], A.shape[1], 0.0,
+               dtype=A.dtype, layout=A.layout, context=A.context)
+
+    _v.svd(S.vcl_leaf, U.vcl_leaf, V.vcl_leaf)
+
+    return (U, S, V)

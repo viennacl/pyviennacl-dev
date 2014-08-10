@@ -207,7 +207,7 @@ CLOSE_OP_FUNC;
           vcl::matrix<TYPE, F>&, vcl::matrix<TYPE, F>&,                 \
           op_recoverq>);
 
-// TODO: NMF, FFT only support row_major right now
+// TODO: NMF, FFT, SVD only support row_major right now
 #define EXPORT_FUNCTIONS(TYPE)                                          \
   EXPORT_FUNCTIONS_F(TYPE, vcl::row_major);                             \
   EXPORT_FUNCTIONS_F(TYPE, vcl::column_major);                          \
