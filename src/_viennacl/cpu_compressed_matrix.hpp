@@ -53,6 +53,9 @@ generate_fdm_laplace(vcl::vcl_size_t points_x, vcl::vcl_size_t points_y) {
   .def("as_ell_matrix",                                                 \
        &cpu_compressed_matrix_wrapper<TYPE>                             \
        ::as_vcl_sparse_matrix<vcl::ell_matrix<TYPE> >)                  \
+  .def("as_sliced_ell_matrix",                                          \
+       &cpu_compressed_matrix_wrapper<TYPE>                             \
+       ::as_vcl_sparse_matrix<vcl::sliced_ell_matrix<TYPE> >)           \
   .def("as_hyb_matrix",                                                 \
        &cpu_compressed_matrix_wrapper<TYPE>                             \
        ::as_vcl_sparse_matrix<vcl::hyb_matrix<TYPE> >)                  \

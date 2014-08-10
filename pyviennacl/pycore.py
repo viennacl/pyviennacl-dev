@@ -1788,6 +1788,21 @@ class CompressedMatrix(SparseMatrixBase):
         self.flushed = True
 
 
+class CompressedCompressedMatrix(SparseMatrixBase):
+    """
+    TODO docstring -- experimental
+    """
+    #statement_node_subtype = _v.statement_node_subtype.COMPRESSED_MATRIX_TYPE
+
+    def flush(self):
+        self._vcl_leaf = self.cpu_leaf.as_compressed_compressed_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle1),
+                        backend.MemoryHandle(self._vcl_leaf.handle2),
+                        backend.MemoryHandle(self._vcl_leaf.handle3))
+        self.flushed = True
+
+
 class CoordinateMatrix(SparseMatrixBase):
     """
     This class represents a sparse matrix on the ViennaCL compute device, in
@@ -1831,6 +1846,22 @@ class ELLMatrix(SparseMatrixBase):
         self._vcl_leaf = self.cpu_leaf.as_ell_matrix()
         self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
                         backend.MemoryHandle(self._vcl_leaf.handle2))
+        self.flushed = True
+
+
+class SlicedELLMatrix(SparseMatrixBase):
+    """
+    TODO docstring -- experimental
+    """
+    #statement_node_subtype = _v.statement_node_subtype.ELL_MATRIX_TYPE
+
+    def flush(self):
+        # TODO -- num_blocks!
+        self._vcl_leaf = self.cpu_leaf.as_sliced_ell_matrix()
+        self._handle = (backend.MemoryHandle(self._vcl_leaf.handle),
+                        backend.MemoryHandle(self._vcl_leaf.handle1),
+                        backend.MemoryHandle(self._vcl_leaf.handle2),
+                        backend.MemoryHandle(self._vcl_leaf.handle3))
         self.flushed = True
 
 

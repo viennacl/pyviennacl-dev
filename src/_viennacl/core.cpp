@@ -57,8 +57,10 @@ PYVCL_SUBMODULE(dense_matrix_double);
 PYVCL_SUBMODULE(structured_matrices);
 
 PYVCL_SUBMODULE(compressed_matrix);
+PYVCL_SUBMODULE(compressed_compressed_matrix);
 PYVCL_SUBMODULE(coordinate_matrix);
 PYVCL_SUBMODULE(ell_matrix);
+PYVCL_SUBMODULE(sliced_ell_matrix);
 PYVCL_SUBMODULE(hyb_matrix);
 
 PYVCL_SUBMODULE(preconditioners);

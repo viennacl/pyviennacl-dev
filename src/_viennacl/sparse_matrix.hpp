@@ -11,6 +11,7 @@
 #include <viennacl/compressed_compressed_matrix.hpp>
 #include <viennacl/coordinate_matrix.hpp>
 #include <viennacl/ell_matrix.hpp>
+#include <viennacl/sliced_ell_matrix.hpp>
 #include <viennacl/hyb_matrix.hpp>
 
 namespace ublas = boost::numeric::ublas;

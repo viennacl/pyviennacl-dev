@@ -179,10 +179,12 @@ def main():
 
         "cpu_compressed_matrix",
         "compressed_matrix", "compressed_compressed_matrix",
-        "coordinate_matrix", "ell_matrix", "hyb_matrix",
+        "ell_matrix", "sliced_ell_matrix",
+        "coordinate_matrix", "hyb_matrix",
+
         "preconditioners","direct_solvers", "iterative_solvers",
 
-        "extra_functions", "eig", #"bandwidth_reduction",
+        "extra_functions", "eig", "bandwidth_reduction",
 
         "device_specific", "scheduler", "platform_support", "opencl_support"]
 
@@ -196,7 +198,7 @@ def main():
     setup(
         name="pyviennacl",
         version=ver_dic["VERSION_TEXT"],
-        description="Sparse/dense linear algebra on GPUs and CPUs using OpenCL",
+        description="Sparse/dense linear algebra on GPUs and CPUs using OpenCL and OpenMP",
         long_description=long_description,
         author='Toby St Clere Smithe',
         author_email='pyviennacl@tsmithe.net',
