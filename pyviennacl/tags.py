@@ -5,6 +5,21 @@ TODO docstring
 from pyviennacl import _viennacl as _v, backend, vcl_statement_node_subtype_strings as vcl_type_strings, vcl_statement_node_numeric_type_strings as dtype_strings
 
 
+class SolverTag(object):
+    def vcl_solve_call(self, *args):
+        raise NotImplementedError("Solver not implemented")
+
+    def vcl_inplace_solve_call(self, *args):
+        raise NotImplementedError("In-place solver not implemented")
+
+class SolverWithoutPreconditioner(object): pass
+
+class EigenvalueTag(object): pass
+
+class NMFTag(object): pass
+
+class BandwidthReductionTag(object): pass
+
 class PreconditionerTag(object):
     vcl_precond_type = None
     vcl_tag_type = None
@@ -14,14 +29,6 @@ class PreconditionerTag(object):
         vcl_precond = self.vcl_precond_type(leaf.vcl_leaf, self.vcl_tag)
         self.vcl_precond = vcl_precond
 
-
-class SolverTag(object): pass
-
-class SolverWithoutPreconditioner(object): pass
-
-class EigenvalueTag(object): pass
-
-class NMFTag(object): pass
 
 class NoPreconditioner(PreconditionerTag):
     vcl_tag_type = None
@@ -306,6 +313,9 @@ class Lower(SolverTag, SolverWithoutPreconditioner):
     def vcl_solve_call(self, *args):
         return _v.direct_solve(*args)
 
+    def vcl_inplace_solve_call(self, *args):
+        return _v.direct_inplace_solve(*args)
+
 
 class UnitLower(SolverTag, SolverWithoutPreconditioner):
     """
@@ -314,6 +324,9 @@ class UnitLower(SolverTag, SolverWithoutPreconditioner):
     vcl_tag = _v.unit_lower_tag()
     def vcl_solve_call(self, *args):
         return _v.direct_solve(*args)
+
+    def vcl_inplace_solve_call(self, *args):
+        return _v.direct_inplace_solve(*args)
 
 
 class Upper(SolverTag, SolverWithoutPreconditioner):
@@ -324,6 +337,9 @@ class Upper(SolverTag, SolverWithoutPreconditioner):
     def vcl_solve_call(self, *args):
         return _v.direct_solve(*args)
 
+    def vcl_inplace_solve_call(self, *args):
+        return _v.direct_inplace_solve(*args)
+
 
 class UnitUpper(SolverTag, SolverWithoutPreconditioner):
     """
@@ -332,6 +348,9 @@ class UnitUpper(SolverTag, SolverWithoutPreconditioner):
     vcl_tag = _v.unit_upper_tag()
     def vcl_solve_call(self, *args):
         return _v.direct_solve(*args)
+
+    def vcl_inplace_solve_call(self, *args):
+        return _v.direct_inplace_solve(*args)
 
 
 class CG(SolverTag):
@@ -734,3 +753,45 @@ class NMF(NMFTag):
         TODO docstring
         """
         return self.vcl_tag.print_relative_error
+
+
+class CuthillMcKee(BandwidthReductionTag):
+    """
+    TODO docstring
+    """
+    vcl_tag = _v.cuthill_mckee_tag()
+
+
+class GibbsPooleStockmeyer(BandwidthReductionTag):
+    """
+    TODO docstring
+    """
+    vcl_tag = _v.gibbs_poole_stockmeyer_tag()
+
+
+class AdvancedCuthillMcKee(BandwidthReductionTag):
+    """
+    TODO docstring
+    """
+
+    def __init__(self, a=0.0, gmax=1):
+        """
+        TODO docstring
+        """
+        self.vcl_tag = _v.advanced_cuthill_mckee_tag(a, gmax)
+
+    @property
+    def starting_node_param(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.starting_node_param
+
+    @property
+    def max_root_nodes(self):
+        """
+        TODO docstring
+        """
+        return self.vcl_tag.max_root_nodes
+
+520214063

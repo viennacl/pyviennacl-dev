@@ -99,7 +99,7 @@ def prod(A, B):
     return (A * B)
 
 
-def solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner()):
+def solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner(), inplace=False):
     """
     Solve the linear system expressed by ``A x = B`` for ``x``.
 
@@ -113,6 +113,8 @@ def solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner()):
         Describes the system matrix and solver algorithm.
         See the help for each tag class for more information.
     precond_tag : PreconditionerTag instance
+    inplace : {False, True}
+        If True, solve in-place in B.
 
     Returns
     -------
@@ -134,19 +136,24 @@ def solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner()):
     if precond_tag is None:
         precond_tag = tags.NoPreconditioner()
 
+    if inplace:
+        vcl_solve_call = solver_tag.vcl_inplace_solve_call
+    else:
+        vcl_solve_call = solver_tag.vcl_solve_call
+
     if isinstance(solver_tag, tags.SolverWithoutPreconditioner):
-        return B.new_instance(solver_tag.vcl_solve_call
-                                (A.vcl_leaf, B.vcl_leaf,
-                                 solver_tag.vcl_tag))
+        return B.new_instance(vcl_solve_call(A.vcl_leaf, B.vcl_leaf,
+                                             solver_tag.vcl_tag))
     else:
         precond_tag.instantiate(A)
-        return B.new_instance(solver_tag.vcl_solve_call
-                                (A.vcl_leaf, B.vcl_leaf,
-                                 solver_tag.vcl_tag,
-                                 precond_tag.vcl_precond))
+        return B.new_instance(vcl_solve_call(A.vcl_leaf, B.vcl_leaf,
+                                             solver_tag.vcl_tag,
+                                             precond_tag.vcl_precond))
 Matrix.solve = solve           # for convenience..
 SparseMatrixBase.solve = solve #
 
+def inplace_solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner()):
+    solve(A, B, solver_tag, precond_tag, inplace=True)
 
 def eig(A, tag):
     """
