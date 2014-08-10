@@ -5,6 +5,7 @@ TODO:
 * Construct data types with associated context
 * Get associated context from data types
 """
+import os
 import pyviennacl as p
 from . import _viennacl as _v
 
@@ -130,7 +131,10 @@ class Context(object):
                 if not self.queues[device]:
                     self.add_queue(device)
             if not self.cache_path:
-                self.cache_path = appdirs.user_config_dir
+                new_path = appdirs.user_data_dir
+                if not os.path.isdir(new_path):
+                    os.makedirs(new_path)
+                self.cache_path = os.path.join(new_path, '')
         #if self.domain is OpenCLMemory:
         #    vcl.set_active_context(self)
 

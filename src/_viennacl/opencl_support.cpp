@@ -63,11 +63,11 @@ std::string get_device_full_info(vcl::ocl::device& d) {
 }
 
 std::string ctx_get_cache_path(vcl::ocl::context& ctx) {
-  return std::string(ctx.cache_path());
+  return ctx.cache_path();
 }
 
 void ctx_set_cache_path(vcl::ocl::context& ctx, const std::string& path) {
-  ctx.cache_path(const_cast<char*>(path.c_str()));
+  ctx.cache_path(path);
 }
 
 const vcl::ocl::command_queue& ctx_get_queue(vcl::ocl::context& ctx,
