@@ -129,7 +129,7 @@ BOOST_PYTHON_MODULE(_viennacl)
 
   export_extra_functions();
   export_eig();
-  //export_bandwidth_reduction();
+  export_bandwidth_reduction();
 
   export_device_specific();
   export_scheduler();

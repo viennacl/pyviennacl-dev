@@ -6,17 +6,58 @@
 vcl::vcl_size_t get_ram_handle(vcl::backend::mem_handle& m) {
   return (vcl::vcl_size_t) m.ram_handle().get();
 }
+
+void set_ram_handle(vcl::backend::mem_handle& m, vcl::vcl_size_t ptr) {
+  char* ram_handle_ = (char*) ptr;
+  typename vcl::backend::mem_handle::ram_handle_type ram_handle(ram_handle_);
+  m.ram_handle() = ram_handle;
+}
+
+void init_ram_handle(vcl::backend::mem_handle& m,
+                     vcl::vcl_size_t ptr, vcl::vcl_size_t raw_size) {
+  set_ram_handle(m, ptr);
+  m.raw_size(raw_size);
+  m.switch_active_handle_id(vcl::MAIN_MEMORY);
+}
+
 #ifdef VIENNACL_WITH_OPENCL
 vcl::vcl_size_t get_opencl_handle(vcl::backend::mem_handle& m) {
   return (vcl::vcl_size_t) m.opencl_handle().get();
 }
+
+void set_opencl_handle(vcl::backend::mem_handle& m, vcl::vcl_size_t ptr) {
+  cl_mem opencl_handle = (cl_mem) ptr;
+  m.opencl_handle() = opencl_handle;
+}
+
+void init_opencl_handle(vcl::backend::mem_handle& m,
+                        vcl::vcl_size_t ptr, vcl::vcl_size_t raw_size) {
+  set_opencl_handle(m, ptr);
+  m.raw_size(raw_size);
+  m.switch_active_handle_id(vcl::OPENCL_MEMORY);
+}
+
 const vcl::ocl::context& get_opencl_context(vcl::backend::mem_handle& m) {
   return m.opencl_handle().context();
 }
 #endif
+
 #ifdef VIENNACL_WITH_CUDA
 vcl::vcl_size_t get_cuda_handle(vcl::backend::mem_handle& m) {
   return (vcl::vcl_size_t) m.cuda_handle().get();
+}
+
+void set_cuda_handle(vcl::backend::mem_handle& m, vcl::vcl_size_t ptr) {
+  char* cuda_handle_ = (char*) ptr;
+  typename vcl::backend::mem_handle::cuda_handle_type cuda_handle(cuda_handle_);
+  m.cuda_handle() = cuda_handle;
+}
+
+void init_cuda_handle(vcl::backend::mem_handle& m,
+                      vcl::vcl_size_t ptr, vcl::vcl_size_t raw_size) {
+  set_cuda_handle(m, ptr);
+  m.raw_size(raw_size);
+  m.switch_active_handle_id(vcl::CUDA_MEMORY);
 }
 #endif
 
@@ -43,16 +84,19 @@ PYVCL_SUBMODULE(platform_support)
                                   mem_handle_set_raw_size,
                                   (vcl::vcl_size_t));
   bp::class_<vcl::backend::mem_handle>("mem_handle")
-    .add_property("ram_handle", get_ram_handle)
+    .def("init_ram_handle", init_ram_handle)
+    .add_property("ram_handle", get_ram_handle, set_ram_handle)
 #ifdef VIENNACL_WITH_OPENCL
-    .add_property("opencl_handle", get_opencl_handle)
+    .def("init_opencl_handle", init_opencl_handle)
+    .add_property("opencl_handle", get_opencl_handle, set_opencl_handle)
     .add_property("opencl_context",
                   bp::make_function(get_opencl_context,
                                     bp::return_value_policy<bp::reference_existing_object>()))
 
 #endif
 #ifdef VIENNACL_WITH_CUDA
-    .add_property("cuda_handle", get_cuda_handle)
+    .def("init_cuda_handle", init_cuda_handle)
+    .add_property("cuda_handle", get_cuda_handle, set_cuda_handle)
 #endif
     .add_property("active_handle_id", &vcl::backend::mem_handle::get_active_handle_id,
                   &vcl::backend::mem_handle::switch_active_handle_id)

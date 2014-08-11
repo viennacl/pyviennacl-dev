@@ -50,21 +50,45 @@ DefaultMemory = vcl_memory_types[_v.default_memory_type]
 
 
 class MemoryHandle(object):
-    vcl_handle = None
-    domain = UninitializedMemory
-    int_ptr = None
+    """
+    TODO docstring
+    """
 
-    def __init__(self, vcl_handle):
-        self.vcl_handle = vcl_handle
-        self.domain = vcl_memory_types[vcl_handle.active_handle_id]
-        if self.domain is UninitializedMemory:
-            self.int_ptr = None
-        elif self.domain is MainMemory:
-            self.int_ptr = vcl_handle.ram_handle
-        elif self.domain is OpenCLMemory:
-            self.int_ptr = vcl_handle.opencl_handle
-        elif self.domain is CUDAMemory:
-            self.int_ptr = vcl_handle.cuda_handle
+    def __init__(self, *args):
+        """
+        TODO docstring
+        """
+        if len(args) == 1:
+            if WITH_OPENCL:
+                if isinstance(args[0], cl.MemoryObject):
+                    int_ptr = args[0].int_ptr
+                    raw_size = args[0].size
+                    self.vcl_handle = _v.mem_handle()
+                    self.vcl_handle.init_opencl_handle(int_ptr, raw_size)
+                    return
+
+            try:
+                self.vcl_handle = args[0].vcl_handle
+            except AttributeError:
+                self.vcl_handle = args[0]
+
+        elif len(args) == 3:
+            domain = args[0]
+            int_ptr = args[1]
+            raw_size = args[2]
+            vcl_handle = _v.mem_handle()
+            if domain is MainMemory:
+                vcl_handle.init_ram_handle(int_ptr, raw_size)
+            elif domain is OpenCLMemory:
+                vcl_handle.init_opencl_handle(int_ptr, raw_size)
+            elif domain is CUDAMemory:
+                vcl_handle.init_cuda_handle(int_ptr, raw_size)
+            else:
+                raise MemoryError("Domain not understood")
+            self.vcl_handle = vcl_handle
+
+        else:
+            raise TypeError("Cannot construct MemoryHandle like this")
 
     def __eq__(self, other):
         return self.vcl_handle == other.vcl_handle
@@ -78,11 +102,59 @@ class MemoryHandle(object):
     def __gt__(self, other):
         return other.vcl_handle < self.vcl_handle
 
+    def assign(self, other):
+        if other.domain is MainMemory:
+            self.vcl_handle.init_ram_handle(other.int_ptr, other.raw_size)
+        elif other.domain is OpenCLMemory:
+            self.vcl_handle.init_opencl_handle(other.int_ptr, other.raw_size)
+        elif other.domain is CUDAMemory:
+            self.vcl_handle.init_cuda_handle(other.int_ptr, other.raw_size)
+        else:
+            raise MemoryError("Other memory domain not understood")
+
     def swap(self, other):
         self.vcl_handle.swap(other.vcl_handle)
         tmp_vcl_handle = self.vcl_handle
         self.__init__(other.vcl_handle)
         other.__init__(tmp_vcl_handle)
+
+    @property
+    def domain(self):
+        return vcl_memory_types[self.vcl_handle.active_handle_id]
+
+    @domain.setter
+    def domain(self, domain):
+        self.vcl_handle.active_handle_id = domain.vcl_memory_type
+
+    @property
+    def raw_size(self):
+        return self.vcl_handle.raw_size
+
+    @raw_size.setter
+    def raw_size(self, size):
+        self.vcl_handle.raw_size = size
+
+    @property
+    def int_ptr(self):
+        if self.domain is UninitializedMemory:
+            return 0
+        elif self.domain is MainMemory:
+            return self.vcl_handle.ram_handle
+        elif self.domain is OpenCLMemory:
+            return self.vcl_handle.opencl_handle
+        elif self.domain is CUDAMemory:
+            return self.vcl_handle.cuda_handle
+
+    @int_ptr.setter
+    def int_ptr(self, ptr):
+        if self.domain is MainMemory:
+            self.vcl_handle.ram_handle = int_ptr
+        elif domain is OpenCLMemory:
+            self.vcl_handle.opencl_handle = int_ptr
+        elif domain is CUDAMemory:
+            self.vcl_handle.cuda_handle = int_ptr
+        else:
+            raise MemoryError("Domain not understood")
 
     @property
     def buffer(self):
@@ -133,8 +205,15 @@ class Context(object):
             if not self.cache_path:
                 new_path = appdirs.user_data_dir
                 if not os.path.isdir(new_path):
-                    os.makedirs(new_path)
-                self.cache_path = os.path.join(new_path, '')
+                    try: os.makedirs(new_path)
+                    except: pass
+                try:
+                    new_path = os.path.join(new_path, '')
+                    open(os.path.join(new_path, 'permission_test'), 'a+')
+                except OSError as e:
+                    log.warning("Could not open cache path '%s' for writing, disabling kernel cache. Exception was: %s" % (new_path, e))
+                    new_path = ''
+                self.cache_path = new_path
         #if self.domain is OpenCLMemory:
         #    vcl.set_active_context(self)
 

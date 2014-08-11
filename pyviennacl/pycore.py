@@ -290,7 +290,7 @@ class MagicMethods(object):
                            self.shape,
                            self.dtype,
                            order = self.layout,
-                           data = self.handle[0].memory_object,
+                           data = self.handle[0].buffer,
                            strides = self.strides)
         return c
 
