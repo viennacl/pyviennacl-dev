@@ -159,8 +159,9 @@ def main():
     UNDEF_MACROS = []
     if conf["DEBUG"]:
          UNDEF_MACROS += ['NDEBUG']
-         #EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
-         EXTRA_DEFINES["VIENNACL_BUILD_INFO"] = None
+         EXTRA_DEFINES["VIENNACL_DEBUG_ALL"] = None
+         EXTRA_DEFINES["VIENNACL_NO_CURRENT_CONTEXT"] = None
+         #EXTRA_DEFINES["VIENNACL_BUILD_INFO"] = None
          platform_cflags["unix"] += ["-O0","-ggdb"]
 
     if not sys.platform.startswith("darwin"):

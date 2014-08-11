@@ -50,19 +50,19 @@
           op_inplace_solve>);
 
 #define EXPORT_DENSE_MATRIX_VECTOR_DIRECT_SOLVERS(TYPE)                 \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector<TYPE>,           \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector_base<TYPE>,      \
           vcl::matrix_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           vcl::linalg::lower_tag&,                                      \
           op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector<TYPE>,           \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector_base<TYPE>,      \
           vcl::matrix_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           vcl::linalg::unit_lower_tag&,                                 \
           op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector<TYPE>,           \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector_base<TYPE>,      \
           vcl::matrix_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           vcl::linalg::upper_tag&,                                      \
           op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector<TYPE>,           \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::vector_base<TYPE>,      \
           vcl::matrix_base<TYPE>&, vcl::vector_base<TYPE>&,             \
           vcl::linalg::unit_upper_tag&,                                 \
           op_solve>);
@@ -70,42 +70,22 @@
 #define EXPORT_DENSE_DIRECT_SOLVERS(TYPE)                               \
   EXPORT_DIRECT_INPLACE_SOLVERS(vcl::matrix_base<TYPE>, TYPE)           \
   EXPORT_DENSE_MATRIX_VECTOR_DIRECT_SOLVERS(TYPE)                       \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::row_major>, \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix_base<TYPE>,      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::linalg::lower_tag&,                                      \
           op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::row_major>, \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix_base<TYPE>,      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::linalg::unit_lower_tag&,                                 \
           op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::row_major>, \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix_base<TYPE>,      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::linalg::upper_tag&,                                      \
           op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::row_major>, \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::linalg::unit_upper_tag&,                                 \
-          op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::column_major>, \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::linalg::lower_tag&,                                      \
-          op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::column_major>, \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::linalg::unit_lower_tag&,                                 \
-          op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::column_major>, \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::matrix_base<TYPE>&,                                      \
-          vcl::linalg::upper_tag&,                                      \
-          op_solve>);                                                   \
-  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix<TYPE, vcl::column_major>, \
+  bp::def("direct_solve", pyvcl_do_3ary_op<vcl::matrix_base<TYPE>,      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::matrix_base<TYPE>&,                                      \
           vcl::linalg::unit_upper_tag&,                                 \
