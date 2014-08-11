@@ -54,11 +54,11 @@ for d_t_, solver_, sparse_type_, vector_getter_, precond_ in product(dtype_toler
 
     def A_solve_b_test_factory(dt, tol, sparse_type, vector_getter, solver_tag_type, precond_tag_type):
         def _test():
-            solver_tag = solver_tag_type(tolerance=tol/1000)
+            solver_tag = solver_tag_type(tolerance=tol/10)
             precond_tag = precond_tag_type()
 
-            #vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt)
-            vcl_system = get_sparse_matrix(10, dtype=dt, sparse_type=sparse_type)
+            vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt)
+            #vcl_system = get_sparse_matrix(10, dtype=dt, sparse_type=sparse_type)
             numpy_system = vcl_system.as_ndarray() # TODO: SciPy-ise
 
             numpy_solution, vcl_solution = vector_getter(vcl_system.size1, dt, vector=np.ones(vcl_system.size1).astype(dt))
