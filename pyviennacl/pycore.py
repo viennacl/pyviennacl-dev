@@ -236,6 +236,10 @@ for numeric_type in vcl_statement_node_numeric_type_strings:
     try: vcl_matrix_base_types.append(getattr(_v, 'matrix_base_' + numeric_type))
     except: pass
 
+mem_handle_types = [backend.MemoryHandle]
+if WITH_OPENCL:
+    mem_handle_types.append(cl.MemoryObject)
+
 # This dict is used to map NumPy dtypes onto OpenCL/ViennaCL numeric types
 HostScalarTypes = {
     'int8': _v.statement_node_numeric_type.CHAR_TYPE,
@@ -1293,6 +1297,41 @@ class Vector(Leaf):
                 # This doesn't do any shape or dtype checking, so beware...
                 def get_leaf(vcl_t):
                     return args[0]
+
+            elif isinstance(args[0], tuple(mem_handle_types)):
+                if self.dtype is None:
+                    raise TypeError("You must set the dtype if constructing from a MemoryHandle")
+
+                mem_handle = args[0]
+                if WITH_OPENCL:
+                    if isinstance(mem_handle, cl.MemoryObject):
+                        mem_handle = backend.MemoryHandle(mem_handle)
+
+                if mem_handle.context is None:
+                    mem_handle.context = self._context
+
+                if shape:
+                    size = shape[0]
+                else:
+                    size = int(mem_handle.raw_size / self.itemsize)
+
+                if 'offset' in kwargs.keys():
+                    try: offset = kwargs['offset'][0]
+                    except IndexError: offset = kwargs['offset']
+                else:
+                    offset = 0
+
+                if 'strides' in kwargs.keys():
+                    stride = int(kwargs['strides'][0] / self.itemsize)
+                if 'stride' in kwargs.keys():
+                    stride = int(kwargs['stride'] / self.itemsize)
+                else:
+                    stride = 1
+
+                def get_leaf(vcl_t):
+                    base_t = vcl_t.__bases__[0]
+                    return base_t(mem_handle.vcl_handle, size, offset, stride)
+
             else:
                 # This doesn't do any shape or dtype checking, so beware...
                 def get_leaf(vcl_t):
@@ -1310,30 +1349,6 @@ class Vector(Leaf):
             else:
                 def get_leaf(vcl_t):
                     return vcl_t(shape[0], args[1], self._context.vcl_context)
-
-        elif len(args) == 3:
-            if self.dtype is None:
-                raise TypeError("You must set the dtype if constructing from a MemoryHandle")
-
-            mem_handle = args[0]
-            if WITH_OPENCL:
-                if isinstance(mem_handle, cl.MemoryObject):
-                    mem_handle = backend.MemoryHandle(mem_handle)
-
-            if mem_handle.context is None:
-                mem_handle.context = self._context
-
-            if shape:
-                size = shape[0]
-            else:
-                size = int(mem_handle.raw_size / self.itemsize)
-
-            offset = args[1]
-            stride = args[2]
-
-            def get_leaf(vcl_t):
-                base_t = vcl_t.__bases__[0]
-                return base_t(mem_handle.vcl_handle, size, offset, stride)
 
         else:
             raise TypeError("Vector cannot be constructed in this way")
@@ -1353,12 +1368,31 @@ class Vector(Leaf):
 
         self.vcl_leaf = get_leaf(vcl_type)
         self._handle = (backend.MemoryHandle(self.vcl_leaf.handle),)
-        self.size = self.vcl_leaf.size
-        self.shape = (self.size,)
-        self.internal_size = self.vcl_leaf.internal_size
-        self.internal_shape = (self.internal_size,)
-        self.strides = (self.itemsize,)
         self.layout = ROW_MAJOR
+
+    @property
+    def size(self):
+        return self.vcl_leaf.size
+
+    @property
+    def shape(self):
+        return (self.size,)
+
+    @property
+    def internal_size(self):
+        return self.vcl_leaf.internal_size
+
+    @property
+    def internal_shape(self):
+        return (self.internal_size,)
+
+    @property
+    def strides(self):
+        return (self.vcl_leaf.stride * self.itemsize,)
+
+    @property
+    def offset(self):
+        return self.vcl_leaf.start * self.strides[0]
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -1985,10 +2019,6 @@ class Matrix(Leaf):
                     return vcl_t(self._context.vcl_context)
 
         elif len(args) == 1:
-            mem_handle_types = [backend.MemoryHandle]
-            if WITH_OPENCL:
-                mem_handle_types.append(cl.MemoryObject)
-
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type,
                               SparseMatrixBase):
@@ -2046,7 +2076,6 @@ class Matrix(Leaf):
                     return vcl_t(args[0], self._context.vcl_context)
 
             elif isinstance(args[0], tuple(mem_handle_types)):
-
                 if self.dtype is None:
                     raise TypeError("You must set the dtype if constructing from a MemoryHandle")
 
@@ -2073,19 +2102,23 @@ class Matrix(Leaf):
                                       int(mem_handle.raw_size / (shape[0] * self.itemsize)))
 
                 if 'strides' in kwargs.keys():
-                    strides = kwargs['strides']
-                elif is_row_major:
-                    strides = (internal_shape[0] * self.itemsize, self.itemsize)
-                else:
-                    strides = (self.itemsize, self.itemsize * internal_shape[1])
+                    if is_row_major:
+                        vcl_strides = (int(kwargs['strides'][0] / (internal_shape[0] * self.itemsize)),
+                                       int(kwargs['strides'][1] / self.itemsize))
+                    else:
+                        vcl_strides = (int(kwargs['strides'][0] / self.itemsize),
+                                       int(kwargs['strides'][1] / (internal_shape[1] * self.itemsize)))
+                    strides = (1, 1)
 
                 if 'offset' in kwargs.keys():
-                    offset = kwargs['offset']
+                    offset = (int(kwargs['offset'][0] / self.itemsize),
+                              int(kwargs['offset'][1] / self.itemsize))
                 else:
                     offset = (0,0)
 
                 def get_leaf(vcl_t):
                     base_t = vcl_t.__bases__[0]
+                    print(mem_handle.vcl_handle, shape[0], offset[0], strides[0], internal_shape[0], shape[1], offset[1], strides[1], internal_shape[1], is_row_major)
                     return base_t(mem_handle.vcl_handle, shape[0], offset[0], strides[0], internal_shape[0], shape[1], offset[1], strides[1], internal_shape[1], is_row_major)
 
             else:
@@ -2143,17 +2176,49 @@ class Matrix(Leaf):
 
         self.vcl_leaf = get_leaf(vcl_type)
         self._handle = (backend.MemoryHandle(self.vcl_leaf.handle),)
-        self.size1 = self.vcl_leaf.size1
-        self.size2 = self.vcl_leaf.size2
-        self.size = self.size1 * self.size2 # Flat size
-        self.shape = (self.size1, self.size2)
-        self.internal_size1 = self.vcl_leaf.internal_size1
-        self.internal_size2 = self.vcl_leaf.internal_size2
-        self.internal_shape = (self.internal_size1, self.internal_size2)
+
+    @property
+    def size1(self):
+        return self.vcl_leaf.size1
+
+    @property
+    def size2(self):
+        return self.vcl_leaf.size2
+
+    @property
+    def size(self):
+        return self.size1 * self.size2
+
+    @property
+    def shape(self):
+        return (self.size1, self.size2)
+
+    @property
+    def internal_size1(self):
+        return self.vcl_leaf.internal_size1
+
+    @property
+    def internal_size2(self):
+        return self.vcl_leaf.internal_size2
+
+    @property
+    def internal_size(self):
+        return self.internal_size1 * self.internal_size2
+
+    @property
+    def internal_shape(self):
+        return (self.internal_size1, self.internal_size2)
+
+    @property
+    def strides(self):
         if self.layout == ROW_MAJOR:
-            self.strides = (self.internal_size1 * self.itemsize, self.itemsize)
+            return (self.vcl_leaf.stride1 * self.internal_size1 * self.itemsize, self.vcl_leaf.stride2 * self.itemsize)
         else:
-            self.strides = (self.itemsize, self.itemsize * self.internal_size2)
+            return (self.vcl_leaf.stride1 * self.itemsize, self.vcl_leaf.stride2 * self.itemsize * self.internal_size2)
+
+    @property
+    def offset(self):
+        return (self.vcl_leaf.start1 * self.strides[0], self.vcl_leaf.start2 * self.strides[1])
 
     def __getitem__(self, key):
         project = getattr(_v,

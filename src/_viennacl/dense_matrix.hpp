@@ -142,6 +142,10 @@ project_matrix_range(MatrixT& m, const vcl::range& r1, const vcl::range& r2) {
   .add_property("size2", &vcl::matrix_base<TYPE>::size2)                \
   .add_property("internal_size2",                                       \
                &vcl::matrix_base<TYPE>::internal_size2)                 \
+  .add_property("start1", &vcl::matrix_base<TYPE>::start1)              \
+  .add_property("start2", &vcl::matrix_base<TYPE>::start2)              \
+  .add_property("stride1", &vcl::matrix_base<TYPE>::stride1)            \
+  .add_property("stride2", &vcl::matrix_base<TYPE>::stride2)            \
    ;                                                                    \
   bp::class_<vcl::matrix_range<vcl::matrix_base<TYPE> >,                \
              vcl::tools::shared_ptr<vcl::matrix_range<vcl::matrix_base<TYPE> > >, \

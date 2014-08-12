@@ -238,6 +238,8 @@ CLOSE_OP_FUNC;
                    bp::return_internal_reference<>()))                  \
     .add_property("size", &vcl::vector_base<TYPE>::size)                \
     .add_property("internal_size", &vcl::vector_base<TYPE>::internal_size) \
+    .add_property("start", &vcl::vector_base<TYPE>::start)              \
+    .add_property("stride", &vcl::vector_base<TYPE>::stride)            \
     .add_property("index_norm_inf", pyvcl_do_1ary_op<vcl::scalar<TYPE>,	\
 		  vcl::vector_base<TYPE>&,                              \
 		  op_index_norm_inf>)                                   \
