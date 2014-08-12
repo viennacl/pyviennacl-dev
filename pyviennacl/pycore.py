@@ -239,6 +239,7 @@ for numeric_type in vcl_statement_node_numeric_type_strings:
 mem_handle_types = [backend.MemoryHandle]
 if WITH_OPENCL:
     mem_handle_types.append(cl.MemoryObject)
+    mem_handle_types.append(cl.array.Array)
 
 # This dict is used to map NumPy dtypes onto OpenCL/ViennaCL numeric types
 HostScalarTypes = {
@@ -1299,13 +1300,23 @@ class Vector(Leaf):
                     return args[0]
 
             elif isinstance(args[0], tuple(mem_handle_types)):
-                if self.dtype is None:
-                    raise TypeError("You must set the dtype if constructing from a MemoryHandle")
-
                 mem_handle = args[0]
+                WITH_CL_ARRAY = False
                 if WITH_OPENCL:
                     if isinstance(mem_handle, cl.MemoryObject):
                         mem_handle = backend.MemoryHandle(mem_handle)
+                    elif isinstance(mem_handle, cl.array.Array):
+                        cl_array = mem_handle
+                        if len(cl_array.shape) > 1:
+                            raise TypeError("Can only construct a Vector from a 1-D array!")
+                        mem_handle = backend.MemoryHandle(cl_array.base_data)
+                        WITH_CL_ARRAY = True
+
+                if self.dtype is None:
+                    if WITH_CL_ARRAY:
+                        self.dtype = np_result_type(cl_array)
+                    else:
+                        raise TypeError("You must set the dtype if constructing from a MemoryHandle")
 
                 if mem_handle.context is None:
                     mem_handle.context = self._context
@@ -1313,18 +1324,25 @@ class Vector(Leaf):
                 if shape:
                     size = shape[0]
                 else:
-                    size = int(mem_handle.raw_size / self.itemsize)
+                    if WITH_CL_ARRAY:
+                        size = cl_array.size
+                    else:
+                        size = int(mem_handle.raw_size / self.itemsize)
 
                 if 'offset' in kwargs.keys():
-                    try: offset = kwargs['offset'][0]
-                    except IndexError: offset = kwargs['offset']
+                    try: offset = int(kwargs['offset'][0] / self.itemsize)
+                    except IndexError: offset = int(kwargs['offset'] / self.itemsize)
+                elif WITH_CL_ARRAY:
+                    offset = int(cl_array.offset / self.itemsize)
                 else:
                     offset = 0
 
                 if 'strides' in kwargs.keys():
                     stride = int(kwargs['strides'][0] / self.itemsize)
-                if 'stride' in kwargs.keys():
+                elif 'stride' in kwargs.keys():
                     stride = int(kwargs['stride'] / self.itemsize)
+                elif WITH_CL_ARRAY:
+                    stride = int(cl_array.strides[0] / self.itemsize)
                 else:
                     stride = 1
 
@@ -2076,16 +2094,29 @@ class Matrix(Leaf):
                     return vcl_t(args[0], self._context.vcl_context)
 
             elif isinstance(args[0], tuple(mem_handle_types)):
-                if self.dtype is None:
-                    raise TypeError("You must set the dtype if constructing from a MemoryHandle")
-
-                if not shape:
-                    raise TypeError("You must provide the shape of the matrix")
-
                 mem_handle = args[0]
+                WITH_CL_ARRAY = False
                 if WITH_OPENCL:
                     if isinstance(mem_handle, cl.MemoryObject):
                         mem_handle = backend.MemoryHandle(mem_handle)
+                    elif isinstance(mem_handle, cl.array.Array):
+                        cl_array = mem_handle
+                        if len(cl_array.shape) > 2:
+                            raise TypeError("Can only construct a Matrix from a 2-D array!")
+                        mem_handle = backend.MemoryHandle(cl_array.base_data)
+                        WITH_CL_ARRAY = True
+
+                if self.dtype is None:
+                    if WITH_CL_ARRAY:
+                        self.dtype = np_result_type(cl_array)
+                    else:
+                        raise TypeError("You must set the dtype if constructing from a MemoryHandle")
+
+                if not shape:
+                    if WITH_CL_ARRAY:
+                        shape = cl_array.shape
+                    else:
+                        raise TypeError("You must provide the shape of the matrix")
 
                 if mem_handle.context is None:
                     mem_handle.context = self._context
@@ -2097,6 +2128,8 @@ class Matrix(Leaf):
 
                 if 'internal_shape' in kwargs.keys():
                     internal_shape = kwargs['internal_shape']
+                elif WITH_CL_ARRAY:
+                    internal_shape = cl_array.shape
                 else:
                     internal_shape = (int(mem_handle.raw_size / (shape[1] * self.itemsize)),
                                       int(mem_handle.raw_size / (shape[0] * self.itemsize)))
@@ -2108,18 +2141,30 @@ class Matrix(Leaf):
                     else:
                         vcl_strides = (int(kwargs['strides'][0] / self.itemsize),
                                        int(kwargs['strides'][1] / (internal_shape[1] * self.itemsize)))
-                    strides = (1, 1)
+                elif WITH_CL_ARRAY:
+                    if is_row_major:
+                        vcl_strides = (int(cl_array.strides[0] / (internal_shape[0] * self.itemsize)),
+                                       int(cl_array.strides[1] / self.itemsize))
+                    else:
+                        vcl_strides = (int(cl_array.strides[0] / self.itemsize),
+                                       int(cl_array.strides[1] / (internal_shape[1] * self.itemsize)))
+                else:
+                    vcl_strides = (1, 1)
 
                 if 'offset' in kwargs.keys():
                     offset = (int(kwargs['offset'][0] / self.itemsize),
                               int(kwargs['offset'][1] / self.itemsize))
+                elif WITH_CL_ARRAY:
+                    if is_row_major:
+                        offset = (int(cl_array.offset / self.itemsize), 0)
+                    else:
+                        offset = (0, int(cl_array.offset / self.itemsize))
                 else:
                     offset = (0,0)
 
                 def get_leaf(vcl_t):
                     base_t = vcl_t.__bases__[0]
-                    print(mem_handle.vcl_handle, shape[0], offset[0], strides[0], internal_shape[0], shape[1], offset[1], strides[1], internal_shape[1], is_row_major)
-                    return base_t(mem_handle.vcl_handle, shape[0], offset[0], strides[0], internal_shape[0], shape[1], offset[1], strides[1], internal_shape[1], is_row_major)
+                    return base_t(mem_handle.vcl_handle, shape[0], offset[0], vcl_strides[0], internal_shape[0], shape[1], offset[1], vcl_strides[1], internal_shape[1], is_row_major)
 
             else:
                 # This doesn't do any dtype checking, so beware...
