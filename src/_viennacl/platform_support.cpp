@@ -37,8 +37,13 @@ void init_opencl_handle(vcl::backend::mem_handle& m,
   m.switch_active_handle_id(vcl::OPENCL_MEMORY);
 }
 
-const vcl::ocl::context& get_opencl_context(vcl::backend::mem_handle& m) {
+const vcl::ocl::context& get_opencl_handle_context(vcl::backend::mem_handle& m) {
   return m.opencl_handle().context();
+}
+
+void set_opencl_handle_context(vcl::backend::mem_handle& m,
+                               const vcl::ocl::context& c) {
+  m.opencl_handle().context(c);
 }
 #endif
 
@@ -90,9 +95,9 @@ PYVCL_SUBMODULE(platform_support)
     .def("init_opencl_handle", init_opencl_handle)
     .add_property("opencl_handle", get_opencl_handle, set_opencl_handle)
     .add_property("opencl_context",
-                  bp::make_function(get_opencl_context,
-                                    bp::return_value_policy<bp::reference_existing_object>()))
-
+                  bp::make_function(get_opencl_handle_context,
+                                    bp::return_value_policy<bp::reference_existing_object>()),
+                  set_opencl_handle_context)
 #endif
 #ifdef VIENNACL_WITH_CUDA
     .def("init_cuda_handle", init_cuda_handle)

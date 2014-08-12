@@ -1310,6 +1310,31 @@ class Vector(Leaf):
             else:
                 def get_leaf(vcl_t):
                     return vcl_t(shape[0], args[1], self._context.vcl_context)
+
+        elif len(args) == 3:
+            if self.dtype is None:
+                raise TypeError("You must set the dtype if constructing from a MemoryHandle")
+
+            mem_handle = args[0]
+            if WITH_OPENCL:
+                if isinstance(mem_handle, cl.MemoryObject):
+                    mem_handle = backend.MemoryHandle(mem_handle)
+
+            if mem_handle.context is None:
+                mem_handle.context = self._context
+
+            if shape:
+                size = shape[0]
+            else:
+                size = int(mem_handle.raw_size / self.itemsize)
+
+            offset = args[1]
+            stride = args[2]
+
+            def get_leaf(vcl_t):
+                base_t = vcl_t.__bases__[0]
+                return base_t(mem_handle.vcl_handle, size, offset, stride)
+
         else:
             raise TypeError("Vector cannot be constructed in this way")
 
@@ -1960,6 +1985,10 @@ class Matrix(Leaf):
                     return vcl_t(self._context.vcl_context)
 
         elif len(args) == 1:
+            mem_handle_types = [backend.MemoryHandle]
+            if WITH_OPENCL:
+                mem_handle_types.append(cl.MemoryObject)
+
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type,
                               SparseMatrixBase):
@@ -2016,6 +2045,49 @@ class Matrix(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(args[0], self._context.vcl_context)
 
+            elif isinstance(args[0], tuple(mem_handle_types)):
+
+                if self.dtype is None:
+                    raise TypeError("You must set the dtype if constructing from a MemoryHandle")
+
+                if not shape:
+                    raise TypeError("You must provide the shape of the matrix")
+
+                mem_handle = args[0]
+                if WITH_OPENCL:
+                    if isinstance(mem_handle, cl.MemoryObject):
+                        mem_handle = backend.MemoryHandle(mem_handle)
+
+                if mem_handle.context is None:
+                    mem_handle.context = self._context
+
+                if self.layout == ROW_MAJOR:
+                    is_row_major = True
+                else:
+                    is_row_major = False
+
+                if 'internal_shape' in kwargs.keys():
+                    internal_shape = kwargs['internal_shape']
+                else:
+                    internal_shape = (int(mem_handle.raw_size / (shape[1] * self.itemsize)),
+                                      int(mem_handle.raw_size / (shape[0] * self.itemsize)))
+
+                if 'strides' in kwargs.keys():
+                    strides = kwargs['strides']
+                elif is_row_major:
+                    strides = (internal_shape[0] * self.itemsize, self.itemsize)
+                else:
+                    strides = (self.itemsize, self.itemsize * internal_shape[1])
+
+                if 'offset' in kwargs.keys():
+                    offset = kwargs['offset']
+                else:
+                    offset = (0,0)
+
+                def get_leaf(vcl_t):
+                    base_t = vcl_t.__bases__[0]
+                    return base_t(mem_handle.vcl_handle, shape[0], offset[0], strides[0], internal_shape[0], shape[1], offset[1], strides[1], internal_shape[1], is_row_major)
+
             else:
                 # This doesn't do any dtype checking, so beware...
                 def get_leaf(vcl_t):
@@ -2032,6 +2104,7 @@ class Matrix(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(shape[0], shape[1], args[1],
                                  self._context.vcl_context)
+
             else:
                 if not shape:
                     shape = args

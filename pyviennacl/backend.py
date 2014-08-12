@@ -53,8 +53,9 @@ class MemoryHandle(object):
     """
     TODO docstring
     """
+    vcl_sub_context = None
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         """
         TODO docstring
         """
@@ -125,6 +126,23 @@ class MemoryHandle(object):
     @domain.setter
     def domain(self, domain):
         self.vcl_handle.active_handle_id = domain.vcl_memory_type
+
+    @property
+    def context(self):
+        if self.domain is not OpenCLMemory:
+            return Context(self.domain)
+
+        if self.vcl_sub_context:
+            return Context(self.vcl_sub_context)
+        else:
+            return None
+
+    @context.setter
+    def context(self, ctx):
+        if self.domain is not ctx.domain:
+            raise MemoryError("Context memory domains not identical")
+        if self.domain is OpenCLMemory:
+            self.vcl_handle.opencl_context = ctx.vcl_sub_context
 
     @property
     def raw_size(self):

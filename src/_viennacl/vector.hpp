@@ -231,6 +231,7 @@ CLOSE_OP_FUNC;
     .def("as_ndarray", &vcl_vector_to_ndarray<TYPE>)			\
     .def("as_list", &vcl_vector_to_list<TYPE>)                          \
     .def("as_std_vector", &vcl_vector_to_std_vector<TYPE>)              \
+  /*.def("switch_memory_context", &vcl::vector_base<TYPE>::switch_memory_context) */  \
     .add_property("memory_domain", &vcl::vector_base<TYPE>::memory_domain) \
     .add_property("handle", bp::make_function                           \
                   (get_vector_##TYPE##_handle,                          \
