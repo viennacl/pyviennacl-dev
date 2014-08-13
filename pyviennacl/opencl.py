@@ -13,7 +13,7 @@ try:
 except ImportError:
     raise ImportError("OpenCL support not included in this installation of ViennaCL")
 
-from collections import MutableMapping
+from collections import MutableMapping, MutableSet
 
 import pyopencl as cl
 import pyopencl.array
@@ -39,18 +39,31 @@ active_context = [None]
 #vcl_backend = vcl.backend()
 default_context = cl.create_some_context(interactive=False)
 
-class ContextPrograms(MutableMapping):
+
+class ContextDict(MutableMapping):
     def __init__(self, context):
         self.context = context
+        self.sub_context = context.sub_context
         self.vcl_sub_context = context.vcl_sub_context
 
+    def __iter__(self):
+        return iter(self.keys())
+
+    def __str__(self):
+        return dict(self).__str__()
+
+    def __repr__(self):
+        return dict(self).__repr__()
+
+
+class ContextPrograms(ContextDict):
     def __getitem__(self, index):
         if self.vcl_sub_context.has_program(index):
             program = self.vcl_sub_context.get_program_from_string(index)
             return get_pyopencl_object(program)
         else:
             raise IndexError("Program %s not in context" % index)
-    
+
     def __setitem__(self, index, program):
         if self.vcl_sub_context.has_program(index):
             log.warn("Program %s already in context, so overwriting")
@@ -81,14 +94,88 @@ class ContextPrograms(MutableMapping):
     def __len__(self):
         return len(self._as_list())
 
-    def __iter__(self):
-        return iter(self.keys())
 
-    def __str__(self):
-        return dict(self).__str__()
+class DeviceQueues(MutableSet):
+    device_queues = set()
 
-    def __repr__(self):
-        return dict(self).__repr__()
+    def __init__(self, context, device):
+        self.context = context
+        self.device = device
+        idx = 0
+        while True:
+            try:
+                vcl_queue = context.vcl_sub_context.get_queue(device.int_ptr, idx)
+            except RuntimeError:
+                break
+            queue = get_pyopencl_object(vcl_queue)
+            self.device_queues.add(queue)
+            idx += 1
+
+    __contains__ = device_queues.__contains__
+    __iter__ = device_queues.__iter__
+    __len__ = device_queues.__len__
+    __repr__ = device_queues.__repr__
+    __str__ = device_queues.__str__
+
+    def __getitem__(self, index):
+        return list(self)[index]
+
+    def add(self, queue):
+        if queue is None:
+            queue = cl.CommandQueue(self.context.sub_context, self.device)
+        if queue in self.device_queues:
+            log.warn("Queue %s already in context for device %s; doing nothing" % (queue, device))
+            return
+        self.device_queues.add(queue)
+        self.context.vcl_sub_context.add_existing_queue(self.device.int_ptr,
+                                                        queue.int_ptr)
+
+    def discard(self):
+        raise NotImplementedError("Cannot delete queues from context")
+
+    def finish(self):
+        for queue in self.device_queues:
+            queue.finish()
+
+
+class ContextQueues(ContextDict):
+    def _get_queues_dict(self):
+        queues = {}
+        for d in self.context.devices:
+            queues[d] = DeviceQueues(self.context, d)
+        return queues
+
+    def __getitem__(self, device):
+        try: return DeviceQueues(self.context, device)
+        except: IndexError("Device %s not in context" % device)
+
+    def __setitem__(self, device, queues):
+        for queue in queues:
+            self[device].add(queue)
+
+    def __delitem__(self, index):
+        raise NotImplementedError("Cannot delete queues from context")
+
+    def keys(self):
+        return self.context.devices
+
+    def values(self):
+        return self._get_queues_dict().values()
+
+    def __len__(self):
+        return len(self.values())
+
+    @property
+    def current_queue(self):
+        return get_pyopencl_object(self.vcl_sub_context.current_queue)
+
+    def switch_queue(self, queue):
+        if queue not in self[queue.device]:
+            self[queue.device].add(queue)
+        vcl_queue = get_viennacl_object(queue, self.sub_context)
+        self.vcl_sub_context.switch_queue(vcl_queue)
+
+
 
 def architecture_family(vendor_id, name):
     return str(_v.opencl_support.get_architecture_family(vendor_id, name))

@@ -292,20 +292,7 @@ class Context(object):
         """
         if self.domain is not OpenCLMemory:
             raise TypeError("Only the OpenCL backend currently supports multiple devices")
-        queues = {}
-        for d in self.devices:
-            device_queues = []
-            idx = 0
-            while True:
-                try:
-                    vcl_queue = self.vcl_sub_context.get_queue(d.int_ptr, idx)
-                except RuntimeError:
-                    break
-                queue = vcl.get_pyopencl_object(vcl_queue)
-                device_queues.append(queue)
-                idx += 1
-            queues[d] = device_queues
-        return queues
+        return vcl.ContextQueues(self)
 
     def add_queue(self, device, queue = None):
         """
@@ -313,11 +300,7 @@ class Context(object):
         """
         if self.domain is not OpenCLMemory:
             raise TypeError("Only the OpenCL backend currently supports queues")
-        if queue is None:
-            queue = cl.CommandQueue(self.sub_context, device)
-        if queue in self.queues[device]:
-            return
-        self.vcl_sub_context.add_existing_queue(device.int_ptr, queue.int_ptr)
+        self.queues[device].add(queue)
 
     def switch_queue(self, queue):
         """
@@ -325,16 +308,13 @@ class Context(object):
         """
         if self.domain is not OpenCLMemory:
             raise TypeError("Only the OpenCL backend currently supports queues")
-        if queue not in self.queues[queue.device]:
-            self.add_queue(queue.device, queue)
-        vcl_queue = vcl.get_viennacl_object(queue, self.sub_context)
-        self.vcl_sub_context.switch_queue(vcl_queue)
+        self.queues.switch_queue(queue)
 
     @property
     def current_queue(self):
         if self.domain is not OpenCLMemory:
             raise TypeError("Only the OpenCL backend currently supports multiple devices")
-        return vcl.get_pyopencl_object(self.vcl_sub_context.current_queue)
+        return self.queues.current_queue
 
     def finish_all_queues(self):
         """
@@ -342,9 +322,8 @@ class Context(object):
         """
         if self.domain is not OpenCLMemory:
             raise TypeError("This only makes sense on OpenCL")
-        for device in self.queues.keys():
-            for queue in self.queues[device]:
-                queue.finish()
+        for device in self.devices:
+            self.queues[device].finish()
 
     @property
     def programs(self):
