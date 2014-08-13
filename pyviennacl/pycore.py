@@ -181,11 +181,16 @@ from numpy import (ndarray, array, zeros,
                    uint8, uint16, uint32, uint64,
                    float16, float32, float64)
 
+class NoSuchType(object):
+    def __init__(self, *args, **kwargs): raise TypeError("Do not instantiate this class")
+
 WITH_SCIPY = True
 try:
-    from scipy import sparse
+    from scipy import sparse as spsparse
+    scipy_sparse_type = spsparse.spmatrix
 except ImportError:
     WITH_SCIPY = False
+    scipy_sparse_type = NoSuchType
 
 WITH_OPENCL = True
 try:
@@ -281,6 +286,7 @@ def noop(*args):
     A no-op function.
     """
     pass
+
 
 class MagicMethods(object):
     """
@@ -1586,6 +1592,7 @@ class SparseMatrixBase(Leaf):
             self.layout = ROW_MAJOR
 
         CONSTRUCT_FROM_DATA = False
+        CONSTRUCT_FROM_SPMATRIX = False
 
         if len(args) == 0:
             # 0: empty -> empty
@@ -1672,18 +1679,22 @@ class SparseMatrixBase(Leaf):
                 def get_cpu_leaf(cpu_t):
                     return cpu_t(args[0])
 
+            elif isinstance(args[0], scipy_sparse_type):
+                # 1: scipy sparse matrix -> init and fill
+                spmatrix = args[0]
+                if self.dtype is None:
+                    self.dtype = np_result_type(spmatrix)
+                if not shape:
+                    shape = spmatrix.shape
+                elif shape != spmatrix.shape:
+                    raise TypeError("Given shapes not compatible")
+                def get_cpu_leaf(cpu_t):
+                    return cpu_t(shape[0], shape[1], spmatrix.nnz)
+                CONSTRUCT_FROM_SPMATRIX = True
+
             else:
-                if WITH_SCIPY:
-                    # then test for scipy.sparse matrix
-                    if isinstance(args[0], scipy.sparse.spmatrix):
-                        if self.dtype is None:
-                            self.dtype = np_result_type(args[0])
-                        if not shape:
-                            shape = args[0].shape
-                        elif shape != args[0].shape
-                else:
-                    # error!
-                    raise TypeError("Sparse matrix cannot be constructed thus")
+                # error!
+                raise TypeError("Sparse matrix cannot be constructed thus")
 
         elif len(args) == 2:
             # 2: 2 ints -> shape
@@ -1715,13 +1726,20 @@ class SparseMatrixBase(Leaf):
         self.cpu_leaf.vcl_context = self._context.vcl_context
 
         if CONSTRUCT_FROM_DATA:
-            idx = 0
             def insert_entry(row, col, value):
                 try:
                     self.cpu_leaf.insert_entry(row, col, value)
                 except IndexError:
                     self.cpu_leaf.set_entry(row, col, value)
             x = list(map(insert_entry, data[0], data[1], data[2]))
+
+        elif CONSTRUCT_FROM_SPMATRIX:
+            def insert_entry(row, col):
+                try:
+                    self.cpu_leaf.insert_entry(int(row), int(col), spmatrix[row, col])
+                except IndexError:
+                    self.cpu_leaf.set_entry(int(row), int(col), spmatrix[row, col])
+            x = list(map(insert_entry, spmatrix.nonzero()[0], spmatrix.nonzero()[1]))
 
         self.base = self
 
@@ -1795,6 +1813,20 @@ class SparseMatrixBase(Leaf):
         Returns the sparse matrix as a dense PyViennaCL ``Matrix``.
         """
         return Matrix(self, context = self._context)
+
+    def as_lil_matrix(self):
+        """
+        Returns the sparse matrix as a SciPy lil_matrix, if possible.
+        """
+        if not WITH_SCIPY:
+            raise TypeError("SciPy not found, so this is unsupported")
+
+        lil = spsparse.lil_matrix(self.shape, dtype=self.dtype)
+
+        for nz in self.nonzeros:
+            lil[nz[0], nz[1]] = self[nz[0], nz[1]]
+
+        return lil
 
     @property
     def vcl_leaf(self):
