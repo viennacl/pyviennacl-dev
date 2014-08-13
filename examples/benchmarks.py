@@ -416,7 +416,7 @@ def do_benchmark(platform_id, benchmark_id, dtype=np.float32, quick=False, skip_
     else:
         test_time = QUICK_TEST_TIME
         sizes = benchmark['CONFIG'][0]
-        def quiet_print(*args): print(*args)
+        def quiet_print(*args): print(args)
 
     if platform[1] is None:
         devices = [None]
