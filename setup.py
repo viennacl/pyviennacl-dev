@@ -178,7 +178,7 @@ def main():
 
         "structured_matrices",
 
-        "cpu_compressed_matrix",
+        "cpu_sparse_matrix",
         "compressed_matrix", "compressed_compressed_matrix",
         "ell_matrix", "sliced_ell_matrix",
         "coordinate_matrix", "hyb_matrix",

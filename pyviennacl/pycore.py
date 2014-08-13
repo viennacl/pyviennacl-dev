@@ -1675,7 +1675,12 @@ class SparseMatrixBase(Leaf):
             else:
                 if WITH_SCIPY:
                     # then test for scipy.sparse matrix
-                    raise NotImplementedError("SciPy support comes later")
+                    if isinstance(args[0], scipy.sparse.spmatrix):
+                        if self.dtype is None:
+                            self.dtype = np_result_type(args[0])
+                        if not shape:
+                            shape = args[0].shape
+                        elif shape != args[0].shape
                 else:
                     # error!
                     raise TypeError("Sparse matrix cannot be constructed thus")
@@ -1700,7 +1705,7 @@ class SparseMatrixBase(Leaf):
         try:
             self.cpu_leaf_type = getattr(
                 _v,
-                "cpu_compressed_matrix_" + 
+                "cpu_sparse_matrix_" +
                 vcl_statement_node_numeric_type_strings[
                     self.statement_node_numeric_type])
         except (KeyError, AttributeError):
