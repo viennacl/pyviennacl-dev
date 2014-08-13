@@ -837,14 +837,16 @@ class View(object):
             of this class is a view.
         """
         start, stop, step = key.indices(axis_size)
+        if stop < start: stop += axis_size
+        size = stop - start
 
         if step == 1:
             # then range -- or slice!
-            self.vcl_view = _v.slice(start, 1, (stop-start))
+            self.vcl_view = _v.slice(start, 1, size)
         else:
             # then slice
             self.vcl_view = _v.slice(start, step,
-                                     int(math.ceil((stop-start)/step)))
+                                     int(math.ceil(size/step)))
 
         self.slice = key
         self.start = start
@@ -1436,9 +1438,10 @@ class Vector(Leaf):
             else:
                 raise IndexError("Too many indices")
         elif isinstance(key, int) or isinstance(key, long):
-            # TODO: key is probably an int -- be sure?
-            # TODO DUBIOUS USE INDEXERROR MAYBE?
-            key = key % self.shape[0]
+            if abs(key) >= self.size:
+                raise IndexError("Index beyond end of vector")
+            if key < 0:
+                key += self.size
             return HostScalar(self.vcl_leaf.get_entry(key),
                               dtype=self.dtype)
         else:
@@ -2315,13 +2318,17 @@ class Matrix(Leaf):
                 return self[key[0]]
             elif len(key) == 2:
                 if isinstance(key[0], int):
-                    # TODO DUBIOUS USE INDEXERROR MAYBE?
-                    key[0] = key[0] % self.shape[0]
+                    if abs(key[0]) >= self.shape[0]:
+                        raise IndexError("Index larger than first axis")
+                    if key[0] < 0:
+                        key[0] += self.shape[0]
                     # Choose from row
                     if isinstance(key[1], int):
-                        # TODO DUBIOUS USE INDEXERROR MAYBE?
-                        key[1] = key[1] % self.shape[1]
                         #  (int, int) -> scalar
+                        if abs(key[1]) >= self.shape[1]:
+                            raise IndexError("Index larger than second axis")
+                        if key[1] < 0:
+                            key[1] += self.shape[1]
                         return HostScalar(self.vcl_leaf.get_entry(key[0], key[1]),
                                           dtype=self.dtype)
                     elif isinstance(key[1], slice):
@@ -2340,8 +2347,10 @@ class Matrix(Leaf):
                 elif isinstance(key[0], slice):
                     # slice of rows
                     if isinstance(key[1], int):
-                        # TODO DUBIOUS USE INDEXERROR MAYBE?
-                        key[1] = key[1] % self.shape[1]
+                        if abs(key[1]) >= self.shape[1]:
+                            raise IndexError("Index larger than second axis")
+                        if key[1] < 0:
+                            key[1] += self.shape[1]
                         #  (slice, int) - range/slice from col -> col vector
                         view1 = View(key[0], self.size1)
                         view2 = View(slice(key[1], key[1]+1), self.size2)
@@ -2378,7 +2387,7 @@ class Matrix(Leaf):
                           view_of=self,
                           view=(view1, view2))
         elif isinstance(key, int):
-            return self[slice(key)]
+            return self[key, :]
         else:
             raise IndexError("Did not understand key")
 
