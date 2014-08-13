@@ -2827,21 +2827,18 @@ class CustomNode(Node):
         args = [x.as_opencl_kernel_operands() for x in operands]
         args = itertools.chain(*args)
         self._kernel(self.context.current_queue,
-                     self._opencl_global_size, self._opencl_local_size, *args)
+                     self.opencl_global_size, self.opencl_local_size, *args)
 
     @property
-    def _opencl_global_size(self):
+    def opencl_global_size(self):
         """
         TODO docstring -- override
         """
-        log.warning("No global work size specified; using default (128, 128)")
-        if len(self.shape) == 1:
-            return (128,)
-        else:
-            return (128, 128)
+        log.warning("No global work size specified; using shape")
+        return self.shape
 
     @property
-    def _opencl_local_size(self):
+    def opencl_local_size(self):
         """
         TODO docstring -- override
         """

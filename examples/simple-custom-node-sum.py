@@ -35,6 +35,13 @@ class CustomSum(CustomNode):
     kernels = { OpenCLMemory: { ('Vector', 'Vector'): vector_src,
                                 ('Matrix', 'Matrix'): matrix_src } }
 
+    @property
+    def shape(self): return self.operands[0].shape
+
+    opencl_global_size = shape
+    opencl_local_size = None
+
+
 size = 1025
 
 print("Initialising two random vectors v and w of size %d" % size)
