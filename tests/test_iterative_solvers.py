@@ -39,7 +39,7 @@ preconditioners = [('no_preconditioner', 'p.tags.NoPreconditioner',
                    ('block_ilut', 'p.tags.BlockILUT', ['compressed_matrix']),
                    ('jacobi', 'p.tags.Jacobi', ['compressed_matrix']),
                    ('row_scaling', 'p.tags.RowScaling', ['compressed_matrix', 'coordinate_matrix']),
-                   ('amg', 'p.tags.AMG', ['compressed_matrix']),
+                   #('amg', 'p.tags.AMG', ['compressed_matrix']),
                    ('spai', 'p.tags.SPAI', ['compressed_matrix']),
                    ('fspai', 'p.tags.FSPAI', ['compressed_matrix'])]
 
