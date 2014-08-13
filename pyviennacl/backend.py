@@ -300,7 +300,7 @@ class Context(object):
         """
         if self.domain is not OpenCLMemory:
             raise TypeError("Only the OpenCL backend currently supports queues")
-        self.queues[device].add(queue)
+        self.queues[device].append(queue)
 
     def switch_queue(self, queue):
         """

@@ -13,7 +13,7 @@ try:
 except ImportError:
     raise ImportError("OpenCL support not included in this installation of ViennaCL")
 
-from collections import MutableMapping, MutableSet
+from collections import MutableMapping, MutableSequence
 
 import pyopencl as cl
 import pyopencl.array
@@ -95,43 +95,57 @@ class ContextPrograms(ContextDict):
         return len(self._as_list())
 
 
-class DeviceQueues(MutableSet):
-    device_queues = set()
-
+class DeviceQueues(MutableSequence):
     def __init__(self, context, device):
         self.context = context
         self.device = device
+
+    @property
+    def device_queues(self):
+        device_queues = []
         idx = 0
         while True:
             try:
-                vcl_queue = context.vcl_sub_context.get_queue(device.int_ptr, idx)
+                vcl_queue = self.context.vcl_sub_context.get_queue(self.device.int_ptr, idx)
             except RuntimeError:
                 break
             queue = get_pyopencl_object(vcl_queue)
-            self.device_queues.add(queue)
+            device_queues.append(queue)
             idx += 1
+        return device_queues
 
-    __contains__ = device_queues.__contains__
-    __iter__ = device_queues.__iter__
-    __len__ = device_queues.__len__
-    __repr__ = device_queues.__repr__
-    __str__ = device_queues.__str__
+    def __getitem__(self, index):
+        return self.device_queues[index]
+
+    def __len__(self):
+        return len(self.device_queues)
+
+    def __repr__(self):
+        return repr(self.device_queues)
+
+    def __str__(self):
+        return str(self.device_queues)
 
     def __getitem__(self, index):
         return list(self)[index]
 
-    def add(self, queue):
+    def __setitem__(self):
+        raise TypeError("Use append instead; the queue order is not mutable!")
+
+    def __delitem__(self):
+        raise TypeError("Cannot delete queues from context")
+
+    def insert(self, index, item):
+        raise TypeError("Use append instead; the queue order is not mutable!")
+
+    def append(self, queue):
         if queue is None:
             queue = cl.CommandQueue(self.context.sub_context, self.device)
         if queue in self.device_queues:
             log.warn("Queue %s already in context for device %s; doing nothing" % (queue, device))
             return
-        self.device_queues.add(queue)
         self.context.vcl_sub_context.add_existing_queue(self.device.int_ptr,
                                                         queue.int_ptr)
-
-    def discard(self):
-        raise NotImplementedError("Cannot delete queues from context")
 
     def finish(self):
         for queue in self.device_queues:
@@ -151,7 +165,7 @@ class ContextQueues(ContextDict):
 
     def __setitem__(self, device, queues):
         for queue in queues:
-            self[device].add(queue)
+            self[device].append(queue)
 
     def __delitem__(self, index):
         raise NotImplementedError("Cannot delete queues from context")
@@ -171,7 +185,7 @@ class ContextQueues(ContextDict):
 
     def switch_queue(self, queue):
         if queue not in self[queue.device]:
-            self[queue.device].add(queue)
+            self[queue.device].append(queue)
         vcl_queue = get_viennacl_object(queue, self.sub_context)
         self.vcl_sub_context.switch_queue(vcl_queue)
 
