@@ -59,7 +59,6 @@ for d_t_, solver_, sparse_type_, vector_getter_, precond_ in product(dtype_toler
 
             vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt)
             #vcl_system = get_sparse_matrix(10, dtype=dt, sparse_type=sparse_type)
-            numpy_system = vcl_system.as_ndarray() # TODO: SciPy-ise
 
             numpy_solution, vcl_solution = vector_getter(vcl_system.size1, dt, vector=np.ones(vcl_system.size1).astype(dt))
 

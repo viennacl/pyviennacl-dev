@@ -40,11 +40,8 @@ public:
          i != cpu_sparse_matrix.end1(); ++i) {
       for (it2 j = i.begin(); j != i.end(); ++j) {
 
-	if (cpu_sparse_matrix(j.index1(), j.index2())) {
-          //std::cout << "--------------- ENTRY "
-          //          << j.index1() << "," << j.index2() << std::endl;
+	if (cpu_sparse_matrix(j.index1(), j.index2()))
           _places->append(bp::make_tuple(j.index1(), j.index2()));
-        }
 
       }
     }
@@ -104,10 +101,10 @@ public:
     _places = NULL;
   }
 
-  cpu_sparse_matrix_wrapper(ublas_sparse_t& cpu_sparse_matrix)
+  cpu_sparse_matrix_wrapper(const ublas_sparse_t& new_sparse_matrix)
     : _dirty(true)
   {
-    cpu_sparse_matrix = ublas_sparse_t(cpu_sparse_matrix);
+    cpu_sparse_matrix = new_sparse_matrix;
     _places = NULL;
   }
 
@@ -139,7 +136,6 @@ public:
   {
     np::dtype dt = np::dtype::get_builtin<ScalarType>();
     bp::tuple shape = bp::make_tuple(size1(), size2());
-    
     np::ndarray array = np::zeros(shape, dt);
 
     typedef typename ublas_sparse_t::iterator1 it1;
@@ -172,10 +168,6 @@ public:
   vcl::tools::shared_ptr<SparseT>
   as_vcl_sparse_matrix_with_size()
   {
-    //std::cout << "!!!! DATA: "
-    //          << size1() << " "
-    //          << size2() << " "
-    //          << nnz() << std::endl;
     SparseT* vcl_sparse_matrix = new SparseT(size1(), size2(), nnz(),
                                              *_context);
     vcl::copy(cpu_sparse_matrix, *vcl_sparse_matrix);
