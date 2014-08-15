@@ -350,3 +350,9 @@ def svd(A, inplace=True):
     _v.svd(S.vcl_leaf, U.vcl_leaf, V.vcl_leaf)
 
     return (U, S, V)
+
+
+__all__ = ['plane_rotation', 'norm', 'prod', 'solve', 'inplace_solve', 'eig',
+           'inplace_qr', 'recover_q', 'qr', 'nmf', 'fft', 'inplace_fft',
+           'ifft', 'inplace_ifft', 'convolve', 'convolve_i', 'svd']
+

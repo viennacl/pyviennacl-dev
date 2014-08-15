@@ -59,3 +59,6 @@ def from_ndarray(obj):
     else:
         raise AttributeError("Cannot cope with %d dimensions!" % self.operands[0].ndim)
     return new
+
+
+__all__ = ['fix_operand', 'from_ndarray']

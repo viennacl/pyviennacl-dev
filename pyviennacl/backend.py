@@ -349,3 +349,6 @@ def backend_finish():
     """
     return _v.backend_finish()
 
+
+__all__ = ['UninitializedMemory', 'MainMemory', 'OpenCLMemory', 'CUDAMemory',
+           'DefaultMemory', 'MemoryHandle', 'Context']

@@ -243,3 +243,6 @@ def get_viennacl_object(ocl_object, context = None):
     update_instance_mapping(new_vcl_instance, ocl_object)
     return new_vcl_instance
 
+
+__all__ = ['ContextPrograms', 'DeviceQueues', 'ContextQueues',
+           'architecture_family', 'get_pyopencl_object', 'get_viennacl_object']

@@ -166,6 +166,7 @@ Node types
 :class:`Add`          Addition (allocates returns a new object)
 :class:`Sub`          Subtraction (allocates returns a new object)
 :class:`Mul`          Multiplication:
+
                       * Scalar by scalar -> scalar;
                       * scalar by vector -> scaled vector;
                       * scalar by matrix -> scaled matrix;
@@ -173,9 +174,11 @@ Node types
                       * vector by matrix -> undefined;
                       * matrix by vector -> matrix-vector product;
                       * matrix by matrix -> matrix-matrix product.
+
                       The concern in defining these semantics has been to
                       preserve the dimensionality of the operands in the
                       result.
+
                       The Mul class does not map directly onto the * operator
                       for every class.
 :class:`Div`          Scalar division
@@ -223,7 +226,7 @@ Leaf types
 .. autoclass:: CompressedMatrix
 .. autoclass:: CoordinateMatrix
 .. autoclass:: ELLMatrix
-.. autoclass:: HybridMtrix
+.. autoclass:: HybridMatrix
 
 Node types
 ^^^^^^^^^^
@@ -250,7 +253,7 @@ Node types
 .. autoclass:: ElementSinh
 .. autoclass:: ElementSqrt
 .. autoclass:: ElementTan
-.. autoclass:: ElementTan
+.. autoclass:: ElementTanh
 .. autoclass:: Trans
 .. autoclass:: Assign
 .. autoclass:: InplaceAdd
