@@ -1,5 +1,5 @@
-util
-----
+Utility functions
+-----------------
 
 .. toctree::
    :maxdepth: 2

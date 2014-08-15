@@ -1,5 +1,5 @@
-linalg
-------
+Linear Algebra with PyViennaCL (linalg)
+---------------------------------------
 
 .. toctree::
    :maxdepth: 2

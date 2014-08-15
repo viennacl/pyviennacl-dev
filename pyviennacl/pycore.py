@@ -586,9 +586,9 @@ class MagicMethods(object):
     def __ceil__(self):
         """x.__ceil__() <==> math.ceil(self)
         
-        Notes
-        -----
-        On array-like types, this is computed elementwise.
+        .. note ::
+
+           On array-like types, this is computed elementwise.
         """
         if issubclass(self.result_container_type, ScalarBase):
             return self.result_container_type(math.ceil(self.value),

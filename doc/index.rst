@@ -5,6 +5,22 @@
 
 .. module:: pyviennacl
 
+PyViennaCL: easy, powerful scientific computing
+===============================================
+
+.. toctree::
+   :maxdepth: 3
+
+   pycore.rst
+   linalg.rst
+   tags.rst
+   vclmath.rst
+   backend.rst
+   opencl.rst
+   io.rst
+   util.rst
+   device_specific.rst
+
 
 Usage examples
 ==============

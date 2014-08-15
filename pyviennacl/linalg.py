@@ -12,22 +12,18 @@ def plane_rotation(vec1, vec2, alpha, beta):
     """
     Computes (vec1, vec2) <- (alpha*vec1+beta*vec2, -beta*vec1+alpha*vec2)
     
-    Parameters
-    ----------
-    vec1 : Vector
-    vec2 : Vector
-    alpha : any Python, NumPy or PyViennaCL scalar (real or integer)
-    beta : any Python, NumPy or PyViennaCL scalar (real or integer)
+    :param: vec1 : Vector
+    :param: vec2 : Vector
+    :param: alpha : any Python, NumPy or PyViennaCL scalar (real or integer)
+    :param: beta : any Python, NumPy or PyViennaCL scalar (real or integer)
 
-    Returns
-    -------
-    None
+    .. note::
 
-    Notes
-    -----
-    The dtypes of the parameters must match.
+       The dtypes of the parameters must match.
 
-    Operates in-place on vec1 and vec2.
+    .. note::
+
+       Operates in-place on vec1 and vec2.
     """
     # Do an assortment of type and dtype checks...
     if isinstance(vec1, Node):
@@ -74,24 +70,22 @@ def plane_rotation(vec1, vec2, alpha, beta):
 
 def norm(x, ord=None):
     """
-    Returns the vector norm of ``x``, if that is defined.
+    Returns the vector norm of *x*, if that is defined.
 
-    The norm returned depends on the ``ord`` parameter, as in SciPy.
+    The norm returned depends on the *ord* parameter, as in SciPy.
 
-    Parameters
-    ----------
-    ord : {1, 2, inf, 'fro', None}
+    :param: ord : {1, 2, inf, 'fro', None}
         Order of the norm.
-        inf means NumPy's ``inf`` object.
-        'fro' means the string 'fro', and denotes the Frobenius norm.
-        If None and self is a Matrix instance, then assumes 'fro'.
+        *inf* means NumPy's :class:`inf` object.
+        *'fro'* means the string 'fro', and denotes the Frobenius norm.
+        If *None* and self is a Matrix instance, then assumes 'fro'.
     """
     return x.norm(ord)
 
 
 def prod(A, B):
     """
-    Returns ``Mul(A, B)`` where that is defined (see the help for ``Mul``),
+    Returns ``Mul(A, B)`` where that is defined (see the help for :class:`Mul`),
     otherwise returns ``(A * B)``.
     """
     if not isinstance(A, MagicMethods):
@@ -101,32 +95,26 @@ def prod(A, B):
 
 def solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner(), inplace=False):
     """
-    Solve the linear system expressed by ``A x = B`` for ``x``.
+    Solve the linear system expressed by ``A x = B`` for *x*.
 
-    Parameters
-    ----------
-    A : (M, M) dense or sparse Matrix
+    :param: A : (M, M) dense or sparse Matrix
         A square matrix
-    B : {Vector, Matrix}
+    :param: B : {Vector, Matrix}
         Right-hand side in ``A x = B``
-    solver_tag : SolverTag instance
+    :param: solver_tag : :class:`SolverTag` instance
         Describes the system matrix and solver algorithm.
         See the help for each tag class for more information.
-    precond_tag : PreconditionerTag instance
-    inplace : {False, True}
+    :param: precond_tag : :class:`PreconditionerTag` instance
+    :param: inplace : {False, True}
         If True, solve in-place in B.
 
-    Returns
-    -------
-    x : {Vector, Matrix}
-        Shape and class of ``x`` matches shape and class of ``B``.
+    :returns: x : {Vector, Matrix}
+        Shape and class of *x* matches shape and class of *B*.
 
-    Raises
-    ------
-    TypeError
-        If ``A`` is not a ``Matrix``  or ``SparseMatrixBase`` instance,
-        or ``B`` is neither a ``Matrix`` nor a ``Vector`` instance,
-        or if ``tag`` is unsupported.
+    :raises: TypeError
+        If *A* is not a :class:`Matrix`  or :class:`SparseMatrixBase` instance,
+        or *B* is neither a :class:`Matrix` nor a :class:`Vector` instance,
+        or if *tag* is unsupported.
     """
     if not isinstance(A, MagicMethods):
         raise TypeError("A must be dense or sparse matrix type")
@@ -157,29 +145,25 @@ def inplace_solve(A, B, solver_tag, precond_tag=tags.NoPreconditioner()):
 
 def eig(A, tag):
     """
-    Solve an eigenvalue problem for matrix ``A``, with results depending
-    on ``tag``.
+    Solve an eigenvalue problem for matrix *A*, with results depending
+    on *tag*.
 
-    Parameters
-    ----------
-    A : Matrix
-    tag : eigenvalue computation tag instance
+    :param: A : Matrix
+    :param: tag : eigenvalue computation tag instance
         Must be one of
+
         * power_iter_tag
         * lanczos_tag
+
         See the help for each tag class for more information.
 
-    Returns
-    -------
-    x : {scalar, array-like}
-        Return type depends on ``tag``
+    :returns: x : {scalar, array-like}
+        Return type depends on *tag*
         * if power_iter_tag, then a scalar of type ``dtype(A).type``
-        * if lanczos_tag, then an ``ndarray`` vector with same dtype as ``A``
+        * if lanczos_tag, then a :class:`ndarray` vector with same dtype as *A*
 
-    Raises
-    ------
-    TypeError
-        If ``A`` is not a ``Matrix`` instance, or if ``tag`` is not understood
+    :raises: TypeError
+        If *A* is not a :class:`Matrix` instance, or if *tag* is not understood
     """
     #if not isinstance(A, Matrix):
     #    raise TypeError("A must be a Matrix type")

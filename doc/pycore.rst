@@ -1,12 +1,13 @@
-pycore: core PyViennaCL features
---------------------------------
+Core PyViennaCL features (pycore)
+=================================
 
 .. module:: pyviennacl.pycore
 
-This submodule contains PyViennaCL's core functionality, including
-types for representing and manipulating scalars, vectors and matrices
-on the host and compute device, with a variety of numerical data types
-(equivalent to the NumPy concept of ``dtype``).
+The :module:`pycore` submodule contains PyViennaCL's core
+functionality, including types for representing and manipulating
+scalars, vectors and matrices on the host and compute device, with a
+variety of numerical data types (equivalent to the NumPy concept of
+:class:`dtype`).
 
 Also provided are routines for type conversion, arithmetic and linear
 algebra, to BLAS level 3. Vector and matrix types can be sensibly
