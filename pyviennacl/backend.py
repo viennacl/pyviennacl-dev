@@ -1,5 +1,6 @@
 """Memory and compute control"""
 
+import numpy as np
 import os
 import pyviennacl as p
 from . import _viennacl as _v
@@ -331,11 +332,11 @@ class Context(object):
     @property
     def default_dtype(self):
         if self.domain is not OpenCLMemory:
-            return p.dtype(p.float64)
+            return np.dtype(p.float64)
         if self.current_device.double_fp_config:
-            return p.dtype(p.float64)
+            return np.dtype(p.float64)
         else:
-            return p.dtype(p.float32)
+            return np.dtype(p.float32)
 
 
 def backend_finish():

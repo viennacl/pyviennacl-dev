@@ -3343,7 +3343,7 @@ class Statement(object):
 __all__ = ['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32',
            'uint64', 'float16', 'float32', 'float64',
            'WITH_SCIPY', 'WITH_OPENCL',
-           'ROW_MAJOR', 'COL_MAJOR',
+           'ROW_MAJOR', 'COL_MAJOR', 'HostScalarTypes',
            'NoResult', 'MagicMethods', 'View', 'Leaf', 'ScalarBase',
            'HostScalar', 'Scalar', 'Vector', 'Matrix', 'SparseMatrixBase',
            'CompressedMatrix', 'CoordinateMatrix', 'ELLMatrix',
