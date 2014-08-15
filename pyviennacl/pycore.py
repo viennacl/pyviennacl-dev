@@ -1,173 +1,4 @@
-"""
-This submodule contains PyViennaCL's core functionality, including types for
-representing and manipulating scalars, vectors and matrices on the host and
-compute device, with a variety of numerical data types (equivalent to the
-NumPy concept of ``dtype``).
-
-Also provided are routines for type conversion, arithmetic and linear
-algebra, to BLAS level 3. Vector and matrix types can be sensibly converted
-to and from NumPy arrays, and support for SciPy sparse matrix types is forth-
-coming.
-
-Background information
-----------------------
-Because in heterogeneous computing systems copying data across the bus from
-host memory to device memory (or vice versa) commonly incurs a proportionally
-substantial wait, PyViennaCL adopts a policy of delayed execution.
-Arithmetical expressions are represented as a binary tree, and are only
-dispatched to be computed when the result of the computation is necessary.
-
-Thus, the result of adding two Matrix objects is not another Matrix object,
-but an Add object, which is converted to a Matrix when the result is accessed.
-Consequently, this submodule provides a number of classes for elementary
-arithmetical operations, such as Add, for representation in an expression
-tree. Each of these expression tree classes is a subclass of Node type, with
-Node providing basic functionality for the construction of the expression tree.
-
-In the language of ViennaCL, 'data' classes such as Scalar, Vector and
-Matrix constitute leaves on the expression tree, and as such, each of these
-data classes inherits from the Leaf type, which provides general functionality
-for leaf construction.
-
-Node and Leaf instances are flattened into a Statement object when the
-expression is executed. The Statement class recursively constructs the C++
-object equivalent to the expression tree as represented in Python, and this is
-then dispatched to the compute device. The result is cached so that multiple
-identical computations are not made.
-
-On object construction and access
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-For the same reasons of bus and compute latency, PyViennaCL does not support
-the elementwise construction of Matrix or Vector objects, or the accessing of
-individual scalar elements from any such type; the waits incurred make such
-access painfully slow.
-
-Instead, you must construct dense matrices and vectors using preconstructed
-types: NumPy ``array``s can be supplied to construct both matrices and
-vectors -- as long as the arrays are of the correct dimensionality -- and
-Python lists can be supplied to construct vectors, as long as the ``dtype``
-of the list is comprehensible. Construction from lists, but not arrays, is
-supported if the element type is a PyViennaCL scalar type. In both the list
-case and the array case, you can use Python or NumPy numeric data types:
-NumPy ``dtype``s are recommended, since these are more explicit.
-
-Elementwise accesses to array-like PyViennaCL types incur the computation of
-any expression, the transfer of the result to the host, the representation of
-that result as a NumPy ``ndarray`` (which may incur a large memory cost), and
-then the accessing of the element from that array.
-
-The exception to this rule is the set of PyViennaCL sparse matrix types, which
-do support elementwise construction and access, because they are backed by a
-transparent host-memory cache which is only flushed to and from the device
-when necessary, in the manner of the delayed execution described above.
-
-To force the execution of an expression or the flushing of a matrix, access
-the ``result`` attribute. To retrieve a NumPy ``array`` containing the data
-of the PyViennaCL Leaf or Node, use the ``as_ndarray()`` method. If you are
-not particularly concerned about the type of object you retrieve, access the
-``value`` attribute: for PyViennaCL scalars, this provides a NumPy / Python
-scalar object; for vectors and matrices, it provides an appropriate NumPy
-``array``.
-
-Ranges and slices of matrices and vectors are well supported, including
-the assignment of one matrix to a sub-matrix of another, as long as the matrix
-dimensions are commensurable. For instance::
-
-  >>> a[5:10, 5:10] = b                                  # doctest: +SKIP 
-
-Submodule contents
-------------------
-
-Leaf types
-^^^^^^^^^^
-================ ==================================
-HostScalar       Represents a scalar in host memory
-Scalar           Represents a scalar in compute device memory
-Vector           Represents a vector in compute device memory
-CompressedMatrix Represents a sparse matrix with compressed-row storage
-                 in compute device memory
-CoordinateMatrix Represents a sparse matrix with a coordinate storage format
-                 in compute device memory
-ELLMatrix        Represents a sparse matrix with an ELL storage format in
-                 compute device memory
-HybridMatrix     Represents a sparse matrix with a hybrid storage format,
-                 combining ELL and compressed-row storage, in compute device
-                 memory
-Matrix           Represents a dense matrix, with either row-major (default) or
-                 column-major storage.
-================ ==================================
-
-Supported numeric data types:
-  int8, int16, int32, int64,
-  uint8, uint16, uint32, uint64,
-  float16, float32, float64.
-
-Many operations are only currently supported using a floating poit numeric
-data type, but wider numeric support is forthcoming in later versions.
-
-Node types
-^^^^^^^^^^
-============ =============================================================
-Norm_1       Order-1 norm
-Norm_2       Order-2 norm
-Norm_Inf     Infinity norm
-ElementAbs   Elementwise abs
-ElementAcos  Elementwise acos
-ElementAsin  Elementwise asin
-ElementAtan  Elementwise atan
-ElementCeil  Elementwise ceil
-ElementCos   Elementwise cos
-ElementCosh  Elementwise cosh
-ElementExp   Elementwise exp
-ElementFabs  Elementwise fabs
-ElementFloor Elementwise floor
-ElementLog   Elementwise log
-ElementLog10 Elementwise log10
-ElementSin   Elementwise sin
-ElementSinh  Elementwise sinh
-ElementSqrt  Elementwise sqrt
-ElementTan   Elementwise tan
-ElementTanh  Elementwise tanh
-Trans        Matrix transpose
-Assign       Assign (copy) the values of one object to another of the same
-             type. You can Assign across different matrix layouts.
-InplaceAdd   In-place addition
-InplaceSub   In-place subtraction
-Add          Addition (allocates returns a new object)
-Sub          Subtraction (allocates returns a new object)
-Mul          Multiplication:
-             * Scalar by scalar -> scalar;
-             * scalar by vector -> scaled vector;
-             * scalar by matrix -> scaled matrix;
-             * vector by vector -> undefined;
-             * vector by matrix -> undefined;
-             * matrix by vector -> matrix-vector product;
-             * matrix by matrix -> matrix-matrix product.
-             The concern in defining these semantics has been to preserve
-             the dimensionality of the operands in the result.
-             The Mul class does not map directly onto the * operator for
-             every class.
-Div          Scalar division
-ElementProd  Elementwise scalar multiplication
-ElementDiv   Elementwise scalar division
-Dot          Inner (dot) product of two vectors
-============ =============================================================
-
-Most of these expression classes are implicitly constructed by arithmetical
-convenience functions, including the standard Python arithmetic operators.
-For instance, for two commensurate objects ``a`` and ``b``::
-
-  >>> ((a + b) == p.Add(a, b)).all()                     # doctest: +SKIP
-  True
-
-For more information about the semantics of the arithmetic operators, such as
-*, +, -, **, / and //, see the docstrings for the individual classes involved;
-for the default semantics, see the docstrings for the ``MagicMethods`` class.
-
-The equality operator falls back to NumPy's ``equal`` function for all classes
-that are not scalars, or that do not produce scalars as a result; in the
-scalar case, simple numerical equality is used.
-"""
+"""Core functionality"""
 
 from __future__ import division
 import itertools, logging, math
@@ -273,36 +104,41 @@ vcl_layout_strings = {
 
 
 class NoResult(object): 
-    """
-    This no-op class is used to represent when some ViennaCL operation produces
-    no explicit result, aside from any effects it may have on the operands.
+    """This no-op class is used to represent when some ViennaCL operation
+    produces no explicit result, aside from any effects it may have on
+    the operands.
     
-    For instance, in-place operations can return NoResult, as can Assign.
+    For instance, in-place operations can return :class:`NoResult`, as can
+    :class:`Assign`.
     """
     pass
 
 def noop(*args):
-    """
-    A no-op function.
+    """A no-op function.
     """
     pass
 
 
 class MagicMethods(object):
-    """
-    A class to provide convenience methods for arithmetic and BLAS access.
+    """A class to provide convenience methods for arithmetic and BLAS
+    access.
 
-    Classes derived from this will inherit lots of useful features applicable
-    to PyViennaCL. For more information, see the individual methods below.
+    Classes derived from this will inherit lots of useful features
+    applicable to PyViennaCL. For more information, see the individual
+    methods below.
     """
     flushed = False
     no_fix = False
 
     @property
     def itemsize(self):
+        """Return the size in bytes of an element of this object.
+        """
         return np_result_type(self).itemsize
 
     def as_opencl_array(self):
+        """Return a representation of this object as a PyOpenCL ``Array``.
+        """
         if self.context.domain is not backend.OpenCLMemory:
             raise TypeError("This operation is currently only supported with the OpenCL backend")
         c = cl.array.Array(self.context.current_queue,
@@ -317,8 +153,7 @@ class MagicMethods(object):
         raise NotImplementedError("This needs to be overridden by derived classes")
 
     def result_container_type(self):
-        """
-        This function should be overridden, with the following semantics.
+        """This function should be overridden, with the following semantics.
 
         Parameters
         ----------
@@ -326,28 +161,28 @@ class MagicMethods(object):
 
         Returns
         -------
-        x : type
+        x : ``type``
             The type that the operation or object represented by an instance
             of this class should return as a result on execution.
 
         Raises
         ------
-        NotImplementedError
+        ``NotImplementedError``
             If you do not override this function in a class derived from
-            MagicMethods.
+            :class:`MagicMethods`.
         """
         raise NotImplementedError("Why is this happening to you?")
 
     def copy(self):
-        """
-        Returns a new instance of this class representing a new copy of this
-        instance's data.
+        """Returns a new instance of this class representing a new copy of
+        this instance's data.
         """
         return self.result_container_type(self)
 
     def new_instance(self, data=None):
-        """
-        TODO docstring
+        """Returns a new instance of this class. By default, the new instance
+        will be empty, inheriting none of the data of the current
+        instance.
         """
         if data is None:
             return self.result_container_type(shape = self.shape,
@@ -361,8 +196,7 @@ class MagicMethods(object):
                                               context = self.context)
 
     def norm(self, ord=None):
-        """
-        Returns a norm of this instance, if that is defined.
+        """Returns a norm of this instance, if that is defined.
         
         The norm returned depends on the ``ord`` parameter, as in SciPy.
 
@@ -408,49 +242,35 @@ class MagicMethods(object):
     #def norm_inf(self):
     #    return Norm_Inf(self) #.result
 
-    def dot(self, rhs):
-        """
-        TODO docstring
-        """
-        return self.__matmul__(rhs)
-
-    def prod(self, rhs):
-        """
-        Returns ``(self * rhs)``.
-        """
-        return (self * rhs)
-
     def element_prod(self, rhs):
-        """
-        Returns the elementwise product of ``self`` and ``rhs``, for some
+        """Returns the elementwise product of ``self`` and ``rhs``, for some
         ``rhs`` (right-hand side).
         """
         return ElementProd(self, rhs)
     element_mul = element_prod
 
     def element_div(self, rhs):
-        """
-        Returns the elementwise division of ``self`` and ``rhs``, for some
+        """Returns the elementwise division of ``self`` and ``rhs``, for some
         ``rhs`` (right-hand side).
         """
         return ElementDiv(self, rhs)
 
     def __pow__(self, rhs):
-        """
-        x.__pow__(y) <==> x**y
+        """x.__pow__(y) <==> x**y
 
         Notes
         -----
-        For array-like types, this is computed elementwise. But ViennaCL does
-        not currently support elementwise exponentiation in the scheduler, so
-        this incurs the computation of the expression represented by ``y`` at
-        this point. Nonetheless, the result is the appropriate PyViennaCL type.
+        For array-like types, this is computed
+        elementwise. But ViennaCL does not currently support
+        elementwise exponentiation in the scheduler, so this incurs
+        the computation of the expression represented by ``y`` at this
+        point. Nonetheless, the result is the appropriate PyViennaCL
+        type.
         """
         return ElementPow(self, rhs)
 
     def __eq__(self, rhs):
-        """
-        The equality operator.
+        """The equality operator.
 
         Parameters
         ----------
@@ -501,8 +321,7 @@ class MagicMethods(object):
         return self.value.__repr__()
 
     def __add__(self, rhs):
-        """
-        x.__add__(y) <==> x+y
+        """x.__add__(y) <==> x+y
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -515,8 +334,7 @@ class MagicMethods(object):
         return op
 
     def __sub__(self, rhs):
-        """
-        x.__sub__(y) <==> x-y
+        """x.__sub__(y) <==> x-y
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -529,8 +347,7 @@ class MagicMethods(object):
         return op
 
     def __mul__(self, rhs):
-        """
-        x.__mul__(y) <==> x*y
+        """x.__mul__(y) <==> x*y
 
         Returns
         -------
@@ -551,12 +368,11 @@ class MagicMethods(object):
         return op
 
     def __matmul__(self, rhs):
-        """
-        x.__matmul__(y) <==> x@y
+        """x.__matmul__(y) <==> x@y
 
         Returns
         -------
-        z : {Mul(x, y), Dot(x, y)}
+        z : {``Mul(x, y)``, ``Dot(x, y)``}
             Returns a Dot instance for two vectors, or a Mul instance.
         """
         if issubclass(self.result_container_type, Vector):
@@ -565,10 +381,10 @@ class MagicMethods(object):
                     return Dot(self, rhs)
         op = Mul(self, rhs)
         return op
+    dot = __matmul__
 
     def __floordiv__(self, rhs):
-        """
-        x.__floordiv__(y) <==> x//y
+        """x.__floordiv__(y) <==> x//y
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -581,8 +397,7 @@ class MagicMethods(object):
         return op
 
     def __truediv__(self, rhs):
-        """
-        x.__truediv__(y) <==> x/y
+        """x.__truediv__(y) <==> x/y
 
         Notes
         -----
@@ -602,8 +417,7 @@ class MagicMethods(object):
     __div__ = __truediv__
 
     def __iadd__(self, rhs):
-        """
-        x.__iadd__(y) <==> x+=y
+        """x.__iadd__(y) <==> x+=y
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -620,8 +434,7 @@ class MagicMethods(object):
             return self
 
     def __isub__(self, rhs):
-        """
-        x.__isub__(y) <==> x-=y
+        """x.__isub__(y) <==> x-=y
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -638,8 +451,7 @@ class MagicMethods(object):
             return self
 
     def __imul__(self, rhs):
-        """
-        x.__imul__(y) <==> x*=y
+        """x.__imul__(y) <==> x*=y
        
         Notes
         -----
@@ -660,8 +472,7 @@ class MagicMethods(object):
             return op.result
 
     def __ifloordiv__(self, rhs):
-        """
-        x.__ifloordiv__(y) <==> x//=y
+        """x.__ifloordiv__(y) <==> x//=y
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -677,8 +488,7 @@ class MagicMethods(object):
             return op.result
 
     def __itruediv__(self, rhs):
-        """
-        x.__itruediv__(y) <==> x/=y
+        """x.__itruediv__(y) <==> x/=y
 
         Notes
         -----
@@ -700,8 +510,7 @@ class MagicMethods(object):
             return op.result
 
     def __radd__(self, rhs):
-        """
-        x.__radd__(y) <==> y+x
+        """x.__radd__(y) <==> y+x
 
         Notes
         -----
@@ -710,8 +519,7 @@ class MagicMethods(object):
         return self + rhs
 
     def __rsub__(self, rhs):
-        """
-        x.__rsub__(y) <==> y-x
+        """x.__rsub__(y) <==> y-x
         """
         if isinstance(rhs, MagicMethods):
             if issubclass(rhs.result_container_type, ScalarBase):
@@ -721,8 +529,7 @@ class MagicMethods(object):
         return rhs - self.value
 
     def __rmul__(self, rhs):
-        """
-        x.__rmul__(y) <==> y*x
+        """x.__rmul__(y) <==> y*x
 
         Notes
         -----
@@ -731,8 +538,7 @@ class MagicMethods(object):
         return self * rhs
 
     def __rfloordiv__(self, rhs):
-        """
-        x.__rfloordiv__(y) <==> y//x
+        """x.__rfloordiv__(y) <==> y//x
         """
         if isinstance(rhs, MagicMethods):
             if issubclass(rhs.result_container_type, ScalarBase):
@@ -742,8 +548,7 @@ class MagicMethods(object):
         return rhs // self.value
 
     def __rtruediv__(self, rhs):
-        """
-        x.__rtruediv__(y) <==> y/x
+        """x.__rtruediv__(y) <==> y/x
 
         Notes
         -----
@@ -760,16 +565,14 @@ class MagicMethods(object):
     __rdiv__ = __rtruediv__
 
     def __neg__(self):
-        """
-        x.__neg__() <==> -x
+        """x.__neg__() <==> -x
         """
         if issubclass(self.result_container_type, ScalarBase):
             return self.result_container_type(-self.value, dtype = self.dtype)
         return Neg(self)
 
     def __abs__(self):
-        """
-        x.__abs__() <==> abs(x)
+        """x.__abs__() <==> abs(x)
 
         Notes
         -----
@@ -789,8 +592,7 @@ class MagicMethods(object):
             return ElementAbs(self)
 
     def __floor__(self):
-        """
-        x.__floor__() <==> math.floor(self)
+        """x.__floor__() <==> math.floor(self)
 
         Notes
         -----
@@ -802,8 +604,7 @@ class MagicMethods(object):
         return ElementFloor(self)
 
     def __ceil__(self):
-        """
-        x.__ceil__() <==> math.ceil(self)
+        """x.__ceil__() <==> math.ceil(self)
         
         Notes
         -----
@@ -816,23 +617,21 @@ class MagicMethods(object):
 
 
 class View(object):
-    """
-    This class represents a C++ ViennaCL range or slice, as a 'view' on an
-    object. A View instance is object-independent; i.e., it represents an
-    abstract view.
+    """This class represents a C++ ViennaCL range or slice, as a 'view'
+    on an object. A ``View`` instance is object-independent; i.e., it
+    represents an abstract view.
     """
     start = None
     stop = None
     step = None
 
     def __init__(self, key, axis_size):
-        """
-        Construct a View object.
+        """Construct a View object.
 
         Parameters
         ----------
-        key : slice
-        axis_size : int
+        key : ``slice``
+        axis_size : ``int``
             The number of elements along the axis of which the instance
             of this class is a view.
         """
@@ -855,19 +654,17 @@ class View(object):
 
 
 class Leaf(MagicMethods):
+    """This is the base class for all ``leaves`` in the ViennaCL
+    expression tree system. A leaf is any type that can store data for
+    use in an operation, such as a scalar, a vector, or a matrix.
     """
-    This is the base class for all ``leaves`` in the ViennaCL expression tree
-    system. A leaf is any type that can store data for use in an operation,
-    such as a scalar, a vector, or a matrix.
-    """
-    shape = None # No shape yet -- not even 0 dimensions
+    shape = None   # No shape yet -- not even 0 dimensions
     flushed = True # Are host and device data synchronised?
     complexity = 0 # A leaf does not contribute computationally to a tree
 
     def __init__(self, *args, **kwargs):
-        """
-        Do initialisation tasks common to all Leaf subclasses, then pass
-        control onto the overridden _init_leaf function.
+        """Do initialisation tasks common to all Leaf subclasses, then pass
+        control onto the overridden ``_init_leaf`` function.
 
         Tasks include expression computation and configuration of data types
         and views.
@@ -960,16 +757,15 @@ class Leaf(MagicMethods):
         Assign(item, value).execute() ## set
 
     def _init_leaf(self, args, kwargs):
-        """
-        By default, leaf subclasses inherit a no-op further init function.
+        """By default, leaf subclasses inherit a no-op further init function.
         
-        If you're deriving from Leaf, then you probably want to override this,
-        with the following semantics:
+        If you're deriving from :class:`Leaf`, then you probably want
+        to override this, with the following semantics:
 
         Parameters
         ----------
-        args : list
-        kwargs : dict
+        args : ``list``
+        kwargs : ``dict``
 
         Returns
         -------
@@ -977,7 +773,7 @@ class Leaf(MagicMethods):
 
         Raises
         ------
-        NotImplementedError
+        ``NotImplementedError``
             Unless overridden by a derived class.
 
         Notes
@@ -988,8 +784,7 @@ class Leaf(MagicMethods):
         raise NotImplementedError("Help")
 
     def flush(self):
-        """
-        Override this function to implement caching functionality.
+        """Override this function to implement caching functionality.
         """
         raise NotImplementedError("Should you be trying to flush this type?")
 
@@ -1005,58 +800,51 @@ class Leaf(MagicMethods):
 
     @property
     def result_container_type(self):
-        """
-        The result_container_type for a leaf is always its own type.
+        """The result_container_type for a leaf is always its own type.
         """
         return type(self)
 
     @property
     def result(self):
-        """
-        The result of an expression or subexpression consisting of a leaf is
-        just the leaf itself.
+        """The result of an expression or subexpression consisting of a leaf
+        is just the leaf itself.
         """
         return self
 
     def express(self, statement=""):
-        """
-        Construct a human-readable version of a ViennaCL expression tree
+        """Construct a human-readable version of a ViennaCL expression tree
         statement from this leaf.
         """
         statement += type(self).__name__ + ":" + str(dtype(self))
         return statement
 
     def as_ndarray(self):
-        """
-        Return a NumPy ``ndarray`` containing the data within the underlying
-        ViennaCL type.
+        """Return a NumPy ``ndarray`` containing the data within the
+        underlying ViennaCL type.
         """
         return array(self.vcl_leaf.as_ndarray(), dtype=self.dtype)
 
     @property
     def value(self):
-        """
-        Return a NumPy ``ndarray`` containing the data within the underlying
-        ViennaCL type.        
+        """Return a NumPy ``ndarray`` containing the data within the
+        underlying ViennaCL type.
         """
         return self.as_ndarray()
 
 
 class ScalarBase(Leaf):
-    """
-    This is the base class for all scalar types, regardless of their memory
-    and backend context. It represents the dtype and the value of the scalar
-    independently of one another.
+    """This is the base class for all scalar types, regardless of their
+    memory and backend context. It represents the dtype and the value
+    of the scalar independently of one another.
 
     Because scalars are leaves in the ViennaCL expression graph, this class
-    derives from the Leaf base class.
+    derives from the :class:`Leaf` base class.
     """
     statement_node_type_family = _v.statement_node_type_family.SCALAR_TYPE_FAMILY
     ndim = 0 # Scalars are point-like, and thus 0-dimensional
 
     def _init_leaf(self, args, kwargs):
-        """
-        Do Scalar-specific initialisation tasks.
+        """Do Scalar-specific initialisation tasks.
         1. Set the scalar value to the value given, or 0.
         2. If no dtype yet set, use the NumPy type promotion rules to deduce
            a dtype.
@@ -1084,11 +872,10 @@ class ScalarBase(Leaf):
         self._init_scalar()
 
     def _init_scalar(self):
-        """
-        By default, scalar subclasses inherit a no-op further init function.
+        """By default, scalar subclasses inherit a no-op init function.
         
-        If you're deriving from ScalarBase, then you probably want to override 
-        this, with the following semantics:
+        If you're deriving from ScalarBase, then you want to override this,
+        with the following semantics:
 
         Parameters
         ----------
@@ -1112,15 +899,13 @@ class ScalarBase(Leaf):
 
     @property
     def shape(self):
-        """
-        Scalars are 0-dimensional and thus have no shape.
+        """Scalars are 0-dimensional and thus have no shape.
         """
         return ()
 
     @property
     def value(self):
-        """
-        The stored value of the scalar.
+        """The stored value of the scalar.
         """
         return self._value
 
@@ -1130,21 +915,19 @@ class ScalarBase(Leaf):
         self._init_scalar()
 
     def as_ndarray(self):
-        """
-        Return a point-like ndarray containing only the value of this Scalar,
-        with the dtype set accordingly.
+        """Return a point-like ndarray containing only the value of this
+        Scalar, with the dtype set accordingly.
         """
         return array(self.value, dtype=self.dtype)
 
     def as_opencl_kernel_operands(self):
-        """
-        TODO docstring
+        """Returns a representation of the current object sufficient for
+        passing to PyOpenCL for executing a custom kernel.
         """
         return [np_result_type(self).type(self.value)]
 
     def __pow__(self, rhs):
-        """
-        x.__pow__(y) <==> x**y
+        """x.__pow__(y) <==> x**y
         """
         if isinstance(rhs, MagicMethods):
             if issubclass(rhs.result_container_type, ScalarBase):
@@ -1155,8 +938,7 @@ class ScalarBase(Leaf):
                                               dtype = self.dtype)
 
     def __rpow__(self, rhs):
-        """
-        x.__rpow__(y) <==> y**x
+        """x.__rpow__(y) <==> y**x
 
         Notes
         -----
@@ -1175,12 +957,11 @@ class ScalarBase(Leaf):
 
 
 class HostScalar(ScalarBase):
-    """
-    This class is used to represent a ``host scalar``: a scalar type that is
-    stored in main CPU RAM, and that is usually represented using a standard
-    NumPy scalar dtype, such as int32 or float64.
+    """This class is used to represent a ``host scalar``: a scalar type
+    that is stored in main CPU RAM, and that is usually represented
+    using a standard NumPy scalar dtype, such as int32 or float64.
 
-    It derives from ScalarBase.
+    It derives from :class:`ScalarBase`.
     """
     statement_node_subtype = _v.statement_node_subtype.HOST_SCALAR_TYPE
     
@@ -1191,13 +972,12 @@ class HostScalar(ScalarBase):
 
 
 class Scalar(ScalarBase):
-    """
-    This class is used to represent a ViennaCL scalar: a scalar type that is
-    usually stored in OpenCL global memory, but which can be converted to a 
-    HostScalar, and thence to a standard NumPy scalar dtype, such as int32 or
-    float64.
+    """This class is used to represent a ViennaCL scalar: a scalar type
+    that is usually stored in OpenCL global memory, but which can be
+    converted to a :class:`HostScalar`, and thence to a standard NumPy
+    scalar dtype, such as ``int32`` or ``float64``.
 
-    It derives from ScalarBase.
+    It derives from :class:`ScalarBase`.
     """
     statement_node_subtype = _v.statement_node_subtype.DEVICE_SCALAR_TYPE
 
@@ -1216,8 +996,7 @@ class Scalar(ScalarBase):
 
     @property
     def value(self):
-        """
-        The stored value of the scalar.
+        """The stored value of the scalar.
         """
         return self.vcl_leaf.to_host()
 
@@ -1228,15 +1007,34 @@ class Scalar(ScalarBase):
 
 
 class Vector(Leaf):
-    """
-    A generalised Vector class: represents ViennaCL vector objects of all
+    """A generalised Vector class: represents ViennaCL vector objects of all
     supported scalar types. Can be constructed in a number of ways:
-    * from an ndarray of the correct dtype
-    * from a list
-    * from an integer: produces an empty Vector of that size
-    * from a tuple: first element an int (for size), second for scalar value
+    * from an ndarray of the correct dtype;
+    * from a list;
+    * from an integer: produces an empty Vector of that size;
+    * from a tuple: first element an int (for size), second for scalar value;
+    * from a PyOpenCL ``Array``: producing a view onto the associated buffer;
+    * from a host / OpenCL / CUDA buffer, wrapped in a
+      :class:`backend.MemoryHandle` object.
 
-    Also provides convenience functions for arithmetic.
+    Parameters
+    ----------
+
+    context : {:class:`backend.Context`, :class:`backend.MemoryDomain`,
+               ``pyopencl.Context``}
+        Context within which to create the ``Vector``.
+    dtype : ``int``
+        Numerical data type of each element of the ``Vector``.
+    shape : ``tuple``
+        A tuple of one element giving the size of the ``Vector``.
+    size : ``int``
+        Equivalent to passing ``shape=(size,)``.
+    offset : ``int``
+
+
+    Also provides convenience functions for arithmetic; see
+    :class:`MagicMethods`.
+
     """
     ndim = 1
     layout = None
@@ -1244,8 +1042,7 @@ class Vector(Leaf):
     statement_node_subtype = _v.statement_node_subtype.DENSE_VECTOR_TYPE
 
     def _init_leaf(self, args, kwargs):
-        """
-        Construct the underlying ViennaCL vector object according to the 
+        """Construct the underlying ViennaCL vector object according to the
         given arguments and types.
         """
         
@@ -1449,27 +1246,25 @@ class Vector(Leaf):
 
     @property
     def index_norm_inf(self):
-        """
-        Returns the index of the L^inf norm on the vector.
+        """Returns the index of the L^inf norm on the vector.
         """
         return self.vcl_leaf.index_norm_inf
 
     def outer(self, rhs):
-        """
-        Returns the outer product of ``self`` and ``rhs``.
+        """Returns the outer product of ``self`` and ``rhs``.
 
         Parameters
         ----------
-        rhs : Vector
+        rhs : :class:`Vector`
 
         Returns
         -------
-        result : Matrix
+        result : :class:`Matrix`
 
         Raises
         ------
-        TypeError
-            If anything but a Vector is supplied.
+        ``TypeError``
+            If anything but a :class:`Vector` is supplied.
 
         Notes
         -----
@@ -1485,24 +1280,24 @@ class Vector(Leaf):
         raise TypeError("Cannot calculate the outer-product of non-vector type: %s" % type(rhs))
 
     def as_column(self):
-        """
-        Returns a representation of this instance as a column Matrix.
+        """Returns a representation of this instance as a column
+        :class:`Matrix`.
         """
         tmp = self.vcl_leaf.as_ndarray()
         tmp.resize(self.size, 1)
         return Matrix(tmp, dtype=self.dtype, layout=COL_MAJOR)
 
     def as_row(self):
-        """
-        Returns a representation of this instance as a row Matrix.
+        """Returns a representation of this instance as a row
+        :class:`Matrix`.
         """
         tmp = self.vcl_leaf.as_ndarray()
         tmp.resize(1, self.size)
         return Matrix(tmp, dtype=self.dtype, layout=ROW_MAJOR)
 
     def as_diag(self):
-        """
-        Returns a representation of this instance as a diagonal Matrix.
+        """Returns a representation of this instance as a diagonal
+        :class:`Matrix`.
         """
         tmp_v = self.as_ndarray()
         tmp_m = zeros((self.size, self.size), dtype=self.dtype)
@@ -1511,16 +1306,18 @@ class Vector(Leaf):
         return Matrix(tmp_m, dtype=self.dtype) # TODO: Ought to be sparse here
 
     def as_opencl_kernel_operands(self):
-        """
-        TODO docstring
+        """Returns a representation of the current object sufficient for
+        passing to PyOpenCL for executing a custom kernel.
+
+        In this case, this means a list consisting of the buffer for this
+        object and its size.
         """
         return [self.handle[0].buffer, uint32(self.internal_size)]
 
 
 class SparseMatrixBase(Leaf):
-    """
-    This is the base class for all sparse matrix types, regardless of their
-    storage format.
+    """This is the base class for all sparse matrix types, regardless of
+    their storage format.
 
     Because sparse matrices are leaves in the ViennaCL expression graph, this 
     class derives from the Leaf base class. It is not expected that any
@@ -1540,6 +1337,8 @@ class SparseMatrixBase(Leaf):
     * from an expression resulting in a ``Matrix`` or sparse matrix;
     * from a NumPy ``ndarray``.
 
+    TODO docstring: data, spmatrix
+
     Support for converting PyViennaCL sparse matrix types to and from SciPy
     sparse matrix types is not currently available, but is planned.
     """
@@ -1549,8 +1348,9 @@ class SparseMatrixBase(Leaf):
 
     @classmethod
     def generate_fdm_laplace(cls, points_x, points_y, dtype=None, context=None):
-        """
-        TODO docstring
+        """Generates a sparse matrix obtained from a simple finite-difference
+        discretization of the Laplace equation on the unit square
+        (2-D).
         """
         A = cls(dtype=dtype, context=context)
         vcl_context = A.context.vcl_context
@@ -1562,17 +1362,15 @@ class SparseMatrixBase(Leaf):
 
     @property
     def vcl_leaf_factory(self):
-        """
-        Derived classes should construct and return the C++ object
-        representing the appropriate sparse matrix on the compute device
-        by overriding this function.
+        """Derived classes should construct and return the C++ object
+        representing the appropriate sparse matrix on the compute
+        device by overriding this function.
         """
         raise NotImplementedError("This is only a base class!")
 
     def _init_leaf(self, args, kwargs):
-        """
-        Do general sparse-matrix-specific construction tasks, like setting up
-        the shape, layout, dtype and host memory cache.
+        """Do general sparse-matrix-specific construction tasks, like setting
+        up the shape, layout, dtype and host memory cache.
         """
         if 'shape' in kwargs.keys():
             shape = kwargs['shape']
@@ -1748,52 +1546,47 @@ class SparseMatrixBase(Leaf):
 
     @property
     def handle(self):
-        """
-        TODO docstring
+        """TODO docstring
         """
         if not self.flushed:
             self.flush()
-        return self._handle,
+        return self._handle
 
     @property
     def nonzeros(self):
-        """
-        A ``list`` of coordinates of the nonzero elements of the matrix.
+        """A ``list`` of coordinates of the nonzero elements of the matrix.
         """
         return self.cpu_leaf.nonzeros
 
     @property
     def nnz(self):
-        """
-        The number of nonzero elements stored in the matrix, as an integer.
+        """The number of nonzero elements stored in the matrix, as an
+        integer.
         """
         return self.cpu_leaf.nnz
 
     @property
     def size1(self):
-        """
-        The size of the first axis of the matrix.
+        """The size of the first axis of the matrix.
         """
         return self.cpu_leaf.size1
 
     @property
     def size2(self):
-        """
-        The size of the second axis of the matrix.
+        """The size of the second axis of the matrix.
         """
         return self.cpu_leaf.size2
 
     @property
     def size(self):
-        """
-        The flat size (area) of the matrix, as it would be in dense form.
+        """The flat size (area) of the matrix, as it would be in dense form.
         """
         return self.size1 * self.size2 # Flat size
 
     @property
     def shape(self):
-        """
-        The shape of the matrix as a 2-tuple, with one entry for each axis.
+        """The shape of the matrix as a 2-tuple, with one entry for each
+        axis.
         """
         return (self.size1, self.size2)
 
@@ -1806,20 +1599,17 @@ class SparseMatrixBase(Leaf):
     #    return self.cpu_leaf.resize(size1, size2)
 
     def as_ndarray(self):
-        """
-        Returns the sparse matrix as a dense NumPy ``ndarray``.
+        """Returns the sparse matrix as a dense NumPy ``ndarray``.
         """
         return self.cpu_leaf.as_ndarray()
 
     def as_dense(self):
-        """
-        Returns the sparse matrix as a dense PyViennaCL ``Matrix``.
+        """Returns the sparse matrix as a dense PyViennaCL :class:`Matrix`.
         """
         return Matrix(self, context = self._context)
 
     def as_lil_matrix(self):
-        """
-        Returns the sparse matrix as a SciPy lil_matrix, if possible.
+        """Returns the sparse matrix as a SciPy ``lil_matrix``, if possible.
         """
         if not WITH_SCIPY:
             raise TypeError("SciPy not found, so this is unsupported")
@@ -1832,9 +1622,19 @@ class SparseMatrixBase(Leaf):
         return lil
 
     @property
-    def vcl_leaf(self):
+    def value(self):
+        """Returns the sparse matrix as a SciPy ``lil_matrix``, if possible.
+        If SciPy is not available, this resorts to constructing a
+        dense NumPy ndarray.
         """
-        The underlying C++ ViennaCL object representing the matrix on the
+        if WITH_SCIPY:
+            return self.as_lil_matrix()
+        else:
+            return self.as_ndarray()
+
+    @property
+    def vcl_leaf(self):
+        """The underlying C++ ViennaCL object representing the matrix on the
         compute device.
         """
         if not self.flushed:
@@ -1897,11 +1697,11 @@ class SparseMatrixBase(Leaf):
 
 
 class CompressedMatrix(SparseMatrixBase):
-    """
-    This class represents a sparse matrix on the ViennaCL compute device, in
-    a compressed-row storage format.
+    """This class represents a sparse matrix on the ViennaCL compute
+    device, in a compressed-row storage format.
 
-    For information on construction, see the help for SparseMatrixBase.
+    For information on construction, see the help for
+    :class:`SparseMatrixBase`.
     """
     statement_node_subtype = _v.statement_node_subtype.COMPRESSED_MATRIX_TYPE
 
@@ -1914,8 +1714,7 @@ class CompressedMatrix(SparseMatrixBase):
 
 
 class CompressedCompressedMatrix(SparseMatrixBase):
-    """
-    TODO docstring -- experimental
+    """TODO docstring -- experimental
     """
     #statement_node_subtype = _v.statement_node_subtype.COMPRESSED_MATRIX_TYPE
 
@@ -1929,13 +1728,13 @@ class CompressedCompressedMatrix(SparseMatrixBase):
 
 
 class CoordinateMatrix(SparseMatrixBase):
-    """
-    This class represents a sparse matrix on the ViennaCL compute device, in
-    a `coordinate` storage format: entries are stored as triplets 
-    ``(i, j, val)``, where ``i`` is the row index, ``j`` is the column index
-    and ``val`` is the entry.
+    """This class represents a sparse matrix on the ViennaCL compute
+    device, in a `coordinate` storage format: entries are stored as
+    triplets ``(i, j, val)``, where ``i`` is the row index, ``j`` is
+    the column index and ``val`` is the entry.
 
-    For information on construction, see the help for SparseMatrixBase.
+    For information on construction, see the help for
+    :class:`SparseMatrixBase`.
     """
     statement_node_subtype = _v.statement_node_subtype.COORDINATE_MATRIX_TYPE
 
@@ -1948,12 +1747,12 @@ class CoordinateMatrix(SparseMatrixBase):
 
 
 class ELLMatrix(SparseMatrixBase):
-    """
-    This class represents a sparse matrix on the ViennaCL compute device, in
-    ELL storage format. In this format, the matrix is stored in a block of
-    memory of size N by n_max, where N is the number of rows of the matrix
-    and n_max is the maximum number of nonzeros per row. Rows with less than
-    n_max entries are padded with zeros. In a second memory block, the
+    """This class represents a sparse matrix on the ViennaCL compute
+    device, in ELL storage format. In this format, the matrix is
+    stored in a block of memory of size ``N`` by ``n_max``, where
+    ``N`` is the number of rows of the matrix and ``n_max`` is the
+    maximum number of nonzeros per row. Rows with fewer than ``n_max``
+    entries are padded with zeros. In a second memory block, the
     respective column indices are stored.
 
     The ELL format is well suited for matrices where most rows have
@@ -1963,7 +1762,8 @@ class ELLMatrix(SparseMatrixBase):
     ELL format introduces substantial overhead if the number of nonzeros per
     row varies a lot.       [description adapted from the ViennaCL manual]
 
-    For information on construction, see the help for SparseMatrixBase.
+    For information on construction, see the help for
+    :class:`SparseMatrixBase`.
     """
     statement_node_subtype = _v.statement_node_subtype.ELL_MATRIX_TYPE
 
@@ -1975,8 +1775,7 @@ class ELLMatrix(SparseMatrixBase):
 
 
 class SlicedELLMatrix(SparseMatrixBase):
-    """
-    TODO docstring -- experimental
+    """TODO docstring -- experimental
     """
     #statement_node_subtype = _v.statement_node_subtype.ELL_MATRIX_TYPE
 
@@ -1991,15 +1790,16 @@ class SlicedELLMatrix(SparseMatrixBase):
 
 
 class HybridMatrix(SparseMatrixBase):
-    """
-    This class represents a sparse matrix on the ViennaCL compute device, in a
-    hybrid storage format, combining the higher performance of the ELL format
-    for matrices with approximately the same number of entries per row with
-    the higher flexibility of the compressed row format. The main part of the 
-    matrix is stored in ELL format and excess entries are stored in
-    compressed row format.  [description adapted from the ViennaCL manual]
+    """This class represents a sparse matrix on the ViennaCL compute
+    device, in a hybrid storage format, combining the higher
+    performance of the ELL format for matrices with approximately the
+    same number of entries per row with the higher flexibility of the
+    compressed row format. The main part of the matrix is stored in
+    ELL format and excess entries are stored in compressed row format.
+    [description adapted from the ViennaCL manual]
 
-    For information on construction, see the help for SparseMatrixBase.
+    For information on construction, see the help for
+    :class:`SparseMatrixBase`.
     """
     statement_node_subtype = _v.statement_node_subtype.HYB_MATRIX_TYPE
 
@@ -2015,19 +1815,20 @@ class HybridMatrix(SparseMatrixBase):
 
 # TODO: add ndarray flushing
 class Matrix(Leaf):
-    """
-    This class represents a dense matrix object on the compute device, and it
-    can be constructed in a number of ways:
+    """This class represents a dense matrix object on the compute device, and 
+    it can be constructed in a number of ways:
     * with no parameters, as an empty matrix;
-    * from an integer tuple: produces an empty Matrix of that shape;
+    * from an integer tuple: produces an empty ``Matrix`` of that shape;
     * from a tuple: first two values shape, third scalar value for each
       element;
     * from an ndarray of the correct dtype;
     * from a ViennaCL sparse matrix;
-    * from a ViennaCL ``Matrix`` instance (to make a copy);
-    * from an expression resulting in a Matrix.
+    * from a ViennaCL :class:`Matrix` instance (to make a copy);
+    * from an expression resulting in a ``Matrix``.
 
-    Both ROW_MAJOR and COL_MAJOR layouts are supported; to determine,
+    TODO docstring: cl.array.Array, memory buffers
+
+    Both ``ROW_MAJOR`` and ``COL_MAJOR`` layouts are supported; to determine,
     provide ``layout`` as a keyword argument to the initialisation. The
     default layout is row-major.
 
@@ -2049,8 +1850,7 @@ class Matrix(Leaf):
     statement_node_subtype = _v.statement_node_subtype.DENSE_MATRIX_TYPE
 
     def _init_leaf(self, args, kwargs):
-        """
-        Construct the underlying ViennaCL vector object according to the 
+        """Construct the underlying ViennaCL vector object according to the
         given arguments and types.
         """
         if 'shape' in kwargs.keys():
@@ -2392,8 +2192,11 @@ class Matrix(Leaf):
             raise IndexError("Did not understand key")
 
     def as_opencl_kernel_operands(self):
-        """
-        TODO docstring
+        """Returns a representation of the current object sufficient for
+        passing to PyOpenCL for executing a custom kernel.
+
+        In this case, this means a list consisting of the buffer for this
+        object and its sizes.
         """
         return [self.handle[0].buffer,
                 uint32(self.internal_size1), uint32(self.internal_size2)]
@@ -2406,22 +2209,22 @@ class Matrix(Leaf):
 
     @property
     def T(self):
-        """
-        Return the matrix transpose.
+        """Return the matrix transpose.
         """
         return Trans(self)
     trans = T
 
 
 class Node(MagicMethods):
-    """
-    This is the base class for all nodes in the ViennaCL expression tree. A
-    node is any binary or unary operation, such as addition. This class
-    provides logic for expression tree construction and result type deduction,
-    in order that expression statements can be executed correctly.
+    """This is the base class for all nodes in the ViennaCL expression
+    tree. A Node is any n-ary operation, such as addition. This class
+    provides logic for expression tree construction and result type
+    deduction, in order that expression statements can be executed
+    correctly.
 
-    If you're extending ViennaCL by adding an operation and want support for
-    it in Python, then you should derive from this class.
+    If you're extending the ViennaCL core by adding an operation and
+    want support for it in Python, then you should derive from this
+    class.
     """
 
     statement_node_type_family = _v.statement_node_type_family.INVALID_TYPE_FAMILY
@@ -2433,11 +2236,10 @@ class Node(MagicMethods):
     flushed = False
 
     def __init__(self, *args):
-        """
-        Take the given operand(s) to an appropriate representation for this
-        operation, and deduce the result_type. Construct a ViennaCL 
-        statement_node object representing this information, ready to be
-        inserted into an expression statement.
+        """Take the given operand(s) to an appropriate representation for
+        this operation, and deduce the result_type. Construct a
+        ViennaCL statement_node object representing this information,
+        ready to be inserted into an expression statement.
         """
         if len(args) == 1:
             self.operation_node_type_family = _v.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY
@@ -2521,12 +2323,12 @@ class Node(MagicMethods):
         self.result[key] = value
 
     def get_vcl_operand_setter(self, operand):
-        """
-        This function returns the correct function for setting the
-        underlying ViennaCL statement_node object's operand(s) in the correct
-        way: each different container type and dtype are mapped onto a
-        different set_operand_to function in the underlying object, in order
-        to avoid type ambiguity at the Python/C++ interface.
+        """This function returns the correct function for setting the
+        underlying ViennaCL statement_node object's operand(s) in the
+        correct way: each different container type and dtype are
+        mapped onto a different set_operand_to function in the
+        underlying object, in order to avoid type ambiguity at the
+        Python/C++ interface.
         """
         vcl_operand_setter = [
             "set_operand_to_",
@@ -2540,9 +2342,8 @@ class Node(MagicMethods):
 
     @property
     def complexity(self):
-        """
-        The complexity of the ViennaCL expression, given as the number of Node
-        instances in the expression tree.
+        """The complexity of the ViennaCL expression, given as the number of
+        ``Node`` instances in the expression tree.
         """
         complexity = 1
         for op in self.operands:
@@ -2551,8 +2352,7 @@ class Node(MagicMethods):
 
     @property
     def operand_types_string(self):
-        """
-        TODO docstring
+        """TODO docstring
         """
         types = []
         for o in self.operands:
@@ -2565,12 +2365,12 @@ class Node(MagicMethods):
 
     @property
     def result_container_type(self):
-        """
-        Determine the container type (ie, Scalar, Vector, etc) needed to
-        store the result of the operation encoded by this Node. If the 
-        operation has some effect (eg, in-place), but does not produce a
-        distinct result, then return NoResult. If the operation is not
-        supported for the given operand types, then return None.
+        """Determine the container type (ie, :class:`Scalar`, :class:`Vector`,
+        etc) needed to store the result of the operation encoded by
+        this :class:`Node`. If the operation has some effect (eg,
+        in-place), but does not produce a distinct result, then return
+        :class:`NoResult`. If the operation is not supported for the
+        given operand types, then return ``None``.
         """
         if self.flushed:
             return type(self._result)
@@ -2581,10 +2381,9 @@ class Node(MagicMethods):
 
     @property
     def dtype(self):
-        """
-        Determine the dtype of the scalar element(s) of the result of the
-        operation encoded by this Node, according to the NumPy type promotion
-        rules.
+        """Determine the dtype of the scalar element(s) of the result of the
+        operation encoded by this :class:`Node`, according to the
+        NumPy type promotion rules.
         """
         if self.flushed:
             return np_result_type(self._result)
@@ -2597,13 +2396,12 @@ class Node(MagicMethods):
 
     @property
     def layout(self):
-        """
-        Recursively determine the storage layout for the result type, if the
-        result is a Matrix.
+        """Recursively determine the storage layout for the result type, if
+        the result is a :class:`Matrix`.
 
-        Notably, this ensures that any Matrix operands have the same layout,
-        since this is a condition of all ViennaCL operations, except for
-        the matrix-matrix product.
+        Notably, this ensures that any ``Matrix`` operands have the
+        same layout, since this is a condition of all ViennaCL
+        operations, except for the matrix-matrix product.
         """
         if self.flushed:
             return self._result.layout
@@ -2626,12 +2424,12 @@ class Node(MagicMethods):
 
     @property
     def result_ndim(self):
-        """
-        Determine the maximum number of dimensions required to store the
+        """Determine the maximum number of dimensions required to store the
         result of any operation on the given operands.
 
-        This can be overridden by the particular Node subclass, in order to
-        compute the correct size for the result container.
+        This can be overridden by the particular :class:`Node`
+        subclass, in order to compute the correct size for the result
+        container.
         """
         if self.flushed:
             return self._result.ndim
@@ -2648,12 +2446,12 @@ class Node(MagicMethods):
 
     @property
     def result_max_axis_size(self):
-        """
-        Determine the maximum size of any axis required to store the result of
-        any operation on the given operands.
+        """Determine the maximum size of any axis required to store the
+        result of any operation on the given operands.
 
-        This can be overridden by the particular Node subclass, in order to
-        compute the correct size for the result container.
+        This can be overridden by the particular :class:`Node`
+        subclass, in order to compute the correct size for the result
+        container.
         """
         if self.flushed:
             return max(self._result.shape)
@@ -2674,14 +2472,16 @@ class Node(MagicMethods):
 
     @property
     def shape(self):
-        """
-        Determine the upper-bound shape of the object needed to store the
-        result of any operation on the given operands. The len of this tuple
-        is the number of dimensions, with each element of the tuple
-        determining the upper-bound size of the corresponding dimension.
+        """Determine the upper-bound shape of the object needed to store the
+        result of any operation on the given operands. The ``len`` of
+        this tuple is the number of dimensions, with each element of
+        the tuple being the upper-bound size of the corresponding
+        dimension.
 
         If the shape is set manually, then this routine is overridden, and
         the manually set value is returned.
+
+        It is advisable to override this; you will get a warning otherwise!
         """
         if self.flushed:
             return self._result.shape
@@ -2707,8 +2507,7 @@ class Node(MagicMethods):
         self._shape = value
 
     def express(self, statement=""):
-        """
-        Produce a human readable representation of the expression graph
+        """Produce a human-readable representation of the expression graph
         including all nodes and leaves connected to this one, which
         constitutes the root node.
         """
@@ -2729,11 +2528,10 @@ class Node(MagicMethods):
 
     @property
     def result(self):
-        """
-        The result of computing the operation represented by this Node
-        instance. Returns the cached result if there is one, otherwise
-        executes the corresponding expression, caches the result, and returns
-        that.
+        """The result of computing the operation represented by this
+        :class:`Node` instance. Returns the cached result if there is
+        one, otherwise executes the corresponding expression, caches
+        the result, and returns that.
         """
         if not self.flushed:
             self.execute()
@@ -2744,8 +2542,7 @@ class Node(MagicMethods):
         return self.result.vcl_leaf
 
     def execute(self):
-        """
-        Execute the expression tree taking this instance as the root, and
+        """Execute the expression tree taking this instance as the root, and
         then cache and return the result.
         """
         if self.flushed:
@@ -2760,17 +2557,15 @@ class Node(MagicMethods):
 
     @property
     def value(self):
-        """
-        The value of the result of computing the operation represented by
-        this Node; if the result is array-like, then the type is a NumPy
-        ``ndarray``, otherwise, a scalar is returned.
+        """The value of the result of computing the operation represented by
+        this :class:`Node`; if the result is array-like, then the type
+        is a NumPy ``ndarray``, otherwise, a scalar is returned.
         """
         return self.result.value
 
     @property
     def handle(self):
-        """
-        Returns the memory handle of the result of the operation.
+        """Returns the memory handle of the result of the operation.
         
         Be aware that this incurs the execution of the statement, if this
         has not yet occurred.
@@ -2786,29 +2581,25 @@ class Node(MagicMethods):
         return self.operands[0].context
 
     def as_ndarray(self):
-        """
-        Return the value of computing the operation represented by this Node
-        as a NumPy ``ndarray``.
+        """Return the value of computing the operation represented by this
+        Node as a NumPy ``ndarray``.
         """
         return array(self.value, dtype=self.dtype)
 
     def as_opencl_kernel_operands(self):
-        """
-        TODO docstring -- beware dispatch
+        """TODO docstring -- beware dispatch
         """
         return self.result.as_opencl_kernel_operands()
 
 
 class CustomNode(Node):
-    """
-    TODO docstring
+    """TODO docstring
     """
     result_types = {}
     kernels = {}
 
     def __init__(self, *args):
-        """
-        TODO docstring
+        """TODO docstring
         """
         def fix_operand(args):
             return util.fix_operand(args, self)
@@ -2842,8 +2633,7 @@ class CustomNode(Node):
                     self.compiled_kernels[domain][op_type] = kernel
 
     def execute(self):
-        """
-        TODO docstring
+        """TODO docstring
         """
         try:
             self._kernel = self.compiled_kernels[self.context.domain][self.operand_types_string]
@@ -2867,8 +2657,7 @@ class CustomNode(Node):
         self.flushed = True
 
     def _opencl_execute_kernel(self, *operands):
-        """
-        TODO docstring
+        """TODO docstring
         """
         args = [x.as_opencl_kernel_operands() for x in operands]
         args = itertools.chain(*args)
@@ -2877,24 +2666,21 @@ class CustomNode(Node):
 
     @property
     def opencl_global_size(self):
-        """
-        TODO docstring -- override
+        """TODO docstring -- override
         """
         log.warning("No global work size specified; using shape")
         return self.shape
 
     @property
     def opencl_local_size(self):
-        """
-        TODO docstring -- override
+        """TODO docstring -- override
         """
         log.warning("No local work size specific; using None")
         return None
 
 
 class Norm_1(Node):
-    """
-    Represent the computation of the L^1-norm of a Vector.
+    """Represent the computation of the L^1-norm of a :class:`Vector`.
     """
     result_types = {
         ('Vector',): HostScalar
@@ -2904,8 +2690,7 @@ class Norm_1(Node):
 
 
 class Norm_2(Node):
-    """
-    Represent the computation of the L^2-norm of a Vector.
+    """Represent the computation of the L^2-norm of a :class:`Vector`.
     """
     result_types = {
         ('Vector',): HostScalar
@@ -2915,8 +2700,7 @@ class Norm_2(Node):
 
 
 class Norm_Inf(Node):
-    """
-    Represent the computation of the L^inf-norm of a Vector.
+    """Represent the computation of the L^inf-norm of a :class:`Vector`.
     """
     result_types = {
         ('Vector',): HostScalar
@@ -2926,8 +2710,7 @@ class Norm_Inf(Node):
 
 
 class Neg(Node):
-    """
-    Represent -x; the negation of the operand.
+    """Represent ``-x``; the negation of the operand.
     """
     result_types = {
         ('Vector',): Vector,
@@ -2940,8 +2723,7 @@ class Neg(Node):
 
 
 class ElementAbs(Node):
-    """
-    Represent the elementwise computation of ``abs`` on an object.
+    """Represent the elementwise computation of ``abs`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -2955,8 +2737,7 @@ class ElementAbs(Node):
 
 
 class ElementAcos(Node):
-    """
-    Represent the elementwise computation of ``acos`` on an object.
+    """Represent the elementwise computation of ``acos`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -2970,8 +2751,7 @@ class ElementAcos(Node):
 
 
 class ElementAsin(Node):
-    """
-    Represent the elementwise computation of ``asin`` on an object.
+    """Represent the elementwise computation of ``asin`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -2985,8 +2765,7 @@ class ElementAsin(Node):
 
 
 class ElementAtan(Node):
-    """
-    Represent the elementwise computation of ``atan`` on an object.
+    """Represent the elementwise computation of ``atan`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3000,8 +2779,7 @@ class ElementAtan(Node):
 
 
 class ElementCeil(Node):
-    """
-    Represent the elementwise computation of ``ceil`` on an object.
+    """Represent the elementwise computation of ``ceil`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3015,8 +2793,7 @@ class ElementCeil(Node):
 
 
 class ElementCos(Node):
-    """
-    Represent the elementwise computation of ``cos`` on an object.
+    """Represent the elementwise computation of ``cos`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3030,8 +2807,7 @@ class ElementCos(Node):
 
 
 class ElementCosh(Node):
-    """
-    Represent the elementwise computation of ``cosh`` on an object.
+    """Represent the elementwise computation of ``cosh`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3045,8 +2821,7 @@ class ElementCosh(Node):
 
 
 class ElementExp(Node):
-    """
-    Represent the elementwise computation of ``exp`` on an object.
+    """Represent the elementwise computation of ``exp`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3060,8 +2835,7 @@ class ElementExp(Node):
 
 
 class ElementFabs(Node):
-    """
-    Represent the elementwise computation of ``fabs`` on an object.
+    """Represent the elementwise computation of ``fabs`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3075,8 +2849,7 @@ class ElementFabs(Node):
 
 
 class ElementFloor(Node):
-    """
-    Represent the elementwise computation of ``floor`` on an object.
+    """Represent the elementwise computation of ``floor`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3090,8 +2863,8 @@ class ElementFloor(Node):
 
 
 class ElementLog(Node):
-    """
-    Represent the elementwise computation of ``log`` (base e) on an object.
+    """Represent the elementwise computation of ``log`` (base e) on an
+    object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3105,8 +2878,8 @@ class ElementLog(Node):
 
 
 class ElementLog10(Node):
-    """
-    Represent the elementwise computation of ``log`` (base 10) on an object.
+    """Represent the elementwise computation of ``log`` (base 10) on an
+    object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3120,8 +2893,7 @@ class ElementLog10(Node):
 
 
 class ElementSin(Node):
-    """
-    Represent the elementwise computation of ``sin`` on an object.
+    """Represent the elementwise computation of ``sin`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3135,8 +2907,7 @@ class ElementSin(Node):
 
 
 class ElementSinh(Node):
-    """
-    Represent the elementwise computation of ``sinh`` on an object.
+    """Represent the elementwise computation of ``sinh`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3150,8 +2921,7 @@ class ElementSinh(Node):
 
 
 class ElementSqrt(Node):
-    """
-    Represent the elementwise computation of ``sqrt`` on an object.
+    """Represent the elementwise computation of ``sqrt`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3165,8 +2935,7 @@ class ElementSqrt(Node):
 
 
 class ElementTan(Node):
-    """
-    Represent the elementwise computation of ``tan`` on an object.
+    """Represent the elementwise computation of ``tan`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3180,8 +2949,7 @@ class ElementTan(Node):
 
 
 class ElementTanh(Node):
-    """
-    Represent the elementwise computation of ``tanh`` on an object.
+    """Represent the elementwise computation of ``tanh`` on an object.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3195,8 +2963,7 @@ class ElementTanh(Node):
 
 
 class Trans(Node):
-    """
-    Represent the computation of the matrix transpose.
+    """Represent the computation of the matrix transpose.
     """
     result_types = {
         ('Matrix',): Matrix,
@@ -3209,10 +2976,10 @@ class Trans(Node):
 
 
 class Assign(Node):
-    """
-    Represent the assignment (copy) of one object's content to another.
+    """Represent the assignment (copy) of one object's content to
+    another.
     
-    For example: `x = y` is represented by `Assign(x, y)`.
+    For example: ``x = y`` is represented by ``Assign(x, y)``.
     """
     result_types = {}
     operation_node_type = _v.operation_node_type.OPERATION_BINARY_ASSIGN_TYPE
@@ -3224,12 +2991,12 @@ class Assign(Node):
 
 
 class InplaceAdd(Assign):
-    """
-    Represent the computation of the in-place addition of one object to
-    another.
+    """Represent the computation of the in-place addition of one object
+    to another.
     
-    Derives from Assign rather than directly from Node because in-place
-    operations are mathematically similar to assignation.
+    Derives from :class:`Assign` rather than directly from
+    :class:`Node` because in-place operations are mathematically
+    similar to assignation.
     """
     result_types = {
         #('Scalar', 'Scalar'): Scalar,
@@ -3250,12 +3017,12 @@ class InplaceAdd(Assign):
 
 
 class InplaceSub(Assign):
-    """
-    Represent the computation of the in-place subtraction of one object to
-    another.
+    """Represent the computation of the in-place subtraction of one
+    object to another.
     
-    Derives from Assign rather than directly from Node because in-place
-    operations are mathematically similar to assignation.
+    Derives from :class:`Assign` rather than directly from
+    :class:`Node` because in-place operations are mathematically
+    similar to assignation.
     """
     result_types = {
         #('Scalar', 'Scalar'): Scalar,
@@ -3272,8 +3039,7 @@ class InplaceSub(Assign):
 
 
 class Add(Node):
-    """
-    Represent the addition of one object to another.
+    """Represent the addition of one object to another.
     """
     result_types = {
         #('Scalar', 'Scalar'): Scalar,
@@ -3290,8 +3056,7 @@ class Add(Node):
 
 
 class Sub(Node):
-    """
-    Represent the subtraction of one object from another.
+    """Represent the subtraction of one object from another.
     """
     result_types = {
         #('Scalar', 'Scalar'): Scalar,
@@ -3313,8 +3078,7 @@ class Sub(Node):
 
 
 class Mul(Node):
-    """
-    Represents the multiplication of one object by another.
+    """Represents the multiplication of one object by another.
 
     The semantics are as follows:
     * Scalar by scalar -> scalar;
@@ -3326,8 +3090,8 @@ class Mul(Node):
     * matrix by matrix -> matrix-matrix product.
     
     The concern in defining these semantics has been to preserve the
-    dimensionality of the operands in the result. The Mul class does not
-    map directly onto the * operator for every class.
+    dimensionality of the operands in the result. The :class:`Mul`
+    class does not map directly onto the ``*`` operator for every class.
     """
     result_types = {
         # OPERATION_BINARY_MAT_MAT_PROD_TYPE
@@ -3414,8 +3178,8 @@ class Mul(Node):
 
 
 class Div(Node):
-    """
-    Represents the division of a Matrix or Vector by a scalar.
+    """Represents the division of a :class:`Matrix` or :class:`Vector` by
+    a scalar.
     """
     result_types = {
         ('Vector', 'Scalar'): Vector,
@@ -3433,9 +3197,8 @@ class Div(Node):
 
 
 class ElementPow(Node):
-    """
-    Represents the elementwise exponentiation of one object by another of the
-    same type.
+    """Represents the elementwise exponentiation of one object by another
+    of the same type.
     """
     result_types = {
         ('Vector', 'Vector'): Vector,
@@ -3450,9 +3213,8 @@ class ElementPow(Node):
 
 
 class ElementProd(Node):
-    """
-    Represents the elementwise multiplication of one object by another of the
-    same type.
+    """Represents the elementwise multiplication of one object by another
+    of the same type.
     """
     result_types = {
         ('Vector', 'Vector'): Vector,
@@ -3467,9 +3229,8 @@ class ElementProd(Node):
 
 
 class ElementDiv(Node):
-    """
-    Represents the elementwise multiplication of one object by another of the
-    same type.
+    """Represents the elementwise multiplication of one object by another
+    of the same type.
     """
     result_types = {
         ('Vector', 'Vector'): Vector,
@@ -3484,8 +3245,8 @@ class ElementDiv(Node):
 
 
 class Dot(Node):
-    """
-    Represents the computation of the inner (dot) product of two vectors.
+    """Represents the computation of the inner (dot) product of two
+    vectors.
     """
     result_types = {
         ('Vector', 'Vector'): Scalar
@@ -3495,27 +3256,26 @@ class Dot(Node):
 
 
 class Statement(object):
-    """
-    This class represents the ViennaCL `statement` corresponding to an
-    expression graph. It employs type deduction information to calculate
-    the resultant types, and generates the appropriate underlying ViennaCL
-    C++ object.
+    """This class represents the ViennaCL `statement` corresponding to an
+    expression graph. It employs type deduction information to
+    calculate the resultant types, and generates the appropriate
+    underlying ViennaCL C++ object.
     """
     statement = []  # A list to hold the flattened expression tree
     vcl_statement = None # Will reference the ViennaCL statement object
 
     def __init__(self, root):
-        """
-        Given a Node instance, return an object representing the ViennaCL
-        statement of the corresponding expression graph, as connected to the
-        given root node.
+        """Given a :class:`Node` instance, return an object representing the
+        ViennaCL statement of the corresponding expression graph, as
+        connected to the given root node.
 
-        If the given root node is not an instance of Assign type, then a
-        temporary object is constructed to store the result of executing the
-        expression, and then a new Assign instance is created, representing
-        the assignation of the result of the expression to the new temporary.
-        The new Assign node is then taken to be the root node of the graph,
-        having transposed the rest.
+        If the given root node is not an instance of :class:`Assign`
+        type, then a temporary object is constructed to store the
+        result of executing the expression, and then a new ``Assign``
+        instance is created, representing the assignation of the
+        result of the expression to the new temporary.  The new
+        ``Assign`` node is then taken to be the root node of the
+        graph, having transposed the rest.
         """
         if not isinstance(root, Node):
             raise RuntimeError("Statement must be initialised on a Node")
@@ -3607,8 +3367,7 @@ class Statement(object):
         del self.result
 
     def execute(self):
-        """
-        Execute the statement -- don't do anything else -- then return the
+        """Execute the statement -- don't do anything else -- then return the
         result (if any).
         """
         if self.result.context.domain is backend.OpenCLMemory:
@@ -3620,4 +3379,19 @@ class Statement(object):
             raise
         return self.result
         
-# TODO: __all__
+
+__all__ = [int8, int16, int32, int64, uint8, uint16, uint32, uint64,
+           float16, float32, float64,
+           WITH_SCIPY, WITH_OPENCL,
+           ROW_MAJOR, COL_MAJOR,
+           NoResult, MagicMethods, View, Leaf, ScalarBase, HostScalar, Scalar,
+           Vector, SparseMatrixBase, CompressedMatrix,
+           #CompressedCompressedMatrix, SlicedELLMatrix,
+           CoordinateMatrix, ELLMatrix, HybridMatrix,
+           Matrix, Node, CustomNode, Norm_1, Norm_2, Norm_Inf, Neg,
+           ElementAbs, ElementAcos, ElementAsin, ElementAtan, ElementCeil,
+           ElementCos, ElementCosh, ElementExp, ElementFabs, ElementFloor,
+           ElementLog, ElementLog10, ElementSin, ElementSinh, ElementSqrt,
+           ElementTan, ElementTanh, Trans, Assign, InplaceAdd, InplaceSub,
+           Add, Sub, Mul, Div, ElementPow, ElementProd, ElementDiv, Dot,
+           Statement]
