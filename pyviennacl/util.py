@@ -41,9 +41,11 @@ def from_ndarray(obj):
     :param: obj : array-like
 
     :param: new : {Vector, Matrix}
+
         ``Vector`` if ``obj`` has 1 dimension; ``Matrix`` if 2.
 
     :raises: AttributeError
+
         If ``obj`` has less than 1 or more than 2 dimensions.
     """
     if obj.ndim == 1:

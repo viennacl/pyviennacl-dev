@@ -1,10 +1,5 @@
-"""
-TODO:
-* ViennaCL context object
-  + interface with PyOpenCL context
-* Construct data types with associated context
-* Get associated context from data types
-"""
+"""Memory and compute control"""
+
 import os
 import pyviennacl as p
 from . import _viennacl as _v
