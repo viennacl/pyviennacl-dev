@@ -3,7 +3,7 @@ Core PyViennaCL features (pycore)
 
 .. module:: pyviennacl.pycore
 
-The :module:`pycore` submodule contains PyViennaCL's core
+The :mod:`pycore` submodule contains PyViennaCL's core
 functionality, including types for representing and manipulating
 scalars, vectors and matrices on the host and compute device, with a
 variety of numerical data types (equivalent to the NumPy concept of
@@ -18,8 +18,8 @@ Finally, support for creating custom operations integrated into the
 PyViennaCL expression graph is provided here in the
 :class:`CustomNode` class.
 
-Background information
-----------------------
+The PyViennaCL expression graph
+-------------------------------
 
 Because in heterogeneous computing systems copying data across the bus
 from host memory to device memory (or vice versa) commonly incurs a
@@ -29,14 +29,14 @@ and are only dispatched to be computed when the result of the
 computation is required, such as for output, or when the computation
 is explicitly executed.
 
-Thus, the result of adding two :class:`Matrix` objects is not another
-``Matrix`` object, but an :class:`Add` object, which is converted to a
-``Matrix`` when the result is accessed.  Consequently, this submodule
-provides a number of classes for elementary operations, such as
-``Add``, for representation in an expression tree. Each of these
-expression tree classes is a subclass of :class:`Node` type, with
-``Node`` providing basic functionality for the construction of the
-expression tree.
+Thus, the result of adding two :class:`Matrix` objects is not
+:class:`Matrix` object, but an :class:`Add` object, which is converted
+to a :class:`Matrix` when the result is accessed.  Consequently, this
+submodule provides a number of classes for elementary operations, such
+as :class:`Add`, for representation in an expression tree. Each of
+these expression tree classes is a subclass of :class:`Node` type,
+with :class:`Node` providing basic functionality for the construction
+of the expression tree.
 
 In the language of PyViennaCL, data classes such as :class:`Scalar`,
 :class:`Vector` and `Matrix` constitute leaves on the expression tree,
@@ -44,40 +44,42 @@ and as such, each of these data classes inherits from the
 :class:`Leaf` type, which provides general functionality for leaf
 construction.
 
-Importantly, you can treat any ``Node`` object -- such as an ``Add``
-instance -- as if it were a ``Leaf`` object explicitly representing
-some data. This means that you can express mathematical operations
-using ``Node`` and ``Leaf`` instances transparently.
+Importantly, you can treat any :class:`Node` object -- such as an
+:class:`Add` instance -- as if it were a :class:`Leaf` object
+explicitly representing some data. This means that you can express
+mathematical operations using :class:`Node` and :class:`Leaf`
+instances transparently.
 
-``Node`` and ``Leaf`` instances are flattened into a
+:class:`Node` and :class:`Leaf` instances are flattened into a
 :class:`Statement` object when the expression is executed. The
-``Statement`` class recursively constructs the C++ object equivalent
-to the expression tree as represented in Python, and this is then
-dispatched to the compute device. The result is cached so that
+:class:`Statement` class recursively constructs the C++ object
+equivalent to the expression tree as represented in Python, and this
+is then dispatched to the compute device. The result is cached so that
 multiple identical computations are not made.
 
 On object construction and access
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For the same reasons of bus and compute latency, PyViennaCL does not
-encourage the elementwise construction of ``Matrix`` or ``Vector``
-objects, or the accessing of individual scalar elements from any such
-type; the waits incurred make such access painfully slow.
+encourage the elementwise construction of :class:`Matrix` or
+:class:`Vector` objects, or the accessing of individual scalar
+elements from any such type; the waits incurred make such access
+painfully slow.
 
 Instead, you should construct dense matrices and vectors using
-preconstructed types: NumPy ``array`` objects can be supplied to
+preconstructed types: NumPy :class:`array` objects can be supplied to
 construct both matrices and vectors -- as long as the arrays are of
 the correct dimensionality -- and Python lists can be supplied to
-construct vectors, as long as the ``dtype`` of the list is
+construct vectors, as long as the :class:`dtype` of the list is
 comprehensible. In both the list case and the array case, you can use
-Python or NumPy numeric data types: usage of the NumPy ``dtype`` is
-recommended, since this is more explicit.
+Python or NumPy numeric data types: usage of the NumPy :class:`dtype`
+is recommended, since this is more explicit.
 
 Elementwise accesses to array-like PyViennaCL types incur the
 computation of any expression, the transfer of the result to the host,
-the representation of that result as a NumPy ``ndarray`` (which may
-incur a large memory cost), and then the accessing of the element from
-that array.
+the representation of that result as a NumPy :class:`ndarray` (which
+may incur a large memory cost), and then the accessing of the element
+from that array.
 
 The exception to this rule is the set of PyViennaCL sparse matrix
 types, which do support elementwise construction and access, because
@@ -86,15 +88,15 @@ flushed to and from the device when necessary, in the manner of the
 delayed execution described above.
 
 To force the execution of an expression or the flushing of a matrix,
-access the ``result`` attribute, which will give a ``Leaf`` object. To
-retrieve a NumPy ``array`` containing the data of the PyViennaCL
-``Leaf`` or ``Node``, use the ``as_ndarray()`` method; there is an
-equivalent method for sparse types. If you are not particularly
-concerned about the type of object you retrieve, access the ``value``
-attribute: for PyViennaCL scalars, this provides a NumPy / Python
-scalar object; for vectors and matrices, it provides an appropriate
-NumPy ``array``; and for sparse matrices, where SciPy is installed, it
-provides a SciPy ``lil_matrix``.
+access the ``result`` attribute, which will give a :class:`Leaf`
+object. To retrieve a NumPy :class:`array` containing the data of the
+PyViennaCL :class:`Leaf` or :class:`Node`, use the ``as_ndarray()``
+method; there is an equivalent method for sparse types. If you are not
+particularly concerned about the type of object you retrieve, access
+the ``value`` attribute: for PyViennaCL scalars, this provides a NumPy
+/ Python scalar object; for vectors and matrices, it provides an
+appropriate NumPy :class:`array`; and for sparse matrices, where SciPy is
+installed, it provides a SciPy :class:`lil_matrix`.
 
 The relationship of an object's ``result`` to its ``value`` is the
 same as that of compute device to host memory.
@@ -105,8 +107,8 @@ long as the matrix dimensions are commensurable. For instance::
 
   >>> a[5:10, 5:10] = b                                  # doctest: +SKIP 
 
-Submodule contents
-------------------
+Overview
+--------
 
 Leaf types
 ^^^^^^^^^^
@@ -207,8 +209,8 @@ classes that are not scalars, or that do not produce scalars as a
 result; note that this incurs a copy of the object into host
 memory. In the scalar case, simple numerical equality is used.
 
-Submodule reference
--------------------
+Reference
+---------
 
 .. autoclass:: MagicMethods
    :private-members:
