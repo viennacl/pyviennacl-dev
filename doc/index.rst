@@ -8,11 +8,6 @@
 PyViennaCL: easy, powerful scientific computing
 ===============================================
 
-.. note::
-
-   All of PyViennaCL's functionality is available from the top-level
-   :mod:`pyviennacl` namespace.
-
 .. toctree::
    :titlesonly:
    :numbered: 2
@@ -31,6 +26,11 @@ PyViennaCL: easy, powerful scientific computing
 Overview
 ========
 
+.. note::
+
+   All of PyViennaCL's functionality is available from the top-level
+   :mod:`pyviennacl` namespace.
+
 This extension provides the Python bindings for the `ViennaCL
 <http://viennacl.sourceforge.net/>`_ linear algebra and numerical
 computation library for GPGPU and heterogeneous systems. `ViennaCL
@@ -41,7 +41,8 @@ and compatible with the Python community's most popular scientific
 packages, NumPy and SciPy.
 
 The PyViennaCL public API is divided into nine submodules, as
-described by the documentation linked below.
+described by the documentation linked above, and code examples given
+below.
 
 Since all of PyViennaCL's functionality is available from the
 top-level pyviennacl namespace, if you want help on the
