@@ -1,5 +1,5 @@
-Utility functions (util)
-------------------------
+Utility functions (pyviennacl.util)
+====================================
 
 .. toctree::
    :maxdepth: 2

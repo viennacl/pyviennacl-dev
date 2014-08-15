@@ -1,5 +1,5 @@
-Input / output (io)
--------------------
+Input / output (pyviennacl.io)
+==============================
 
 .. toctree::
    :maxdepth: 2

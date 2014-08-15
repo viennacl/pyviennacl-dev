@@ -8,18 +8,56 @@
 PyViennaCL: easy, powerful scientific computing
 ===============================================
 
-.. toctree::
-   :maxdepth: 3
+.. note::
 
-   pycore.rst
-   linalg.rst
-   tags.rst
-   vclmath.rst
-   backend.rst
-   opencl.rst
-   io.rst
-   util.rst
-   device_specific.rst
+   All of PyViennaCL's functionality is available from the top-level
+   :mod:`pyviennacl` namespace.
+
+.. toctree::
+   :titlesonly:
+   :numbered: 2
+
+   README
+   pycore
+   linalg
+   tags
+   vclmath
+   backend
+   opencl
+   io
+   util
+   device_specific
+
+Overview
+========
+
+This extension provides the Python bindings for the `ViennaCL
+<http://viennacl.sourceforge.net/>`_ linear algebra and numerical
+computation library for GPGPU and heterogeneous systems. `ViennaCL
+<http://viennacl.sourceforge.net/>`_ itself is a header-only C++
+library, so these bindings make available to Python programmers
+ViennaCL's fast OpenCL and CUDA algorithms, in a way that is idiomatic
+and compatible with the Python community's most popular scientific
+packages, NumPy and SciPy.
+
+The PyViennaCL public API is divided into nine submodules, as
+described by the documentation linked below.
+
+Since all of PyViennaCL's functionality is available from the
+top-level pyviennacl namespace, if you want help on the
+:class:`Matrix` class, you can just run::
+
+  >>> import pyviennacl as p
+  >>> help(p.Matrix)                                     # doctest: +SKIP
+
+For help on PyViennaCL's core functionality in general, or
+PyViennaCL's high-level linear algebra functions, run::
+
+   >>> help(p.pycore)                                    # doctest: +SKIP
+
+or::
+
+   >>> help(p.linalg)                                    # doctest: +SKIP
 
 
 Usage examples

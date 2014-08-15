@@ -1,5 +1,5 @@
-Algorithm selection and configuration (tags)
---------------------------------------------
+Algorithm selection and configuration (pyviennacl.tags)
+=======================================================
 
 .. toctree::
    :maxdepth: 2

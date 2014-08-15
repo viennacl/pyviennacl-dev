@@ -1,6 +1,6 @@
-*****************
-PyViennaCL Readme
-*****************
+******************
+Getting PyViennaCL
+******************
 
 
 PyViennaCL around the web

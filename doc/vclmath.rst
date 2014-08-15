@@ -1,10 +1,10 @@
-Convenience functions for mathematics (vclmath)
-===============================================
+Convenience functions for mathematics (pyviennacl.vclmath)
+==========================================================
 
 .. module:: pyviennacl
 
 This submodule provides convenience functions for performing basic
-mathematical operations, akin to the standard Python module `math'.
+mathematical operations, akin to the standard Python module :mod:`math`.
 
 ``pyviennacl.vclmath`` is also accessible under ``pyviennacl.math``,
 for simplicity

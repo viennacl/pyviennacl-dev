@@ -1,5 +1,5 @@
-Device-specific templates and kernel generation (device_specific)
------------------------------------------------------------------
+Device-specific templates and kernel generation (pyviennacl.device_specific)
+============================================================================
 
 .. toctree::
    :maxdepth: 2

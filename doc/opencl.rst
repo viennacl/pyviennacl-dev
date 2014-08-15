@@ -1,5 +1,5 @@
-OpenCL-specific functionality (opencl)
---------------------------------------
+OpenCL-specific functionality (pyviennacl.opencl)
+=================================================
 
 .. toctree::
    :maxdepth: 2

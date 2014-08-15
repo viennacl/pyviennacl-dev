@@ -1,5 +1,5 @@
-Memory and compute control (backend)
-------------------------------------
+Memory and compute control (pyviennacl.backend)
+===============================================
 
 .. toctree::
    :maxdepth: 2
