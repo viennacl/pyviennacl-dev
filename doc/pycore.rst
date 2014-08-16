@@ -1,5 +1,5 @@
-Core PyViennaCL concepts and features (pyviennacl.pycore)
-=========================================================
+Core concepts and features (pyviennacl.pycore)
+==============================================
 
 .. module:: pyviennacl.pycore
 
