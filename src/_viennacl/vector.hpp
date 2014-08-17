@@ -221,7 +221,7 @@ CLOSE_OP_FUNC;
                                   handle, get_vector_##TYPE##_handle, ()); \
   bp::class_<vcl::vector_base<TYPE>,                                    \
              vcl::tools::shared_ptr<vcl::vector_base<TYPE> > >          \
-  ("vector_base",                                                       \
+  ("vector_base_" #TYPE,                                                \
    bp::init<vcl::backend::mem_handle&,                                  \
    vcl::vector_base<TYPE>::size_type,                                   \
    vcl::vector_base<TYPE>::size_type,                                   \

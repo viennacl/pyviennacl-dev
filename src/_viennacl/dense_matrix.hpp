@@ -122,7 +122,7 @@ project_matrix_range(MatrixT& m, const vcl::range& r1, const vcl::range& r2) {
                                   ());                                  \
   bp::class_<vcl::matrix_base<TYPE>,                                    \
 	     vcl::tools::shared_ptr<vcl::matrix_base<TYPE> > >          \
-  ("matrix_base",                                                       \
+  ("matrix_base_" #TYPE,                                                \
    bp::init<vcl::backend::mem_handle&,                                  \
    vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \
    vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \

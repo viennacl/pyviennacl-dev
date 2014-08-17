@@ -11,6 +11,7 @@ from numpy import (ndarray, array, zeros,
                    int8, int16, int32, int64,
                    uint8, uint16, uint32, uint64,
                    float16, float32, float64)
+import numpy
 
 class NoSuchType(object):
     def __init__(self, *args, **kwargs): raise TypeError("Do not instantiate this class")
@@ -63,13 +64,14 @@ vcl_statement_node_numeric_type_strings = {
     _v.statement_node_numeric_type.FLOAT_TYPE: 'float',
     _v.statement_node_numeric_type.DOUBLE_TYPE: 'double',
 }
+vcl_statement_node_numeric_type_strings_inverse = dict([(v, k) for k, v in vcl_statement_node_numeric_type_strings.items()])
 
-vcl_vector_base_types = []
-vcl_matrix_base_types = []
-for numeric_type in vcl_statement_node_numeric_type_strings:
-    try: vcl_vector_base_types.append(getattr(_v, 'vector_base_' + numeric_type))
+vcl_vector_base_types = {}
+vcl_matrix_base_types = {}
+for numeric_type in vcl_statement_node_numeric_type_strings.values():
+    try: vcl_vector_base_types[numeric_type] = getattr(_v, 'vector_base_' + numeric_type)
     except: pass
-    try: vcl_matrix_base_types.append(getattr(_v, 'matrix_base_' + numeric_type))
+    try: vcl_matrix_base_types[numeric_type] = getattr(_v, 'matrix_base_' + numeric_type)
     except: pass
 
 mem_handle_types = [backend.MemoryHandle]
@@ -92,6 +94,7 @@ HostScalarTypes = {
     'float64': _v.statement_node_numeric_type.DOUBLE_TYPE,
     'float': _v.statement_node_numeric_type.DOUBLE_TYPE
 }
+HostScalarTypes_inverse = dict([(v, k) for k, v in HostScalarTypes.items()])
 
 # Constants for choosing matrix storage layout
 ROW_MAJOR = 'C'
@@ -1060,12 +1063,26 @@ class Vector(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(a, self._context.vcl_context)
 
-            elif isinstance(args[0], _v.vector_base): #tuple(vcl_vector_base_types)):
+            elif isinstance(args[0], tuple(vcl_vector_base_types.values())):
+                # Crudely find the dtype of the argument
+                test_dtype = None
+                for key in vcl_vector_base_types.keys():
+                    if isinstance(args[0], vcl_vector_base_types[key]):
+                        test_dtype = dtype(getattr(numpy, HostScalarTypes_inverse[vcl_statement_node_numeric_type_strings_inverse[key]]))
+                        break
+
+                if test_dtype is None:
+                    raise TypeError("Could not deduce dtype of argument")
+                if self.dtype is None:
+                    self.dtype = test_dtype
+                elif test_dtype != self.dtype:
+                    raise TypeError("Cannot convert dtypes")
+
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
-                # This doesn't do any shape or dtype checking, so beware...
+
                 def get_leaf(vcl_t):
-                    return args[0] # vcl_t(args[0])
+                    return args[0]
 
             elif isinstance(args[0], tuple(mem_handle_types)):
                 mem_handle = args[0]
@@ -1875,12 +1892,31 @@ class Matrix(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(shape[0], shape[1], self._context.vcl_context)
 
-            elif isinstance(args[0], _v.matrix_base): #tuple(vcl_matrix_base_types)):
+            elif isinstance(args[0], tuple(vcl_matrix_base_types.values())):
+                # Crudely find the dtype of the argument
+                test_dtype = None
+                for key in vcl_matrix_base_types.keys():
+                    if isinstance(args[0], vcl_matrix_base_types[key]):
+                        test_dtype = dtype(getattr(numpy, HostScalarTypes_inverse[vcl_statement_node_numeric_type_strings_inverse[key]]))
+                        break
+
+                if test_dtype is None:
+                    raise TypeError("Could not deduce dtype of argument")
+                if self.dtype is None:
+                    self.dtype = test_dtype
+                elif test_dtype != self.dtype:
+                    raise TypeError("Cannot convert dtypes")
+
+                if args[0].row_major and self.layout != ROW_MAJOR:
+                    raise TypeError("Cannot convert matrix layouts")
+                if not args[0].row_major and self.layout != COL_MAJOR:
+                    raise TypeError("Cannot convert matrix layouts")
+
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
-                # NB: No shape or dtype checking!
+
                 def get_leaf(vcl_t):
-                    return args[0] #vcl_t(args[0])
+                    return args[0]
 
             elif isinstance(args[0], ndarray):
                 if not shape:
