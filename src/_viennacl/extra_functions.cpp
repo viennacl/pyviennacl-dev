@@ -193,7 +193,7 @@ CLOSE_OP_FUNC;
           vcl::matrix_base<TYPE>&, vcl::matrix_base<TYPE>&,             \
           op_element_pow>);                                             \
   bp::def("norm_frobenius", pyvcl_do_1ary_op<vcl::scalar<TYPE>,         \
-          vcl::matrix<TYPE, F>&,                                        \
+          vcl::matrix_base<TYPE>&,                                      \
           op_norm_frobenius>);                                          \
   bp::def("inplace_qr", pyvcl_do_2ary_op<std::vector<TYPE>,             \
           vcl::matrix<TYPE, F>&, vcl::vcl_size_t,                       \

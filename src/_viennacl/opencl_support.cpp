@@ -94,7 +94,7 @@ void ctx_add_program(vcl::ocl::context& ctx,
 
 bp::list ctx_get_programs(vcl::ocl::context& ctx)
 {
-  return std_vector_to_list<vcl::ocl::program>
+  return std_vector_to_list<vcl::tools::shared_ptr<vcl::ocl::program> >
     (ctx.get_programs());
 }
 

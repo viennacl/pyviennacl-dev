@@ -122,7 +122,7 @@ project_matrix_range(MatrixT& m, const vcl::range& r1, const vcl::range& r2) {
                                   ());                                  \
   bp::class_<vcl::matrix_base<TYPE>,                                    \
 	     vcl::tools::shared_ptr<vcl::matrix_base<TYPE> > >          \
-  ("matrix_base_" #TYPE,                                                \
+  ("matrix_base",                                                       \
    bp::init<vcl::backend::mem_handle&,                                  \
    vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \
    vcl::vcl_size_t, vcl::vcl_size_t, vcl::vcl_ptrdiff_t, vcl::vcl_size_t, \
@@ -166,7 +166,7 @@ project_matrix_range(MatrixT& m, const vcl::range& r1, const vcl::range& r2) {
              vcl::tools::shared_ptr<vcl::matrix<TYPE, F> >,             \
              bp::bases<vcl::matrix_base<TYPE> > >                       \
   ( "matrix_" #LAYOUT "_" #TYPE )                                       \
-  .def(bp::init<vcl::matrix<TYPE, F> >())                               \
+  .def(bp::init<vcl::matrix_base<TYPE> >())                             \
   .def(bp::init<vcl::vcl_size_t, vcl::vcl_size_t>())                    \
   .def(bp::init<vcl::vcl_size_t, vcl::vcl_size_t, vcl::context>())      \
   /*.def("__init__", bp::make_constructor(matrix_init_mem<TYPE, F>))  */ \

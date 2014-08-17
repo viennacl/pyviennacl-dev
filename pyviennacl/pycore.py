@@ -1060,12 +1060,12 @@ class Vector(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(a, self._context.vcl_context)
 
-            elif isinstance(args[0], tuple(vcl_vector_base_types)):
+            elif isinstance(args[0], _v.vector_base): #tuple(vcl_vector_base_types)):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
                 # This doesn't do any shape or dtype checking, so beware...
                 def get_leaf(vcl_t):
-                    return args[0]
+                    return args[0] # vcl_t(args[0])
 
             elif isinstance(args[0], tuple(mem_handle_types)):
                 mem_handle = args[0]
@@ -1875,12 +1875,12 @@ class Matrix(Leaf):
                 def get_leaf(vcl_t):
                     return vcl_t(shape[0], shape[1], self._context.vcl_context)
 
-            elif isinstance(args[0], tuple(vcl_matrix_base_types)):
+            elif isinstance(args[0], _v.matrix_base): #tuple(vcl_matrix_base_types)):
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
                     raise TypeError("TODO Can only construct from objects with same memory domain")
                 # NB: No shape or dtype checking!
                 def get_leaf(vcl_t):
-                    return args[0]
+                    return args[0] #vcl_t(args[0])
 
             elif isinstance(args[0], ndarray):
                 if not shape:
