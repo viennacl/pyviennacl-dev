@@ -339,6 +339,9 @@ class Context(object):
             return np.dtype(p.float32)
 
 
+default_context = Context(DefaultMemory)
+
+
 def backend_finish():
     """
     Block until any computation active on the compute backend is finished.
@@ -347,4 +350,4 @@ def backend_finish():
 
 
 __all__ = ['UninitializedMemory', 'MainMemory', 'OpenCLMemory', 'CUDAMemory',
-           'DefaultMemory', 'MemoryHandle', 'Context']
+           'DefaultMemory', 'MemoryHandle', 'Context', 'default_context']

@@ -158,11 +158,13 @@ class MagicMethods(object):
     def result_container_type(self):
         """This function should be overridden, with the following semantics.
 
-        :returns: type
+        :returns: *type*
+
            The type that the operation or object represented by an instance
            of this class should return as a result on execution.
 
-        :raises: NotImplementedError
+        :raises: *NotImplementedError*
+
            If you do not override this function in a class derived from
            :class:`MagicMethods`.
         """
@@ -195,15 +197,15 @@ class MagicMethods(object):
         
         The norm returned depends on the *ord* parameter, as in SciPy.
 
-        :param: ord -- {1, 2, inf, 'fro', None}
+        :param: *ord* -- {1, 2, inf, 'fro', None}
 
            Order of the norm.
 
-           inf means NumPy's :class:`inf` object.
+           *inf* means NumPy's :class:`inf` object.
 
            *'fro'* means the string 'fro', and denotes the Frobenius norm.
 
-           If None and self is a Matrix instance, then assumes 'fro'.
+           If None and ``self`` is a Matrix instance, then assumes 'fro'.
         """
         if ord is None: # TODO: Tidy this up
             try:
@@ -268,15 +270,19 @@ class MagicMethods(object):
     def __eq__(self, rhs):
         """The equality operator.
 
-        :param: rhs -- {scalar, Vector, Matrix, ndarray, etc}
+        :param: *rhs* -- {scalar, Vector, Matrix, ndarray, etc}
 
-        :returns: {bool, ndarray}
-           If the r.h.s. is elementwise comparable with a Vector, Matrix or
-           ndarray, then an array of boolean values is returned; see NumPy's
-           *equal* function. If the r.h.s. is a scalar, then a boolean
-           value is returned. Otherwise, the behaviour is undefined, but the
-           Python ``==`` operator is used to compare the *result* attribute
-           of *self* to the r.h.s., in an attempt at meaningfulness.
+        :returns: {*bool*, *ndarray*}
+
+           If the r.h.s. is elementwise comparable with a
+           :class:`Vector`, :class:`Matrix` or :class:`ndarray`, then
+           an array of boolean values is returned; see NumPy's *equal*
+           function. If the r.h.s. is a scalar, then a boolean value
+           is returned. Otherwise, the behaviour is undefined, but the
+           Python ``==`` operator is used to compare the *result*
+           attribute of *self* to the r.h.s., in an attempt at
+           meaningfulness.
+
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -340,8 +346,9 @@ class MagicMethods(object):
     def __mul__(self, rhs):
         """x.__mul__(y) <==> x*y
 
-        :returns: z : {Mul(x, y), (x.value * rhs)}
-           Returns a Mul instance if defined.
+        :returns: *z* : {Mul(x, y), (x.value * rhs)}
+
+           Returns a :class:`Mul` instance if defined.
         """
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
@@ -359,8 +366,10 @@ class MagicMethods(object):
     def __matmul__(self, rhs):
         """x.__matmul__(y) <==> x@y
 
-        :returns: z : {Mul(x, y), Dot(x, y)}
-           Returns a Dot instance for two vectors, or a Mul instance.
+        :returns: *z* : {Mul(x, y), Dot(x, y)}
+
+           Returns a :class:`Dot` instance for two vectors, or a
+           :class:`Mul` instance.
         """
         if issubclass(self.result_container_type, Vector):
             if isinstance(rhs, MagicMethods):
@@ -611,9 +620,10 @@ class View(object):
     def __init__(self, key, axis_size):
         """Construct a View object.
 
-        :param: key : slice
+        :param: *key* : slice
 
-        :param: axis_size : int
+        :param: *axis_size* : int
+
            The number of elements along the axis of which the instance
            of this class is a view.
         """
@@ -639,6 +649,19 @@ class Leaf(MagicMethods):
     """This is the base class for all leaves in the ViennaCL expression tree
     system. A leaf is any type that can store data for use in an operation,
     such as a scalar, a vector, or a matrix.
+
+    You can provide the following to the constructor, either as arguments or
+    keyword arguments:
+
+    :param: *context*
+
+       Context within which to create the Vector. Can be one of
+       :class:`backend.Context`, :class:`backend.MemoryDomain`, or
+       :class:`pyopencl.Context`.
+
+    :param: *dtype*
+
+       Numerical data type of each element of the Vector.
     """
     shape = None   # No shape yet -- not even 0 dimensions
     flushed = True # Are host and device data synchronised?
@@ -694,7 +717,7 @@ class Leaf(MagicMethods):
         if 'context' in kwargs.keys():
             self._context = backend.Context(kwargs['context'])
         elif self._context is None:
-            self._context = backend.Context()
+            self._context = backend.default_context
 
         if 'dtype' in kwargs.keys():    
             self.dtype = dtype(kwargs['dtype']) 
@@ -744,7 +767,8 @@ class Leaf(MagicMethods):
         If you're deriving from :class:`Leaf`, then you probably want
         to override this, with the following semantics:
 
-        :raises: NotImplementedError
+        :raises: *NotImplementedError*
+
            Unless overridden by a derived class.
 
         .. note ::
@@ -848,7 +872,8 @@ class ScalarBase(Leaf):
         If you're deriving from ScalarBase, then you want to override this,
         with the following semantics:
 
-        :raises: NotImplementedError
+        :raises: *NotImplementedError*
+
            Unless overridden by a derived class.
 
         .. note ::
@@ -923,7 +948,14 @@ class HostScalar(ScalarBase):
     that is stored in main CPU RAM, and that is usually represented
     using a standard NumPy scalar dtype, such as int32 or float64.
 
-    It derives from :class:`ScalarBase`.
+    Construct an instance from a numerical value, using a built-in Python type,
+    such as :class:`float`, or a NumPy type, such as :class:`float32`, or
+    another PyViennaCL :class:`ScalarBase` instance.
+
+    See also the constructor parameters inherited from :class:`Leaf`.
+
+    Also inherits convenience functions for arithmetic; see
+    :class:`MagicMethods`.
     """
     statement_node_subtype = _v.statement_node_subtype.HOST_SCALAR_TYPE
     
@@ -939,7 +971,14 @@ class Scalar(ScalarBase):
     converted to a :class:`HostScalar`, and thence to a standard NumPy
     scalar dtype, such as :class:`int32` or :class:`float64`.
 
-    It derives from :class:`ScalarBase`.
+    Construct an instance from a numerical value, using a built-in Python type,
+    such as :class:`float`, or a NumPy type, such as :class:`float32`, or
+    another PyViennaCL :class:`ScalarBase` instance.
+
+    See also the constructor parameters inherited from :class:`Leaf`.
+
+    Also inherits convenience functions for arithmetic; see
+    :class:`MagicMethods`.
     """
     statement_node_subtype = _v.statement_node_subtype.DEVICE_SCALAR_TYPE
 
@@ -980,27 +1019,36 @@ class Vector(Leaf):
     * from a host / OpenCL / CUDA buffer, wrapped in a
       :class:`backend.MemoryHandle` object.
 
-    :param: context
-       Context within which to create the Vector. Can be one of
-       :class:`backend.Context`, :class:`backend.MemoryDomain`, or
-       :class:`pyopencl.Context`.
+    You can also provide the following keyword parameters to the constructor:
 
-    :param: dtype
-       Numerical data type of each element of the Vector.
+    :param: *size*
 
-    :param: size
        Size of the vector to construct.
 
-    :param: shape
+    :param: *shape* = (size,)
+
        A tuple of one element giving the size of the Vector.
 
        You should only pass one of *shape* or *size*.
 
-    :param: offset : int
-       TODO
+    And, if you are constructing fom a buffer via a
+    :class:`backend.MemoryHandle` object:
+
+    :param: *offset* : int
+
+       The starting index for the elements of the vector in the buffer, given
+       as a multiple of the size in bytes of each element. The default is 0.
+
+    :param: *stride* : int
+
+       The number of bytes between elements of the Vector in the buffer, as a
+       multiple of the size of each element. The default is 1.
+
+    See also the constructor parameters inherited from :class:`Leaf`.
 
     Also inherits convenience functions for arithmetic; see
     :class:`MagicMethods`.
+
     """
     ndim = 1
     layout = None
@@ -1035,7 +1083,7 @@ class Vector(Leaf):
             if isinstance(args[0], MagicMethods):
                 if issubclass(args[0].result_container_type, Vector):
                     if args[0].handle[0].domain is not self._context.domain:
-                        raise TypeError("TODO Can only construct from objects with same memory domain")
+                        raise TypeError("Can only construct from objects with same memory domain")
                     if self.dtype is None:
                         self.dtype = args[0].result.dtype
                     if not shape:
@@ -1079,7 +1127,7 @@ class Vector(Leaf):
                     raise TypeError("Cannot convert dtypes")
 
                 if backend.vcl_memory_types[args[0].memory_domain] is not self._context.domain:
-                    raise TypeError("TODO Can only construct from objects with same memory domain")
+                    raise TypeError("Can only construct from objects with same memory domain")
 
                 def get_leaf(vcl_t):
                     return args[0]
@@ -1237,7 +1285,8 @@ class Vector(Leaf):
 
         :returns: :class:`Matrix`
 
-        :raises: TypeError
+        :raises: *TypeError*
+
            If anything but a :class:`Vector` is supplied.
 
         .. note ::
@@ -1307,15 +1356,28 @@ class SparseMatrixBase(Leaf):
     * as an empty instance, with no parameters;
     * by passing a 2-tuple representing the shape or a 3-tuple representing
       both the shape and the number of nonzeros, to pre-allocate memory;
+    * from a 3-tuple of lists representing (rows, cols, values);
     * from a :class:`Matrix` instance;
     * from another sparse matrix instance;
     * from an expression resulting in a :class:`Matrix` or sparse matrix;
-    * from a NumPy :class`ndarray`.
+    * from a NumPy :class`ndarray`;
+    * from a SciPy sparse matrix.
 
-    TODO docstring: data, spmatrix
+    You can also provide the following keyword parameters to the constructor:
 
-    Support for converting PyViennaCL sparse matrix types to and from SciPy
-    sparse matrix types is not currently available, but is planned.
+    :param: *nnz*
+
+       The number of nonzeros for which to allocate memory.
+
+    :param: *shape*
+
+       A tuple of two ints giving the shape of the matrix: (rows, cols).
+
+    See also the constructor parameters inherited from :class:`Leaf`.
+
+    Also inherits convenience functions for arithmetic; see
+    :class:`MagicMethods`.
+
     """
     ndim = 2
     flushed = False
@@ -1800,26 +1862,66 @@ class Matrix(Leaf):
     * from an ndarray of the correct dtype;
     * from a ViennaCL sparse matrix;
     * from a ViennaCL :class:`Matrix` instance (to make a copy);
-    * from an expression resulting in a ``Matrix``.
+    * from an expression resulting in a ``Matrix``;
+    * from a PyOpenCL *Array*: producing a view onto the associated buffer;
+    * from a host / OpenCL / CUDA buffer, wrapped in a
+      :class:`backend.MemoryHandle` object.
 
-    TODO docstring: cl.array.Array, memory buffers
+    You can also provide the following keyword parameters to the constructor:
 
-    Both ``ROW_MAJOR`` and ``COL_MAJOR`` layouts are supported; to determine,
-    provide ``layout`` as a keyword argument to the initialisation. The
-    default layout is row-major.
+    :param: *layout* : either ROW_MAJOR ('C') or COL_MAJOR ('F')
+
+       Layout of the matrix in memory. This corresponds to NumPy's *order*
+       parameter. The default is ROW_MAJOR.
+
+    :param: *shape* : 2-tuple of ints
+
+       The shape of the matrix as a tuple of two ints: (rows, cols).
+
+    And, if you are constructing fom a buffer via a
+    :class:`backend.MemoryHandle` object:
+
+    :param: *internal_shape* : 2-tuple of ints
+
+       The shape of the matrix in memory, including any padding, as a
+       tuple of two ints: (rows, cols). The default is the shape, or
+       the next largest multiple of (128, 128), if the shape is not
+       such a multiple.
+
+    :param: *offset* : 2-tuple of ints
+
+       The first int gives the starting index for the rows in the
+       buffer of the target matrix, whilst the second int gives the
+       starting index for the columns. Each int should be a multiple
+       of the size in bytes of each element of the matrix. The default
+       is (0, 0).
+
+    :param: *strides* : 2-tuple of ints
+
+       The first int gives the number of bytes between each row, and the
+       second gives the number between each column. Each int should be a
+       multiple of the size in bytes of each element of the matrix. The
+       default, if ROW_MAJOR, is ``(itemsize * internal_shape[0], itemsize)``;
+       if COL_MAJOR, ``(itemsize, itemsize * internal_shape[1])``.
+
+    See also the constructor parameters inherited from :class:`Leaf`.
+
+    Also inherits convenience functions for arithmetic; see
+    :class:`MagicMethods`.
 
     Thus, to construct a 5-by-5 column-major Matrix instance with a numeric 
     data type of ``float32`` (C++ ``float``) and each element being equal to
     ``3.141``, type:
 
       >>> import pyviennacl as p
-      >>> mat = p.Matrix(10, 10, 3.141, dtype=p.float32, layout=p.COL_MAJOR)
+      >>> mat = p.Matrix(5, 5, 3.141, dtype=p.float32, layout=p.COL_MAJOR)
       >>> print(mat)
       [[ 3.14100003  3.14100003  3.14100003  3.14100003  3.14100003]
        [ 3.14100003  3.14100003  3.14100003  3.14100003  3.14100003]
        [ 3.14100003  3.14100003  3.14100003  3.14100003  3.14100003]
        [ 3.14100003  3.14100003  3.14100003  3.14100003  3.14100003]
        [ 3.14100003  3.14100003  3.14100003  3.14100003  3.14100003]]
+
     """
     ndim = 2
     statement_node_type_family = _v.statement_node_type_family.MATRIX_TYPE_FAMILY
