@@ -116,6 +116,8 @@ Leaf types
 :class:`HostScalar`       Represents a scalar in host memory
 :class:`Scalar`           Represents a scalar in compute device memory
 :class:`Vector`           Represents a vector in compute device memory
+:class:`Matrix`           Represents a dense matrix, with either row-major
+                          (default) or column-major storage.
 :class:`CompressedMatrix` Represents a sparse matrix with compressed-row
                           storage in compute device memory
 :class:`CoordinateMatrix` Represents a sparse matrix with a coordinate
@@ -125,8 +127,6 @@ Leaf types
 :class:`HybridMatrix`     Represents a sparse matrix with a hybrid storage
                           format, combining ELL and compressed-row storage,
                           in compute device memory
-:class:`Matrix`           Represents a dense matrix, with either row-major
-                          (default) or column-major storage.
 ========================= =================================================
 
 Supported numeric data types:

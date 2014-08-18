@@ -1583,7 +1583,9 @@ class SparseMatrixBase(Leaf):
 
     @property
     def handle(self):
-        """TODO docstring
+        """A tuple of :class:`backend.MemoryHandle` objects representing the
+        storage of this object on the compute device.
+
         """
         if not self.flushed:
             self.flush()
@@ -1636,7 +1638,7 @@ class SparseMatrixBase(Leaf):
     #    return self.cpu_leaf.resize(size1, size2)
 
     def as_ndarray(self):
-        """Returns the sparse matrix as a dense NumPy ``ndarray``.
+        """Returns the sparse matrix as a dense NumPy :class:`ndarray`.
         """
         return self.cpu_leaf.as_ndarray()
 
@@ -1646,7 +1648,8 @@ class SparseMatrixBase(Leaf):
         return Matrix(self, context = self._context)
 
     def as_lil_matrix(self):
-        """Returns the sparse matrix as a SciPy ``lil_matrix``, if possible.
+        """Returns the sparse matrix as a SciPy :class:`lil_matrix`,
+        if possible.
         """
         if not WITH_SCIPY:
             raise TypeError("SciPy not found, so this is unsupported")
@@ -1660,9 +1663,9 @@ class SparseMatrixBase(Leaf):
 
     @property
     def value(self):
-        """Returns the sparse matrix as a SciPy ``lil_matrix``, if possible.
-        If SciPy is not available, this resorts to constructing a
-        dense NumPy ndarray.
+        """Returns the sparse matrix as a SciPy :class:`lil_matrix`,
+        if possible. If SciPy is not available, this resorts to constructing
+        a dense NumPy ndarray.
         """
         if WITH_SCIPY:
             return self.as_lil_matrix()
@@ -1751,7 +1754,16 @@ class CompressedMatrix(SparseMatrixBase):
 
 
 class CompressedCompressedMatrix(SparseMatrixBase):
-    """TODO docstring -- experimental
+    """A sparse square matrix in compressed sparse rows format optimized
+    for the case that only a few rows carry nonzero entries.
+
+    The difference from the 'standard' CSR format is that there is an
+    additional array ``row_indices`` so that the i-th set of indices
+    in the CSR layout refers to ``row_indices[i]``.
+    [description adapted from the ViennaCL manual]
+
+    For information on construction, see the help for
+    :class:`SparseMatrixBase`.
     """
     #statement_node_subtype = _v.statement_node_subtype.COMPRESSED_MATRIX_TYPE
 
@@ -1812,9 +1824,11 @@ class ELLMatrix(SparseMatrixBase):
 
 
 class SlicedELLMatrix(SparseMatrixBase):
-    """TODO docstring -- experimental
+    """NB: This is an experimental format, with no support as of yet!
+
+    TODO: construction with parameters C, sigma
     """
-    #statement_node_subtype = _v.statement_node_subtype.ELL_MATRIX_TYPE
+    #statement_node_subtype = _v.statement_node_subtype.SLICED_ELL_MATRIX_TYPE
 
     def flush(self):
         # TODO -- num_blocks!
@@ -1856,13 +1870,13 @@ class Matrix(Leaf):
     it can be constructed in a number of ways:
 
     * with no parameters, as an empty matrix;
-    * from an integer tuple: produces an empty ``Matrix`` of that shape;
+    * from an integer tuple: produces an empty :class:`Matrix` of that shape;
     * from a tuple: first two values shape, third scalar value for each
       element;
     * from an ndarray of the correct dtype;
     * from a ViennaCL sparse matrix;
     * from a ViennaCL :class:`Matrix` instance (to make a copy);
-    * from an expression resulting in a ``Matrix``;
+    * from an expression resulting in a :class:`Matrix`;
     * from a PyOpenCL *Array*: producing a view onto the associated buffer;
     * from a host / OpenCL / CUDA buffer, wrapped in a
       :class:`backend.MemoryHandle` object.
@@ -1892,15 +1906,15 @@ class Matrix(Leaf):
 
        The first int gives the starting index for the rows in the
        buffer of the target matrix, whilst the second int gives the
-       starting index for the columns. Each int should be a multiple
-       of the size in bytes of each element of the matrix. The default
-       is (0, 0).
+       starting index for the columns. Each should be given as a
+       multiple of the size in bytes of each element of the matrix.
+       The default is (0, 0).
 
     :param: *strides* : 2-tuple of ints
 
        The first int gives the number of bytes between each row, and the
-       second gives the number between each column. Each int should be a
-       multiple of the size in bytes of each element of the matrix. The
+       second gives the number between each column. Each should be given
+       as multiple of the size in bytes of each element of the matrix. The
        default, if ROW_MAJOR, is ``(itemsize * internal_shape[0], itemsize)``;
        if COL_MAJOR, ``(itemsize, itemsize * internal_shape[1])``.
 
@@ -2440,7 +2454,7 @@ class Node(MagicMethods):
     @property
     def complexity(self):
         """The complexity of the ViennaCL expression, given as the number of
-        ``Node`` instances in the expression tree.
+        :class:`Node` instances in the expression tree.
         """
         complexity = 1
         for op in self.operands:
@@ -2449,7 +2463,9 @@ class Node(MagicMethods):
 
     @property
     def operand_types_string(self):
-        """TODO docstring
+        """A tuple of strings representing the names of the types of the
+        operands.
+
         """
         types = []
         for o in self.operands:
@@ -2496,8 +2512,8 @@ class Node(MagicMethods):
         """Recursively determine the storage layout for the result type, if
         the result is a :class:`Matrix`.
 
-        Notably, this ensures that any ``Matrix`` operands have the
-        same layout, since this is a condition of all ViennaCL
+        Notably, this ensures that any :class:`Matrix` operands have
+        the same layout, since this is a condition of all ViennaCL
         operations, except for the matrix-matrix product.
         """
         if self.flushed:
@@ -2655,8 +2671,11 @@ class Node(MagicMethods):
     @property
     def value(self):
         """The value of the result of computing the operation represented by
-        this :class:`Node`; if the result is array-like, then the type
-        is a NumPy ``ndarray``, otherwise, a scalar is returned.
+        this :class:`Node`; if the result is a :class:`Vector` or
+        :class:`Matrix`, then the type is a NumPy :class:`ndarray`;
+        if the result is a sparse matrix, then the type is a SciPy
+        :class:`lil_matrix`; otherwise, a scalar is returned.
+
         """
         return self.result.value
 
@@ -2679,12 +2698,13 @@ class Node(MagicMethods):
 
     def as_ndarray(self):
         """Return the value of computing the operation represented by this
-        Node as a NumPy ``ndarray``.
+        Node as a NumPy :class:`ndarray`.
         """
         return array(self.value, dtype=self.dtype)
 
     def as_opencl_kernel_operands(self):
-        """TODO docstring -- beware dispatch
+        """Returns a representation of the current object sufficient for
+        passing to PyOpenCL for executing a custom kernel.
         """
         return self.result.as_opencl_kernel_operands()
 
