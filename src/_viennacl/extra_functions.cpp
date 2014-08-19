@@ -8,7 +8,8 @@
 #include <viennacl/linalg/qr.hpp>
 
 #ifdef VIENNACL_WITH_OPENCL
-#include <viennacl/linalg/nmf.hpp>
+#include <viennacl/linalg/nmf_operations.hpp>
+#include <viennacl/linalg/fft_operations.hpp>
 #include <viennacl/linalg/svd.hpp>
 #include <viennacl/fft.hpp>
 #else
@@ -163,7 +164,7 @@ CLOSE_OP_FUNC;
 DO_OP_FUNC(op_fft_normalize_2d)
 {
 #ifdef VIENNACL_WITH_OPENCL
-  vcl::detail::fft::normalize(o.operand1);
+  vcl::linalg::normalize(o.operand1);
 #endif
   return bp::object();
 }
