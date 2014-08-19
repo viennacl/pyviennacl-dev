@@ -21,6 +21,13 @@ make_statements_tuple(bp::list statement_wrappers,
 PYVCL_SUBMODULE(device_specific)
 {
 
+  bp::enum_<ds::fetching_policy_type>
+      ("fetching_policy_type")
+      ENUM_VALUE(ds, FETCH_FROM_LOCAL)
+      ENUM_VALUE(ds, FETCH_FROM_GLOBAL_CONTIGUOUS)
+      ENUM_VALUE(ds, FETCH_FROM_GLOBAL_STRIDED)
+      ;
+      
   //Base
   {
     #define __PROP(name) .def_readonly(#name, &ds::template_base::parameters_type::name)
@@ -29,6 +36,7 @@ PYVCL_SUBMODULE(device_specific)
               __PROP(simd_width)
               __PROP(local_size_0)
               __PROP(local_size_1);
+
     #undef __PROP
   }
   
@@ -81,12 +89,6 @@ PYVCL_SUBMODULE(device_specific)
         __PROP(local_fetch_0) __PROP(local_fetch_1)
         __PROP(mL) __PROP(nL);
     
-    bp::enum_<ds::fetching_policy_type>
-      ("FetchingPolicy")
-      ENUM_VALUE(ds, FETCH_FROM_LOCAL)
-      ENUM_VALUE(ds, FETCH_FROM_GLOBAL_CONTIGUOUS)
-      ENUM_VALUE(ds, FETCH_FROM_GLOBAL_STRIDED)
-      ;
     #undef __PROP
   }
  

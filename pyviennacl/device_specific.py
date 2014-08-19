@@ -27,6 +27,8 @@ class StatementsTuple(object):
         self.vcl_tuple = _v.statements_tuple(vcl_statements, order.vcl_order)
 
 
+FetchingPolicy = _v.fetching_policy_type
+
 class TemplateBase(object):
 
     Parameters = _v.template_base.parameters_type
@@ -35,8 +37,8 @@ class TemplateBase(object):
     def parameters(self):
         return self._vcl_template.get_parameters()
 
-    def __init__(self, kernel_prefix):
-        self.kernel_prefix = kernel_prefix
+    def __init__(self):
+        pass
 
     def check(self, statement):
         vcl_statement = statement.vcl_statement;
@@ -54,36 +56,36 @@ class VectorAxpyTemplate(TemplateBase):
 
     Parameters = _v.vector_axpy_template.parameters_type
 
-    def __init__(self, parameters, kernel_prefix):
-        super(VectorAxpyTemplate, self).__init__(kernel_prefix)
-        self._vcl_template = _v.vector_axpy_template(parameters, self.kernel_prefix)
+    def __init__(self, parameters):
+        super(VectorAxpyTemplate, self).__init__()
+        self._vcl_template = _v.vector_axpy_template(parameters)
 
 
 class MatrixAxpyTemplate(TemplateBase):
 
     Parameters = _v.matrix_axpy_template.parameters_type
 
-    def __init__(self, parameters, kernel_prefix):
-        super(MatrixAxpyTemplate, self).__init__(kernel_prefix)
-        self._vcl_template = _v.matrix_axpy_template(parameters, self.kernel_prefix)
+    def __init__(self, parameters):
+        super(MatrixAxpyTemplate, self).__init__()
+        self._vcl_template = _v.matrix_axpy_template(parameters)
 
 
 class ReductionTemplate(TemplateBase):
 
     Parameters = _v.reduction_template.parameters_type
 
-    def __init__(self, parameters, kernel_prefix):
-        super(ReductionTemplate, self).__init__(kernel_prefix)
-        self._vcl_template = _v.reduction_template(parameters, self.kernel_prefix)
+    def __init__(self, parameters):
+        super(ReductionTemplate, self).__init__()
+        self._vcl_template = _v.reduction_template(parameters)
 
 class RowWiseReductionTemplate(TemplateBase):
 
     Parameters = _v.row_wise_reduction_template.parameters_type
 
-    def __init__(self, parameters, A_trans, kernel_prefix):
-        super(RowWiseReductionTemplate, self).__init__(kernel_prefix)
+    def __init__(self, parameters, A_trans):
+        super(RowWiseReductionTemplate, self).__init__()
         self._A_trans = A_trans
-        self._vcl_template = _v.row_wise_reduction_template(parameters, A_trans, self.kernel_prefix)
+        self._vcl_template = _v.row_wise_reduction_template(parameters, A_trans)
 
     @property
     def A_trans(self):
@@ -93,11 +95,11 @@ class MatrixProductTemplate(TemplateBase):
 
     Parameters = _v.matrix_product_template.parameters_type
 
-    def __init__(self, parameters, A_trans, B_trans, kernel_prefix):
-        super(MatrixProductTemplate, self).__init__(kernel_prefix);
+    def __init__(self, parameters, A_trans, B_trans):
+        super(MatrixProductTemplate, self).__init__();
         self._A_trans = A_trans
         self._B_trans = B_trans
-        self._vcl_template = _v.matrix_product_template(parameters, A_trans,  B_trans, self.kernel_prefix)
+        self._vcl_template = _v.matrix_product_template(parameters, A_trans,  B_trans)
 
     @property
     def A_trans(self):
