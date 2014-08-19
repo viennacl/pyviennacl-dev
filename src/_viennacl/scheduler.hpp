@@ -183,9 +183,9 @@ public:
     return tplt.check_invalid(tmp_statement, context.current_device());
   }
   
-  void execute_template(vcl::device_specific::template_base & tplt, vcl::ocl::context & ctx, bool force_compilation)
+  void execute_template(vcl::device_specific::template_base const & T, vcl::ocl::context & ctx, bool force_compilation)
   {
-    vcl::device_specific::execute(tplt, get_vcl_statement(), ctx, force_compilation);
+    vcl::device_specific::execute(T, get_vcl_statement(), ctx, force_compilation);
   }
     
   std::size_t size() const {
