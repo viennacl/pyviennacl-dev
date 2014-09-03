@@ -39,16 +39,16 @@ with :class:`Node` providing basic functionality for the construction
 of the expression tree.
 
 In the language of PyViennaCL, data classes such as :class:`Scalar`,
-:class:`Vector` and `Matrix` constitute leaves on the expression tree,
-and as such, each of these data classes inherits from the
-:class:`Leaf` type, which provides general functionality for leaf
+:class:`Vector` and :class:`Matrix` constitute leaves on the
+expression tree, and as such, each of these data classes inherits from
+the :class:`Leaf` type, which provides general functionality for leaf
 construction.
 
 Importantly, you can treat any :class:`Node` object -- such as an
-:class:`Add` instance -- as if it were a :class:`Leaf` object
-explicitly representing some data. This means that you can express
-mathematical operations using :class:`Node` and :class:`Leaf`
-instances transparently.
+:class:`Add` or a :class:`CustomNode` instance -- as if it were a
+:class:`Leaf` object explicitly representing some data. This means
+that you can express mathematical operations using :class:`Node` and
+:class:`Leaf` instances transparently.
 
 :class:`Node` and :class:`Leaf` instances are flattened into a
 :class:`Statement` object when the expression is executed. The
@@ -63,8 +63,8 @@ On object construction and access
 For the same reasons of bus and compute latency, PyViennaCL does not
 encourage the elementwise construction of :class:`Matrix` or
 :class:`Vector` objects, or the accessing of individual scalar
-elements from any such type; the waits incurred make such access
-painfully slow.
+elements from any such type; the waits incurred in launching a kernel
+for each such access make this painfully slow.
 
 Instead, you should construct dense matrices and vectors using
 preconstructed types: NumPy :class:`array` objects can be supplied to

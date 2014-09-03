@@ -110,11 +110,13 @@ def main():
                     source_path="external/boost-python-ublas-subset/boost_subset",
                     boost_chrono="header_only")
 
-    INCLUDE_DIRS = conf["BOOST_INC_DIR"] + [
-            "external/boost_numpy/"
-            ]
+    INCLUDE_DIRS = ["external/boost_numpy/"]
+    INCLUDE_DIRS += conf["BOOST_INC_DIR"] # This is set by set_up_shipped_boost_if_requested
+
     if conf["USE_SHIPPED_VIENNACL"]:
         INCLUDE_DIRS += ["external/viennacl-dev/"]
+    else:
+        INCLUDE_DIRS += conf["VIENNACL_INC_DIR"]
 
     LIBRARY_DIRS = conf["BOOST_LIB_DIR"]
     LIBRARIES = conf["BOOST_PYTHON_LIBNAME"]
