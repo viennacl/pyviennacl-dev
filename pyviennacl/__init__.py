@@ -12,7 +12,7 @@ try: from .opencl import *
 except ImportError: pass
 from .io import *
 from .util import *
-from .device_specific import *
+from .atidlas import *
 
 from . import vclmath as math
 
