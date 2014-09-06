@@ -16,7 +16,9 @@ class IndependentOrder(OrderType):
 class StatementsTuple(object):
     vcl_statements_tuple = None
 
-    def __init__(self, statements, order):
+    def __init__(self, statements, order = SequentialOrder):
+        if not isinstance(statements, list):
+            statements = [statements]
         def to_vcl_statement(s):
             if isinstance(s, Node):
                 return Statement(s).vcl_statement
@@ -26,20 +28,25 @@ class StatementsTuple(object):
         self.order = order
         self.vcl_tuple = _v.statements_tuple(vcl_statements, order.vcl_order)
 
-
 FetchingPolicy = _v.fetching_policy_type
 
 class TemplateBase(object):
 
     Parameters = _v.template_base.parameters_type
 
-    @property
-    def parameters(self):
-        return self._vcl_template.get_parameters()
-
     def __init__(self):
         pass
 
+    @property
+    def parameters(self):
+        return self._vcl_template.parameters()
+        
+    def lmem_usage(self, statements):
+        return self._vcl_template.lmem_usage(statements.vcl_tuple)
+        
+    def registers_usage(self, statements):
+        return self._vcl_template.registers_usage(statements.vcl_tuple)
+        
     def check(self, statement):
         vcl_statement = statement.vcl_statement;
         vcl_context = statement.result.context.vcl_sub_context;
@@ -82,14 +89,10 @@ class RowWiseReductionTemplate(TemplateBase):
 
     Parameters = _v.row_wise_reduction_template.parameters_type
 
-    def __init__(self, parameters, A_trans):
+    def __init__(self, parameters):
         super(RowWiseReductionTemplate, self).__init__()
-        self._A_trans = A_trans
-        self._vcl_template = _v.row_wise_reduction_template(parameters, A_trans)
+        self._vcl_template = _v.row_wise_reduction_template(parameters)
 
-    @property
-    def A_trans(self):
-        return self._A_trans
 
 class MatrixProductTemplate(TemplateBase):
 

@@ -2,9 +2,12 @@
 #define _PYVIENNACL_VECTOR_H
 
 #include "common.hpp"
-
-#include <viennacl/device_specific/execute.hpp>
 #include <viennacl/scheduler/execute.hpp>
+#include <viennacl/scheduler/io.hpp>
+
+#ifdef VIENNACL_WITH_OPENCL
+#include <atidlas/execute.hpp>
+#endif
 
 class statement_node_wrapper {
 
@@ -177,17 +180,19 @@ public:
     vcl::scheduler::execute(get_vcl_statement());
   }
 
-  int check_template(vcl::device_specific::template_base const & tplt, viennacl::ocl::context const & context)
+#ifdef VIENNACL_WITH_OPENCL
+  int check_template(atidlas::template_base const & tplt, viennacl::ocl::context const & context)
   {
     vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
     return tplt.check_invalid(tmp_statement, context.current_device());
   }
   
-  void execute_template(vcl::device_specific::template_base const & T, vcl::ocl::context & ctx, bool force_compilation)
+  void execute_template(atidlas::template_base const & T, vcl::ocl::context & ctx, bool force_compilation)
   {
-    vcl::device_specific::execute(T, get_vcl_statement(), ctx, force_compilation);
+    atidlas::execute(T, get_vcl_statement(), ctx, force_compilation);
   }
-    
+#endif
+
   std::size_t size() const {
     return vcl_expression_nodes.size();
   }

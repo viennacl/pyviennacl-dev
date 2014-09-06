@@ -74,7 +74,8 @@ def get_config_schema():
 
             Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
             Switch("USE_SHIPPED_VIENNACL", True, "Use included ViennaCL library"),
-
+            Switch("USE_SHIPPED_ATIDLAS", True, "Use included ATIDLAS library"),
+            
             Switch("USE_OPENCL", True, "Use OpenCL"),
             IncludeDir("CL", []),
             LibraryDir("CL", []),
@@ -83,6 +84,7 @@ def get_config_schema():
             Switch("USE_OPENMP", True, "Use OpenMP"),
 
             IncludeDir("VIENNACL", []),
+            IncludeDir("ATIDLAS", []),
 
             StringListOption("CXXFLAGS", default_cxxflags,
                              help="Any extra C++ compiler options to include"),
@@ -117,6 +119,11 @@ def main():
         INCLUDE_DIRS += ["external/viennacl-dev/"]
     else:
         INCLUDE_DIRS += conf["VIENNACL_INC_DIR"]
+        
+    if conf["USE_SHIPPED_ATIDLAS"]:
+        INCLUDE_DIRS += ["external/ATIDLAS"]
+    else:
+        INCLUDE_DIRS += conf["ATIDLAS_INC_DIR"]
 
     LIBRARY_DIRS = conf["BOOST_LIB_DIR"]
     LIBRARIES = conf["BOOST_PYTHON_LIBNAME"]
@@ -189,7 +196,7 @@ def main():
 
         "extra_functions", "eig", "bandwidth_reduction",
 
-        "device_specific", "scheduler", "platform_support", "opencl_support"]
+        "atidlas", "scheduler", "platform_support", "opencl_support"]
 
     from glob import glob
 

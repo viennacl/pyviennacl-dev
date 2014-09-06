@@ -1,4 +1,13 @@
-#ifdef VIENNACL_WITH_OPENCL
+#include "common.hpp"
+
+#ifndef VIENNACL_WITH_OPENCL
+
+PYVCL_SUBMODULE(opencl_support)
+{
+    PYTHON_SCOPE_SUBMODULE(opencl_support);
+}
+
+#else
 
 #include "vector.hpp"
 
@@ -98,12 +107,9 @@ bp::list ctx_get_programs(vcl::ocl::context& ctx)
     (ctx.get_programs());
 }
 
-#endif
-
 PYVCL_SUBMODULE(opencl_support)
 {
 
-#ifdef VIENNACL_WITH_OPENCL
   PYTHON_SCOPE_SUBMODULE(opencl_support);
 
   bp::enum_<vcl::ocl::vendor_id>
@@ -243,7 +249,6 @@ PYVCL_SUBMODULE(opencl_support)
                  bp::make_function(&vcl::ocl::program::name,
                                    bp::return_value_policy<bp::reference_existing_object>()))
    ;
- 
-#endif
-
 }
+
+#endif
