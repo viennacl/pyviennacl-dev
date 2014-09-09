@@ -20,7 +20,10 @@ def fix_operand(opand, node=None):
         return from_ndarray(opand)
     if (np_result_type(opand).name in p.HostScalarTypes
         and not isinstance(opand, p.MagicMethods)):
-        return p.HostScalar(opand)
+        if node is None:
+            return p.HostScalar(opand)
+        else:
+            return p.HostScalar(np_result_type(node).type(opand))
     if isinstance(opand, p.Node):
         if opand.flushed:
             return opand.result

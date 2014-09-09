@@ -85,6 +85,7 @@ HostScalarTypes = {
     'int16': _v.statement_node_numeric_type.SHORT_TYPE,
     'int32': _v.statement_node_numeric_type.INT_TYPE,
     'int64': _v.statement_node_numeric_type.LONG_TYPE,
+    'int': _v.statement_node_numeric_type.LONG_TYPE,
     'uint8': _v.statement_node_numeric_type.UCHAR_TYPE,
     'uint16': _v.statement_node_numeric_type.USHORT_TYPE,
     'uint32': _v.statement_node_numeric_type.UINT_TYPE,
@@ -355,12 +356,9 @@ class MagicMethods(object):
                 if issubclass(rhs.result_container_type, ScalarBase):
                     return self.result_container_type(self.value * rhs.value,
                                                       dtype = self.dtype)
-            else:
-                return self.value * rhs
-        try:
+        op = Mul(self, rhs)
+        if op.result_container_type is None:
             op = ElementProd(self, rhs)
-        except TypeError:
-            op = Mul(self, rhs)
         return op
 
     def __matmul__(self, rhs):
@@ -382,14 +380,7 @@ class MagicMethods(object):
     def __floordiv__(self, rhs):
         """x.__floordiv__(y) <==> x//y
         """
-        if issubclass(self.result_container_type, ScalarBase):
-            if isinstance(rhs, MagicMethods):
-                if issubclass(rhs.result_container_type, ScalarBase):
-                    return self.result_container_type(self.value // rhs.value,
-                                                      dtype = self.dtype)
-            else:
-                return self.value // rhs
-        op = math.floor(Div(self, rhs))
+        op = math.floor(self.__truediv__(rhs))
         return op
 
     def __truediv__(self, rhs):
@@ -401,15 +392,22 @@ class MagicMethods(object):
            the ``/`` division operator is never floor (integer) division, and
            always true floating point division.
         """
+        op = Div(self, rhs)
+        if op.result_container_type is None:
+            op = ElementDiv(self, rhs)
+        if op.result_container_type is not None:
+            return op
+
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
                 if issubclass(rhs.result_container_type, ScalarBase):
                     return self.result_container_type(self.value / rhs.value,
                                                       dtype = self.dtype)
             else:
-                return self.value / rhs
-        op = Div(self, rhs)
-        return op
+                return self.result_container_type(self.value / rhs,
+                                                  dtype = self.dtype)
+        else:
+            raise TypeError("I don't know how we got into this situation: can't express the division!")
     __div__ = __truediv__
 
     def __iadd__(self, rhs):
@@ -606,6 +604,34 @@ class MagicMethods(object):
             return self.result_container_type(math.ceil(self.value),
                                               dtype = self.dtype)
         return ElementCeil(self)
+
+    def row(self, index):
+        """If *self* is of :class:`Matrix` type, then return the row at
+        *index* as a :class:`Vector`. Otherwise, raise :exc:`TypeError`.
+
+        .. note ::
+
+           This will cause the computation of any expression
+           represented by *self*.
+        """
+        if not issubclass(self.result_container_type, Matrix):
+            raise TypeError("Can only get rows from a dense Matrix!")
+
+        return Vector(_v.row(self.vcl_leaf, index))
+
+    def column(self, index):
+        """If *self* is of :class:`Matrix` type, then return the column at
+        *index* as a :class:`Vector`. Otherwise, raise :exc:`TypeError`.
+
+        .. note ::
+
+           This will cause the computation of any expression
+           represented by *self*.
+        """
+        if not issubclass(self.result_container_type, Matrix):
+            raise TypeError("Can only get columns from a dense Matrix!")
+
+        return Vector(_v.column(self.vcl_leaf, index))
 
 
 class View(object):
@@ -1278,16 +1304,12 @@ class Vector(Leaf):
         """
         return self.vcl_leaf.index_norm_inf
 
-    def outer(self, rhs):
+    def outer(self, rhs, layout=ROW_MAJOR):
         """Returns the outer product of *self* and *rhs*.
 
         :param: :class:`Vector`.
 
-        :returns: :class:`Matrix`
-
-        :raises: *TypeError*
-
-           If anything but a :class:`Vector` is supplied.
+        :returns: :class:`Matrix` with given layout or ROW_MAJOR
 
         .. note ::
 
@@ -1295,28 +1317,39 @@ class Vector(Leaf):
            the expression tree, so this forces the computation of *rhs*, if 
            *rhs* represents a complex expression.
         """
-        if isinstance(rhs, MagicMethods):
-            if issubclass(rhs.result_container_type, Vector):
-                return Matrix(_v.outer(self.vcl_leaf, rhs.vcl_leaf),
-                              dtype=self.dtype,
-                              layout=COL_MAJOR) # I don't know why COL_MAJOR..
-        raise TypeError("Cannot calculate the outer-product of non-vector type: %s" % type(rhs))
+        #return self.as_column(layout=layout).dot(rhs.as_row(layout=layout))
+        if layout == ROW_MAJOR:
+            return Matrix(_v.outer_row(self.vcl_leaf, rhs.vcl_leaf),
+                          dtype=self.dtype,
+                          layout=ROW_MAJOR)
+        else:
+            return Matrix(_v.outer_col(self.vcl_leaf, rhs.vcl_leaf),
+                          dtype=self.dtype,
+                          layout=COL_MAJOR)
 
-    def as_column(self):
+    def as_column(self, layout=ROW_MAJOR, copy=False):
         """Returns a representation of this instance as a column
         :class:`Matrix`.
         """
-        tmp = self.vcl_leaf.as_ndarray()
-        tmp.resize(self.size, 1)
-        return Matrix(tmp, dtype=self.dtype, layout=COL_MAJOR)
+        if copy: tmp = self.copy()
+        else: tmp = self
+        return Matrix(tmp.handle[0], dtype=tmp.dtype, layout=layout,
+                      shape=(tmp.shape[0], 1),
+                      internal_shape=(tmp.internal_shape[0], 1),
+                      offset=(tmp.offset, 0),
+                      strides=(tmp.strides[0], tmp.strides[0] * tmp.internal_shape[0]))
 
-    def as_row(self):
+    def as_row(self, layout=ROW_MAJOR, copy=False):
         """Returns a representation of this instance as a row
         :class:`Matrix`.
         """
-        tmp = self.vcl_leaf.as_ndarray()
-        tmp.resize(1, self.size)
-        return Matrix(tmp, dtype=self.dtype, layout=ROW_MAJOR)
+        if copy: tmp = self.copy()
+        else: tmp = self
+        return Matrix(tmp.handle[0], dtype=tmp.dtype, layout=layout,
+                      shape=(1, tmp.shape[0]),
+                      internal_shape=(1, tmp.internal_shape[0]),
+                      offset=(0, tmp.offset),
+                      strides=(tmp.strides[0] * tmp.internal_shape[0], tmp.strides[0]))
 
     def as_diag(self):
         """Returns a representation of this instance as a diagonal
@@ -2359,8 +2392,8 @@ class Node(MagicMethods):
         else:
             raise TypeError("Only unary or binary nodes supported currently")
 
-        def fix_operand(args):
-            return util.fix_operand(args, self)
+        def fix_operand(arg):
+            return util.fix_operand(arg, self)
         self.operands = list(map(fix_operand, args))
 
         if self.result_container_type is None:

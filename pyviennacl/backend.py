@@ -331,12 +331,20 @@ class Context(object):
 
     @property
     def default_dtype(self):
+        try:
+            return self._default_dtype
+        except AttributeError: pass
+
         if self.domain is not OpenCLMemory:
             return np.dtype(p.float64)
         if self.current_device.double_fp_config:
             return np.dtype(p.float64)
         else:
             return np.dtype(p.float32)
+
+    @default_dtype.setter
+    def default_dtype(self, dtype):
+        self._default_dtype = dtype
 
 
 default_context = Context(DefaultMemory)

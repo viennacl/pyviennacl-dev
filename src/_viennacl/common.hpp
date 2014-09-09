@@ -65,7 +65,10 @@ enum op_t {
   op_inplace_qr_apply_trans_q, // 23
   op_recoverq,       // 24
   op_nmf,            // 25
-  op_svd             // 26
+  op_svd,            // 26
+  op_diag,           // 27
+  op_row,            // 28
+  op_column          // 29
 };
 
 // Generic operation dispatch class -- specialised for different ops

@@ -186,10 +186,23 @@ DO_OP_FUNC(op_svd) {
 }
 CLOSE_OP_FUNC;
 
+DO_OP_FUNC(op_diag) {
+  return vcl::diag(o.operand1, o.operand2);
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_row) {
+  return vcl::row(o.operand1, o.operand2);
+}
+CLOSE_OP_FUNC;
+
+DO_OP_FUNC(op_column) {
+  return vcl::column(o.operand1, o.operand2);
+}
+CLOSE_OP_FUNC;
+
+
 #define EXPORT_FUNCTIONS_F(TYPE, F)                                     \
-  bp::def("outer", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
-          vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
-          op_outer_prod>);                                              \
   bp::def("element_pow", pyvcl_do_2ary_op<vcl::matrix<TYPE, F>,         \
           vcl::matrix_base<TYPE>&, vcl::matrix_base<TYPE>&,             \
           op_element_pow>);                                             \
@@ -209,9 +222,17 @@ CLOSE_OP_FUNC;
           op_recoverq>);
 
 // TODO: NMF, FFT, SVD only support row_major right now
+// TODO: diag, row, and column should be dispatched via the scheduler
+//        - (this isn't available directly right now)
 #define EXPORT_FUNCTIONS(TYPE)                                          \
   EXPORT_FUNCTIONS_F(TYPE, vcl::row_major);                             \
   EXPORT_FUNCTIONS_F(TYPE, vcl::column_major);                          \
+  bp::def("outer_row", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::row_major>, \
+          vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
+          op_outer_prod>);                                              \
+  bp::def("outer_col", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
+          vcl::vector_base<TYPE>&, vcl::vector_base<TYPE>&,             \
+          op_outer_prod>);                                              \
   bp::def("nmf", pyvcl_do_4ary_op<bp::object,                           \
           const vcl::matrix<TYPE, vcl::row_major>&,                     \
           vcl::matrix<TYPE, vcl::row_major>&,                           \
@@ -269,7 +290,19 @@ CLOSE_OP_FUNC;
           vcl::vector<TYPE>&, vcl::vector<TYPE>&, vcl::vector<TYPE>&,   \
           op_convolve_i_2d>);                                           \
   bp::def("normalize", pyvcl_do_1ary_op<bp::object, vcl::vector<TYPE>&, \
-          op_fft_normalize_2d>);
+          op_fft_normalize_2d>);                                        \
+  bp::def("diag", pyvcl_do_2ary_op<vcl::matrix<TYPE>,                   \
+          const vcl::vector_base<TYPE>&, int,                           \
+          op_diag>);                                                    \
+  bp::def("diag", pyvcl_do_2ary_op<vcl::vector<TYPE>,                   \
+          const vcl::matrix_base<TYPE>&, int,                           \
+          op_diag>);                                                    \
+  bp::def("row", pyvcl_do_2ary_op<vcl::vector<TYPE>,                    \
+          const vcl::matrix_base<TYPE>&, unsigned int,                  \
+          op_row>);                                                     \
+  bp::def("column", pyvcl_do_2ary_op<vcl::vector<TYPE>,                 \
+          const vcl::matrix_base<TYPE>&, unsigned int,                  \
+          op_column>);
 
 
 PYVCL_SUBMODULE(extra_functions)
