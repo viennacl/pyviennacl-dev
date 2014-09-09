@@ -2429,7 +2429,14 @@ class Node(MagicMethods):
         # the operands all have the same dtype.
         if len(self.operands) > 1:
             if dtype(self.operands[0]) != dtype(self.operands[1]):
-                raise TypeError("dtypes on operands do not match: %s with %s and %s" % (self.express(), dtype(self.operands[0]), dtype(self.operands[1])))
+                if issubclass(self.operands[1].result_container_type, ScalarBase):
+                    fix = self.operands[1].result_container_type(np_result_type(self.operands[0]).type(self.operands[1].value))
+                    self.operands[1] = fix
+                elif issubclass(self.operands[0].result_container_type, ScalarBase):
+                    fix = self.operands[0].result_container_type(np_result_type(self.operands[1]).type(self.operands[0].value))
+                    self.operands[1] = fix
+                else:
+                    raise TypeError("dtypes on operands do not match: %s with %s and %s" % (self.express(), dtype(self.operands[0]), dtype(self.operands[1])))
             # Set up the ViennaCL statement_node with two operands
             self.vcl_node = _v.statement_node(
                 self.operands[0].statement_node_type_family,   # lhs
