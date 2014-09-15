@@ -85,6 +85,7 @@ np::ndarray vcl_matrix_to_ndarray(const MATRIXTYPE& m)
 
   std::size_t size = m.internal_size1() * m.internal_size2() * sizeof(SCALARTYPE);
 
+  // TODO!!! : How to have Python keep track of this memory, to avoid a leak?
   SCALARTYPE* data = (SCALARTYPE*)malloc(size);
 
   // Read the whole matrix

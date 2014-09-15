@@ -291,7 +291,10 @@ CLOSE_OP_FUNC;
           op_convolve_i_2d>);                                           \
   bp::def("normalize", pyvcl_do_1ary_op<bp::object, vcl::vector<TYPE>&, \
           op_fft_normalize_2d>);                                        \
-  bp::def("diag", pyvcl_do_2ary_op<vcl::matrix<TYPE>,                   \
+  bp::def("diag_row", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::row_major>, \
+          const vcl::vector_base<TYPE>&, int,                           \
+          op_diag>);                                                    \
+  bp::def("diag_col", pyvcl_do_2ary_op<vcl::matrix<TYPE, vcl::column_major>, \
           const vcl::vector_base<TYPE>&, int,                           \
           op_diag>);                                                    \
   bp::def("diag", pyvcl_do_2ary_op<vcl::vector<TYPE>,                   \

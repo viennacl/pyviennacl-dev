@@ -304,6 +304,68 @@ class MagicMethods(object):
     def __ne__(self, rhs):
         return not (self == rhs)
 
+    def __lt__(self, rhs):
+        """The less-than operator.
+
+        :param: *rhs* -- {scalar, Vector, Matrix, ndarray, etc}
+
+        :returns: {*bool*, *ndarray*}
+
+           If the r.h.s. is elementwise comparable with a
+           :class:`Vector`, :class:`Matrix` or :class:`ndarray`, then
+           an array of boolean values is returned. If the r.h.s. is a
+           scalar, then a boolean value is returned.
+        """
+        if issubclass(self.result_container_type, ScalarBase):
+            if isinstance(rhs, MagicMethods):
+                if issubclass(rhs.result_container_type, ScalarBase):
+                    return self.value < rhs.value
+            else:
+                return self.value < rhs
+        if self.flushed:
+            if isinstance(rhs, MagicMethods):
+                return self.as_ndarray() < rhs.as_ndarray()
+            elif isinstance(rhs, ndarray):
+                return self.as_ndarray() < rhs
+            else:
+                return self.value < rhs
+        else:
+            return self.result < rhs
+
+    def __gt__(self, rhs):
+        """The greater-than operator.
+
+        :param: *rhs* -- {scalar, Vector, Matrix, ndarray, etc}
+
+        :returns: {*bool*, *ndarray*}
+
+           If the r.h.s. is elementwise comparable with a
+           :class:`Vector`, :class:`Matrix` or :class:`ndarray`, then
+           an array of boolean values is returned. If the r.h.s. is a
+           scalar, then a boolean value is returned.
+        """
+        if issubclass(self.result_container_type, ScalarBase):
+            if isinstance(rhs, MagicMethods):
+                if issubclass(rhs.result_container_type, ScalarBase):
+                    return self.value > rhs.value
+            else:
+                return self.value > rhs
+        if self.flushed:
+            if isinstance(rhs, MagicMethods):
+                return self.as_ndarray() > rhs.as_ndarray()
+            elif isinstance(rhs, ndarray):
+                return self.as_ndarray() > rhs
+            else:
+                return self.value > rhs
+        else:
+            return self.result > rhs
+
+    def __le__(self, rhs):
+        return not (self > rhs)
+
+    def __ge__(self, rhs):
+        return not (self < rhs)
+
     def __hash__(self):
         ## TODO implement better hash function
         return object.__hash__(self)
@@ -351,15 +413,22 @@ class MagicMethods(object):
 
            Returns a :class:`Mul` instance if defined.
         """
+        op = Mul(self, rhs)
+        if op.result_container_type is None:
+            op = ElementProd(self, rhs)
+        if op.result_container_type is not None:
+            return op
+
         if issubclass(self.result_container_type, ScalarBase):
             if isinstance(rhs, MagicMethods):
                 if issubclass(rhs.result_container_type, ScalarBase):
                     return self.result_container_type(self.value * rhs.value,
                                                       dtype = self.dtype)
-        op = Mul(self, rhs)
-        if op.result_container_type is None:
-            op = ElementProd(self, rhs)
-        return op
+            else:
+                return self.result_container_type(self.value * rhs,
+                                                  dtype = self.dtype)
+        else:
+            raise TypeError("I don't know how we got into this situation: can't express the multiplication!")
 
     def __matmul__(self, rhs):
         """x.__matmul__(y) <==> x@y
@@ -369,11 +438,9 @@ class MagicMethods(object):
            Returns a :class:`Dot` instance for two vectors, or a
            :class:`Mul` instance.
         """
-        if issubclass(self.result_container_type, Vector):
-            if isinstance(rhs, MagicMethods):
-                if issubclass(rhs.result_container_type, Vector):
-                    return Dot(self, rhs)
-        op = Mul(self, rhs)
+        op = Dot(self, rhs)
+        if op.result_container_type is None:
+            op = Mul(self, rhs)
         return op
     dot = __matmul__
 
@@ -605,6 +672,19 @@ class MagicMethods(object):
                                               dtype = self.dtype)
         return ElementCeil(self)
 
+    def diag(self, k=0, layout=ROW_MAJOR):
+        """TODO docstring
+        """
+        if issubclass(self.result_container_type, Matrix):
+            return Vector(_v.diag(self.vcl_leaf, k), context=self.context)
+        elif issubclass(self.result_container_type, Vector):
+            if layout == ROW_MAJOR:
+                return Matrix(_v.diag_row(self.vcl_leaf, k), layout=layout, context=self.context)
+            else:
+                return Matrix(_v.diag_col(self.vcl_leaf, k), layout=layout, context=self.context)
+        else:
+            raise TypeError("Can only get a diagonal from a Matrix or Vector!")
+
     def row(self, index):
         """If *self* is of :class:`Matrix` type, then return the row at
         *index* as a :class:`Vector`. Otherwise, raise :exc:`TypeError`.
@@ -617,7 +697,7 @@ class MagicMethods(object):
         if not issubclass(self.result_container_type, Matrix):
             raise TypeError("Can only get rows from a dense Matrix!")
 
-        return Vector(_v.row(self.vcl_leaf, index))
+        return Vector(_v.row(self.vcl_leaf, index), context=self.context)
 
     def column(self, index):
         """If *self* is of :class:`Matrix` type, then return the column at
@@ -631,7 +711,95 @@ class MagicMethods(object):
         if not issubclass(self.result_container_type, Matrix):
             raise TypeError("Can only get columns from a dense Matrix!")
 
-        return Vector(_v.column(self.vcl_leaf, index))
+        return Vector(_v.column(self.vcl_leaf, index), context=self.context)
+
+    @property
+    def index_norm_inf(self):
+        """Returns the index of the L^inf norm on the vector.
+        TODO docstring (now in MagicMethods)
+        """
+        if not issubclass(self.result_container_type, Vector):
+            raise TypeError("Operation not defined on non-Vector types")
+
+        return self.vcl_leaf.index_norm_inf
+
+    def outer(self, rhs, layout=ROW_MAJOR):
+        """Returns the outer product of *self* and *rhs*.
+
+        :param: :class:`Vector`.
+
+        :returns: :class:`Matrix` with given layout or ROW_MAJOR
+
+        .. note ::
+
+           ViennaCL currently does not support outer product computation in
+           the expression tree, so this forces the computation of *rhs*, if 
+           *rhs* represents a complex expression.
+        TODO docstring (now in MagicMethods)
+        """
+        if not issubclass(self.result_container_type, Vector):
+            raise TypeError("Operation not defined on non-Vector types")
+
+        #return self.as_column(layout=layout).dot(rhs.as_row(layout=layout))
+        if layout == ROW_MAJOR:
+            return Matrix(_v.outer_row(self.vcl_leaf, rhs.vcl_leaf),
+                          dtype=self.dtype,
+                          layout=ROW_MAJOR,
+                          context=self.context)
+        else:
+            return Matrix(_v.outer_col(self.vcl_leaf, rhs.vcl_leaf),
+                          dtype=self.dtype,
+                          layout=COL_MAJOR,
+                          context=self.context)
+
+    def as_column(self, layout=ROW_MAJOR, copy=False):
+        """Returns a representation of this instance as a column
+        :class:`Matrix`.
+        TODO docstring (now in MagicMethods)
+        """
+        if not issubclass(self.result_container_type, Vector):
+            raise TypeError("Operation not defined on non-Vector types")
+
+        if copy: tmp = self.copy()
+        else: tmp = self
+        return Matrix(tmp.handle[0], dtype=tmp.dtype, layout=layout,
+                      shape=(tmp.shape[0], 1),
+                      internal_shape=(tmp.internal_shape[0], 1),
+                      offset=(tmp.offset, 0),
+                      strides=(tmp.strides[0], tmp.strides[0] * tmp.internal_shape[0]),
+                      context=self.context)
+
+    def as_row(self, layout=ROW_MAJOR, copy=False):
+        """Returns a representation of this instance as a row
+        :class:`Matrix`.
+        TODO docstring (now in MagicMethods)
+        """
+        if not issubclass(self.result_container_type, Vector):
+            raise TypeError("Operation not defined on non-Vector types")
+
+        if copy: tmp = self.copy()
+        else: tmp = self
+        return Matrix(tmp.handle[0], dtype=tmp.dtype, layout=layout,
+                      shape=(1, tmp.shape[0]),
+                      internal_shape=(1, tmp.internal_shape[0]),
+                      offset=(0, tmp.offset),
+                      strides=(tmp.strides[0] * tmp.internal_shape[0], tmp.strides[0]),
+                      context=self.context)
+
+    def as_diag(self):
+        """Returns a representation of this instance as a diagonal
+        :class:`Matrix`.
+        TODO docstring (now in MagicMethods)
+        """
+        if not issubclass(self.result_container_type, Vector):
+            raise TypeError("Operation not defined on non-Vector types")
+
+        tmp_v = self.as_ndarray()
+        tmp_m = zeros((self.size, self.size), dtype=self.dtype)
+        for i in range(self.size):
+            tmp_m[i][i] = tmp_v[i]
+        return Matrix(tmp_m, dtype=self.dtype,
+                      layout=self.layout, context=self.context) # TODO: Ought to be sparse here
 
 
 class View(object):
@@ -1190,7 +1358,7 @@ class Vector(Leaf):
 
                 if 'offset' in kwargs.keys():
                     try: offset = int(kwargs['offset'][0] / self.itemsize)
-                    except IndexError: offset = int(kwargs['offset'] / self.itemsize)
+                    except TypeError: offset = int(kwargs['offset'] / self.itemsize)
                 elif WITH_CL_ARRAY:
                     offset = int(cl_array.offset / self.itemsize)
                 else:
@@ -1297,69 +1465,6 @@ class Vector(Leaf):
                               dtype=self.dtype)
         else:
             raise IndexError("Can't understand index")
-
-    @property
-    def index_norm_inf(self):
-        """Returns the index of the L^inf norm on the vector.
-        """
-        return self.vcl_leaf.index_norm_inf
-
-    def outer(self, rhs, layout=ROW_MAJOR):
-        """Returns the outer product of *self* and *rhs*.
-
-        :param: :class:`Vector`.
-
-        :returns: :class:`Matrix` with given layout or ROW_MAJOR
-
-        .. note ::
-
-           ViennaCL currently does not support outer product computation in
-           the expression tree, so this forces the computation of *rhs*, if 
-           *rhs* represents a complex expression.
-        """
-        #return self.as_column(layout=layout).dot(rhs.as_row(layout=layout))
-        if layout == ROW_MAJOR:
-            return Matrix(_v.outer_row(self.vcl_leaf, rhs.vcl_leaf),
-                          dtype=self.dtype,
-                          layout=ROW_MAJOR)
-        else:
-            return Matrix(_v.outer_col(self.vcl_leaf, rhs.vcl_leaf),
-                          dtype=self.dtype,
-                          layout=COL_MAJOR)
-
-    def as_column(self, layout=ROW_MAJOR, copy=False):
-        """Returns a representation of this instance as a column
-        :class:`Matrix`.
-        """
-        if copy: tmp = self.copy()
-        else: tmp = self
-        return Matrix(tmp.handle[0], dtype=tmp.dtype, layout=layout,
-                      shape=(tmp.shape[0], 1),
-                      internal_shape=(tmp.internal_shape[0], 1),
-                      offset=(tmp.offset, 0),
-                      strides=(tmp.strides[0], tmp.strides[0] * tmp.internal_shape[0]))
-
-    def as_row(self, layout=ROW_MAJOR, copy=False):
-        """Returns a representation of this instance as a row
-        :class:`Matrix`.
-        """
-        if copy: tmp = self.copy()
-        else: tmp = self
-        return Matrix(tmp.handle[0], dtype=tmp.dtype, layout=layout,
-                      shape=(1, tmp.shape[0]),
-                      internal_shape=(1, tmp.internal_shape[0]),
-                      offset=(0, tmp.offset),
-                      strides=(tmp.strides[0] * tmp.internal_shape[0], tmp.strides[0]))
-
-    def as_diag(self):
-        """Returns a representation of this instance as a diagonal
-        :class:`Matrix`.
-        """
-        tmp_v = self.as_ndarray()
-        tmp_m = zeros((self.size, self.size), dtype=self.dtype)
-        for i in range(self.size):
-            tmp_m[i][i] = tmp_v[i]
-        return Matrix(tmp_m, dtype=self.dtype) # TODO: Ought to be sparse here
 
     def as_opencl_kernel_operands(self):
         """Returns a representation of the current object sufficient for
@@ -2345,6 +2450,34 @@ class Matrix(Leaf):
         return [self.handle[0].buffer,
                 uint32(self.internal_size1), uint32(self.internal_size2)]
 
+    def as_vector(self, copy=False):
+        """TODO docstring
+
+        NB: param copy is meaningless if self.size != self.internal_size!
+        NB: copies rows if ROW_MAJOR, cols if COL_MAJOR
+        """
+        if self.offset[1] != 0:
+            raise ValueError("Offset in the second index must be 0")
+        if self.size == self.internal_size:
+            if copy:
+                tmp = self.copy()
+            else:
+                tmp = self
+            if self.layout == ROW_MAJOR:
+                new_vector = Vector(tmp.handle[0].buffer, size=tmp.size, offset=tmp.offset[0], stride=tmp.strides[1], dtype=tmp.dtype, context=tmp.context)
+            else:
+                new_vector = Vector(tmp.handle[0].buffer, size=tmp.size, offset=tmp.offset[0], stride=tmp.strides[0], dtype=tmp.dtype, context=tmp.context)
+        else:
+            new_cpu_vector = zeros(self.size, dtype=self.dtype)
+            if self.layout == ROW_MAJOR:
+                for index in range(self.shape[0]):
+                    new_cpu_vector[index*self.shape[1]:(index+1)*self.shape[1]] = self[index, :].as_ndarray()
+            else:
+                for index in range(self.shape[1]):
+                    new_cpu_vector[index*self.shape[0]:(index+1)*self.shape[0]] = self[:, index].as_ndarray().flatten()
+            new_vector = Vector(new_cpu_vector, context=self.context)
+        return new_vector
+
     #def clear(self):
     #    """
     #    Set every element of the matrix to 0.
@@ -2658,6 +2791,18 @@ class Node(MagicMethods):
     @shape.setter
     def shape(self, value):
         self._shape = value
+
+    @property
+    def internal_shape(self):
+        return self.result.internal_shape
+
+    @property
+    def offset(self):
+        return self.result.offset
+
+    @property
+    def strides(self):
+        return self.result.strides
 
     def express(self, statement=""):
         """Produce a human-readable representation of the expression graph
@@ -3274,9 +3419,6 @@ class Mul(Node):
         ('Matrix', 'Scalar'): Matrix,
         ('Vector', 'HostScalar'): Vector,
         ('Vector', 'Scalar'): Vector,
-        ('Scalar', 'Scalar'): Scalar,
-        ('Scalar', 'HostScalar'): HostScalar,
-        ('HostScalar', 'HostScalar'): HostScalar
         # TODO: Sparse matrix support here
     }
 
@@ -3302,8 +3444,6 @@ class Mul(Node):
             elif self.operands[1].result_container_type == HostScalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
                 self.shape = self.operands[0].shape
-            else:
-                self.operation_node_type = None
         elif self.operands[0].result_container_type == Vector: # Vector * ...
             if self.operands[1].result_container_type == Scalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
@@ -3311,28 +3451,6 @@ class Mul(Node):
             elif self.operands[1].result_container_type == HostScalar:
                 self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
                 self.shape = self.operands[0].shape
-            else:
-                self.operation_node_type = None
-        elif self.operands[0].result_container_type == Scalar: 
-            #
-            # TODO -- but why?..
-            #
-            if self.operands[1].result_container_type == Matrix:
-                self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[1].shape
-            else:
-                self.operation_node_type = None
-        elif self.operands[0].result_container_type == HostScalar:
-            #
-            # TODO -- but why?..
-            #
-            if self.operands[1].result_container_type == Matrix:
-                self.operation_node_type = _v.operation_node_type.OPERATION_BINARY_MULT_TYPE
-                self.shape = self.operands[1].shape
-            else:
-                self.operation_node_type = None
-        else:
-            self.operation_node_type = None
 
 
 class Div(Node):
