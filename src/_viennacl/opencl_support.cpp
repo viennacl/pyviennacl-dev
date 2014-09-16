@@ -4,7 +4,7 @@
 
 PYVCL_SUBMODULE(opencl_support)
 {
-    PYTHON_SCOPE_SUBMODULE(opencl_support);
+  //PYTHON_SCOPE_SUBMODULE(opencl_support);
 }
 
 #else

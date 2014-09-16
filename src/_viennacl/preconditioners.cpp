@@ -1,6 +1,8 @@
 #include "preconditioners.hpp"
 
-struct empty_tag {};
+struct empty_amg_tag {};
+struct empty_spai_tag {};
+struct empty_fspai_tag {};
 
 PYVCL_SUBMODULE(preconditioners)
 {
@@ -181,9 +183,9 @@ PYVCL_SUBMODULE(preconditioners)
   EXPORT_FSPAI_PRECOND(compressed_matrix, double);
 
 #else
-  bp::class_<empty_tag>("amg_tag");
-  bp::class_<empty_tag>("spai_tag");
-  bp::class_<empty_tag>("fspai_tag");
+  bp::class_<empty_amg_tag>("amg_tag");
+  bp::class_<empty_spai_tag>("spai_tag");
+  bp::class_<empty_fspai_tag>("fspai_tag");
 #endif // VIENNACL_WITH_OPENCL
 
 }

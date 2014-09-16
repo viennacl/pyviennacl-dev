@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 try:
     vcl = _v.opencl_support
-except ImportError:
+except AttributeError:
     raise ImportError("OpenCL support not included in this installation of ViennaCL")
 
 from collections import MutableMapping, MutableSequence
