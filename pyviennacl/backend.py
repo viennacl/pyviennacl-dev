@@ -13,8 +13,8 @@ log = logging.getLogger(__name__)
 
 WITH_OPENCL = True
 try:
-    import pyviennacl.opencl as vcl
     import pyopencl as cl
+    import pyviennacl.opencl as vcl
 except ImportError as e:
     #log.warning("OpenCL not available: %s", e)
     WITH_OPENCL = False
@@ -184,6 +184,8 @@ class Context(object):
     _programs = None
 
     def __init__(self, domain_or_context=DefaultMemory):
+        create_vcl_context_from = None # set this later
+
         if domain_or_context is None:
             domain_or_context = DefaultMemory
 
@@ -202,14 +204,20 @@ class Context(object):
                 create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
 
         try:
-            if issubclass(domain_or_context, MemoryDomain): # cf default arg
-                self.domain = domain_or_context
-                if domain_or_context is OpenCLMemory:
-                    self.sub_context = vcl.default_context
-                    create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
-                else:
-                    create_vcl_context_from = self.domain.vcl_memory_type
-        except TypeError: pass
+            domain_or_context_is_domain = issubclass(domain_or_context, MemoryDomain)
+        except TypeError:
+            domain_or_context_is_domain = False
+
+        if domain_or_context_is_domain: # cf default arg
+            self.domain = domain_or_context
+            if domain_or_context is OpenCLMemory:
+                self.sub_context = vcl.default_context
+                create_vcl_context_from = vcl.get_viennacl_object(self.sub_context)
+            else:
+                create_vcl_context_from = self.domain.vcl_memory_type
+
+        if create_vcl_context_from is None:
+            raise TypeError("Cannot handle argument of type %s. Note: WITH_OPENCL is %s" % (type(domain_or_context), WITH_OPENCL))
 
         self.vcl_context = _v.context(create_vcl_context_from)
         if self.domain is OpenCLMemory:
