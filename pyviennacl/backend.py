@@ -217,7 +217,7 @@ class Context(object):
                 create_vcl_context_from = self.domain.vcl_memory_type
 
         if create_vcl_context_from is None:
-            raise TypeError("Cannot handle argument of type %s. Note: WITH_OPENCL is %s" % (type(domain_or_context), WITH_OPENCL))
+            raise TypeError("Cannot handle argument of type %s. Note: WITH_OPENCL is %s." % (type(domain_or_context), WITH_OPENCL))
 
         self.vcl_context = _v.context(create_vcl_context_from)
         if self.domain is OpenCLMemory:
