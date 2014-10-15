@@ -196,7 +196,7 @@ def main():
 
         "extra_functions", "eig", "bandwidth_reduction",
 
-        "atidlas", "scheduler", "platform_support", "opencl_support"]
+        "scheduler", "platform_support", "opencl_support"]
 
     from glob import glob
 

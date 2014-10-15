@@ -3531,6 +3531,32 @@ class Dot(Node):
     shape = ()
 
 
+class OrderType(object):
+    def __init__(*args):
+        raise TypeError("This class is not supposed to be instantiated")
+
+class SequentialOrder(OrderType):
+    vcl_order = _v.statements_tuple_order_type.SEQUENTIAL
+
+class IndependentOrder(OrderType):
+    vcl_order = _v.statements_tuple_order_type.INDEPENDENT
+
+
+class StatementsTuple(object):
+    vcl_statements_tuple = None
+
+    def __init__(self, statements, order = SequentialOrder):
+        if not isinstance(statements, list):
+            statements = [statements]
+        def to_vcl_statement(s):
+            if isinstance(s, Node):
+                return Statement(s).vcl_statement
+            else:
+                return s.vcl_statement
+        vcl_statements = list(map(to_vcl_statement, statements))
+        self.order = order
+        self.vcl_tuple = _v.statements_tuple(vcl_statements, order.vcl_order)
+
 class Statement(object):
     """This class represents the ViennaCL `statement` corresponding to an
     expression graph. It employs type deduction information to
@@ -3655,6 +3681,8 @@ class Statement(object):
             raise
         return self.result
         
+
+
 
 __all__ = ['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32',
            'uint64', 'float16', 'float32', 'float64',
