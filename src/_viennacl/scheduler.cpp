@@ -288,10 +288,6 @@ DISAMBIGUATE_CLASS_FUNCTION_PTR(statement_node_wrapper,         // class
 
   bp::class_<statement_wrapper>("statement")
     .add_property("size", &statement_wrapper::size)
-    #ifdef VIENNACL_WITH_OPENCL
-    .def("check_template", &statement_wrapper::check_template)
-    .def("execute_template", &statement_wrapper::execute_template)
-    #endif
     .def("execute", &statement_wrapper::execute)
     .def("print", &statement_wrapper::print_vcl_statement)
     .def("clear", &statement_wrapper::clear)
