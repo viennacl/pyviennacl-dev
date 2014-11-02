@@ -227,8 +227,8 @@ def main():
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Physics',
         ],
-        setup_requires=['numpy>=1.7'],
-        install_requires=['numpy>=1.7', 'appdirs'],
+        setup_requires=['numpy>=1.6'],
+        install_requires=['numpy>=1.6', 'appdirs'],
         tests_require=['pytest'],
 
         packages=["pyviennacl"],
