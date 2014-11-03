@@ -281,27 +281,27 @@ CLOSE_OP_FUNC;
                                    vcl::vector_base<TYPE> >),           \
                             vcl::project,                               \
                             project_vector_##TYPE##_range,              \
-                            (CONCAT(vcl::vector_base<TYPE>&,            \
+                            (CONCAT(vcl::vector_base<TYPE> const &,     \
                                     const vcl::range&)))                \
   DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::vector_range<                   \
                                    vcl::vector_base<TYPE> >),           \
                             vcl::project,                               \
                             project_vector_range_##TYPE##_range,        \
                             (CONCAT(vcl::vector_range<                  \
-                                    vcl::vector_base<TYPE> >&,          \
+                                    vcl::vector_base<TYPE> > const &,   \
                                     const vcl::range&)))                \
   DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::vector_slice<                   \
                                    vcl::vector_base<TYPE> >),           \
                             vcl::project,                               \
                             project_vector_##TYPE##_slice,              \
-                            (CONCAT(vcl::vector_base<TYPE>&,            \
+                            (CONCAT(vcl::vector_base<TYPE> const &,     \
                                     const vcl::slice&)))                \
   DISAMBIGUATE_FUNCTION_PTR(CONCAT(vcl::vector_slice<                   \
                                    vcl::vector_base<TYPE> >),           \
                             vcl::project,                               \
                             project_vector_slice_##TYPE##_slice,        \
                             (CONCAT(vcl::vector_slice<                  \
-                                    vcl::vector_base<TYPE> >&,          \
+                                    vcl::vector_base<TYPE> > const &,   \
                                     const vcl::slice&)))                \
   bp::def("project_vector_" #TYPE, project_vector_##TYPE##_range);      \
   bp::def("project_vector_" #TYPE, project_vector_range_##TYPE##_range); \
