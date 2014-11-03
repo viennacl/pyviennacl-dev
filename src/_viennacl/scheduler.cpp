@@ -1,7 +1,33 @@
 #include "scheduler.hpp"
 
+vcl::tools::shared_ptr<vcl::device_specific::statements_container>
+	make_statements_tuple(bp::list statement_wrappers, vcl::device_specific::statements_container::order_type order)
+{
+    std::list<vcl::scheduler::statement> statements;
+    for (long i=0; i < bp::len(statement_wrappers); ++i) {
+      const statement_wrapper& w = bp::extract<statement_wrapper>(statement_wrappers[i]);
+      statements.push_front(w.get_vcl_statement());
+    }
+    vcl::device_specific::statements_container* s = new vcl::device_specific::statements_container(statements, order);
+    return vcl::tools::shared_ptr<vcl::device_specific::statements_container>(s);
+}
+
 PYVCL_SUBMODULE(scheduler)
 {
+
+
+  bp::enum_<vcl::device_specific::statements_container::order_type>
+    ("statements_tuple_order_type")
+    ENUM_VALUE(vcl::device_specific::statements_container, SEQUENTIAL)
+    ENUM_VALUE(vcl::device_specific::statements_container, INDEPENDENT)
+    ;
+
+  bp::class_<vcl::device_specific::statements_container,
+             vcl::tools::shared_ptr<vcl::device_specific::statements_container> >
+    ("statements_tuple", bp::no_init)
+    .def("__init__", bp::make_constructor(make_statements_tuple))
+    ;
+
 
   bp::enum_<vcl::scheduler::operation_node_type_family>
     ("operation_node_type_family")
@@ -262,10 +288,6 @@ DISAMBIGUATE_CLASS_FUNCTION_PTR(statement_node_wrapper,         // class
 
   bp::class_<statement_wrapper>("statement")
     .add_property("size", &statement_wrapper::size)
-    #ifdef VIENNACL_WITH_OPENCL
-    .def("check_template", &statement_wrapper::check_template)
-    .def("execute_template", &statement_wrapper::execute_template)
-    #endif
     .def("execute", &statement_wrapper::execute)
     .def("print", &statement_wrapper::print_vcl_statement)
     .def("clear", &statement_wrapper::clear)

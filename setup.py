@@ -74,7 +74,6 @@ def get_config_schema():
 
             Switch("USE_SHIPPED_BOOST", True, "Use included Boost library"),
             Switch("USE_SHIPPED_VIENNACL", True, "Use included ViennaCL library"),
-            Switch("USE_SHIPPED_ATIDLAS", True, "Use included ATIDLAS library"),
             
             Switch("USE_OPENCL", True, "Use OpenCL"),
             IncludeDir("CL", []),
@@ -84,7 +83,6 @@ def get_config_schema():
             Switch("USE_OPENMP", True, "Use OpenMP"),
 
             IncludeDir("VIENNACL", []),
-            IncludeDir("ATIDLAS", []),
 
             StringListOption("CXXFLAGS", default_cxxflags,
                              help="Any extra C++ compiler options to include"),
@@ -119,11 +117,6 @@ def main():
         INCLUDE_DIRS += ["external/viennacl-dev/"]
     else:
         INCLUDE_DIRS += conf["VIENNACL_INC_DIR"]
-        
-    if conf["USE_SHIPPED_ATIDLAS"]:
-        INCLUDE_DIRS += ["external/ATIDLAS"]
-    else:
-        INCLUDE_DIRS += conf["ATIDLAS_INC_DIR"]
 
     LIBRARY_DIRS = conf["BOOST_LIB_DIR"]
     LIBRARIES = conf["BOOST_PYTHON_LIBNAME"]
@@ -196,7 +189,7 @@ def main():
 
         "extra_functions", "eig", "bandwidth_reduction",
 
-        "atidlas", "scheduler", "platform_support", "opencl_support"]
+        "scheduler", "platform_support", "opencl_support"]
 
     from glob import glob
 
@@ -234,8 +227,8 @@ def main():
             'Topic :: Scientific/Engineering :: Mathematics',
             'Topic :: Scientific/Engineering :: Physics',
         ],
-        setup_requires=['numpy>=1.7'],
-        install_requires=['numpy>=1.7', 'appdirs'],
+        setup_requires=['numpy>=1.6'],
+        install_requires=['numpy>=1.6', 'appdirs'],
         tests_require=['pytest'],
 
         packages=["pyviennacl"],
@@ -250,7 +243,7 @@ def main():
             depends=[os.path.join("src", "_viennacl", "viennacl.h")],
 
             extra_compile_args=conf["CXXFLAGS"],
-            extra_link_args=conf["LDFLAGS"],
+            extra_link_args=['-Wl,-soname=_viennacl.so'] + conf["LDFLAGS"],
 
             define_macros=list(EXTRA_DEFINES.items()),
             undef_macros=UNDEF_MACROS,

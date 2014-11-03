@@ -30,7 +30,7 @@ def fix_operand(opand, node=None):
         if opand.no_fix:
             return opand
         # TODO: REMOVE NEXT TEST
-        if opand.operation_node_type_family == _viennacl.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY and not (type(opand) == p.Assign or type(node) == p.Assign) and not opand.operation_node_type == _v.operation_node_type.OPERATION_UNARY_TRANS_TYPE:
+        if opand.operation_node_type_family == _viennacl.operation_node_type_family.OPERATION_UNARY_TYPE_FAMILY and not (type(opand) == p.Assign or type(node) == p.Assign) and not opand.operation_node_type == _viennacl.operation_node_type.OPERATION_UNARY_TRANS_TYPE:
             opand.no_fix = True
             return opand.result
     return opand

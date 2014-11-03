@@ -5,10 +5,6 @@
 #include <viennacl/scheduler/execute.hpp>
 #include <viennacl/scheduler/io.hpp>
 
-#ifdef VIENNACL_WITH_OPENCL
-#include <atidlas/execute.hpp>
-#endif
-
 class statement_node_wrapper {
 
   vcl::scheduler::statement::value_type vcl_node;
@@ -179,19 +175,6 @@ public:
   void execute() {
     vcl::scheduler::execute(get_vcl_statement());
   }
-
-#ifdef VIENNACL_WITH_OPENCL
-  int check_template(atidlas::template_base const & tplt, viennacl::ocl::context const & context)
-  {
-    vcl::scheduler::statement tmp_statement(vcl_expression_nodes);
-    return tplt.check_invalid(tmp_statement, context.current_device());
-  }
-  
-  void execute_template(atidlas::template_base const & T, vcl::ocl::context & ctx, bool force_compilation)
-  {
-    atidlas::execute(T, get_vcl_statement(), ctx, force_compilation);
-  }
-#endif
 
   std::size_t size() const {
     return vcl_expression_nodes.size();
