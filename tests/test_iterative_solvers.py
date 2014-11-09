@@ -7,7 +7,7 @@ import scipy.sparse.linalg as spspla
 from _common import *
 from itertools import product
 
-points_x_y = 5
+points_x_y = 10
 
 if double_support:
     dtype_tolerances = [('float64', 1.0E-5)]
@@ -57,7 +57,7 @@ for d_t_, solver_, sparse_type_, vector_getter_, precond_ in product(dtype_toler
             solver_tag = solver_tag_type(tolerance=tol/10)
             precond_tag = precond_tag_type()
 
-            vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt)
+            vcl_system = sparse_type.generate_fdm_laplace(points_x_y, points_x_y, dtype=dt, context=default_context)
             #vcl_system = get_sparse_matrix(10, dtype=dt, sparse_type=sparse_type)
 
             numpy_solution, vcl_solution = vector_getter(vcl_system.size1, dt, vector=np.ones(vcl_system.size1).astype(dt))

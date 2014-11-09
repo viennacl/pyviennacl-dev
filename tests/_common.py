@@ -6,7 +6,7 @@ import pyviennacl as p
 
 logger = logging.getLogger('pyviennacl')
 default_context = p.backend.Context()
-double_support = ([x for x in p.backend.Context().devices if x.double_fp_config] != [])
+double_support = ([x for x in default_context.devices if x.double_fp_config] != [])
 
 def diff(a, b):
     ret = 0
