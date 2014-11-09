@@ -8,7 +8,7 @@
 #include <viennacl/linalg/qr.hpp>
 
 #ifdef VIENNACL_WITH_OPENCL
-#include <viennacl/linalg/nmf_operations.hpp>
+#include <viennacl/linalg/nmf.hpp>
 #include <viennacl/linalg/fft_operations.hpp>
 #include <viennacl/linalg/svd.hpp>
 #include <viennacl/fft.hpp>
