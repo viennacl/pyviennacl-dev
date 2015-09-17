@@ -9,7 +9,7 @@ vcl::vcl_size_t get_ram_handle(vcl::backend::mem_handle& m) {
 
 void set_ram_handle(vcl::backend::mem_handle& m, vcl::vcl_size_t ptr) {
   char* ram_handle_ = (char*) ptr;
-  typename vcl::backend::mem_handle::ram_handle_type ram_handle(ram_handle_);
+  vcl::backend::mem_handle::ram_handle_type ram_handle(ram_handle_);
   m.ram_handle() = ram_handle;
 }
 
@@ -54,7 +54,7 @@ vcl::vcl_size_t get_cuda_handle(vcl::backend::mem_handle& m) {
 
 void set_cuda_handle(vcl::backend::mem_handle& m, vcl::vcl_size_t ptr) {
   char* cuda_handle_ = (char*) ptr;
-  typename vcl::backend::mem_handle::cuda_handle_type cuda_handle(cuda_handle_);
+  vcl::backend::mem_handle::cuda_handle_type cuda_handle(cuda_handle_);
   m.cuda_handle() = cuda_handle;
 }
 
